@@ -1,0 +1,61 @@
+{
+  "name": "hello-world-react-app",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "start": "react-scripts start",
+    "build": "react-scripts build",
+    "test": "react-scripts test",
+    "eject": "react-scripts eject"
+  },
+  "eslintConfig": {
+    "extends": [
+      "react-app",
+      "react-app/jest"
+    ]
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  },
+  "dependencies": {
+    "cesium": "^1.129.0",
+    "http-proxy-middleware": "^3.0.5",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "react-scripts": "^5.0.1",
+    "resium": "^1.19.0-beta.1",
+    "satellite.js": "^6.0.0"
+  },
+  "devDependencies": {
+    "@types/babel__core": "^7.20.5",
+    "@types/babel__generator": "^7.27.0",
+    "@types/babel__template": "^7.4.4",
+    "@types/babel__traverse": "^7.20.7",
+    "@types/eslint": "^9.6.1",
+    "@types/estree": "^1.0.7",
+    "@types/express": "^4.17.22",
+    "@types/express-serve-static-core": "^5.0.6",
+    "@types/graceful-fs": "^4.1.9",
+    "@types/html-minifier-terser": "^7.0.2",
+    "@types/json5": "^2.2.0",
+    "@types/prettier": "^3.0.0",
+    "@types/q": "^1.5.8",
+    "@types/qs": "^6.14.0",
+    "@types/react": "^19.1.5",
+    "@types/react-dom": "^19.1.5",
+    "@types/resolve": "^1.20.6",
+    "@types/semver": "^7.7.0",
+    "@types/serve-static": "^1.15.7",
+    "@types/ws": "^8.18.1",
+    "@types/yargs": "^17.0.33"
+  }
+}
