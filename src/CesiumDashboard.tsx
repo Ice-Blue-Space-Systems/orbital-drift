@@ -343,6 +343,32 @@ length: new CallbackProperty(() => {
     }, false);
   }, [showGroundTrack, satPositionProperty]);
 
+    // Past TLE track (keeps growing)
+  const tleHistory = useMemo(() => {
+    return new CallbackProperty(() => tleHistoryRef.current, false);
+  }, []);
+
+  // Future TLE track
+  const tleFuture = useMemo(() => {
+    if (!showTle || !satPositionProperty) return null;
+    return new CallbackProperty(() => {
+      const positions: Cartesian3[] = [];
+      const viewer = viewerRef.current?.cesiumElement;
+      if (!viewer) return positions;
+
+      const currentTime = viewer.clock.currentTime;
+      if (!currentTime) return positions;
+
+      // +1 hour from now
+      for (let i = 0; i <= 3600; i += 30) {
+        const offsetTime = JulianDate.addSeconds(currentTime, i, new JulianDate());
+        const pos = satPositionProperty.getValue(offsetTime);
+        if (pos) positions.push(pos);
+      }
+      return positions;
+    }, false);
+  }, [showTle, satPositionProperty]);
+
   const groundTrackEntities = useMemo(() => {
     if (!showGroundTrack) return null;
     return (
@@ -396,6 +422,67 @@ length: new CallbackProperty(() => {
     );
   }, [showGroundTrack, showHistory, groundTrackHistory, groundTrackFuture, satPositionProperty]);
 
+  const tleEntities = useMemo(() => {
+    if (!showTle || !satPositionProperty) return null;
+    return (
+      <>          {showTle && (
+            <>
+              {showHistory && (
+                <Entity
+                  name="TLE Path - Past"
+                  polyline={{
+                    positions: tleHistory,
+                    width: 2,
+                    material: Color.GRAY, // Past TLE in gray
+                  }}
+                />
+              )}
+              {showHistory && tleFuture && (
+                <Entity
+                  name="TLE Path - Future"
+                  polyline={{
+                    positions: tleFuture,
+                    width: 2,
+                    material: Color.GREEN, // Future TLE in green
+                  }}
+                />
+              )}
+              {!showHistory && satPositionProperty && (
+                <Entity
+                  name="TLE Path - Preview"
+                  polyline={{
+                    positions: new CallbackProperty(() => {
+                      const positions: Cartesian3[] = [];
+                      const now = JulianDate.now();
+                      const durationSeconds = 3600 // 1 hour
+                      const stepSeconds = 60; // 1-minute intervals
+                      for (let i = 0; i <= durationSeconds; i += stepSeconds) {
+                        const time = JulianDate.addSeconds(now, i, new JulianDate());
+                        const pos = satPositionProperty.getValue(time);
+                        if (pos) positions.push(pos);
+                      }
+                      return positions;
+                    }, false),
+                    width: 2,
+                    material: Color.BLUE.withAlpha(0.8), // Preview TLE in blue
+                  }}
+                />
+              )}
+              <Entity
+                name="TLE Path - Current"
+                polyline={{
+                  positions: satPositionProperty?.getValue(JulianDate.now()) ? [satPositionProperty.getValue(JulianDate.now())].filter((pos): pos is Cartesian3 => pos !== undefined) : [],
+                  width: 2,
+                  material: Color.BLUE, // Current TLE in blue
+                }}
+              />
+            </>
+          )}
+      </>
+    );
+  }, [showTle, showHistory, tleHistory, tleFuture, satPositionProperty]);
+
+
   //
   // TLE TRACK
   //
@@ -417,32 +504,6 @@ length: new CallbackProperty(() => {
     viewer.clock.onTick.addEventListener(recordTleTrack);
     return () => viewer.clock.onTick.removeEventListener(recordTleTrack);
   }, [showTle, showHistory, satPositionProperty]);
-
-  // Past TLE track (keeps growing)
-  const tleHistory = useMemo(() => {
-    return new CallbackProperty(() => tleHistoryRef.current, false);
-  }, []);
-
-  // Future TLE track
-  const tleFuture = useMemo(() => {
-    if (!showTle || !satPositionProperty) return null;
-    return new CallbackProperty(() => {
-      const positions: Cartesian3[] = [];
-      const viewer = viewerRef.current?.cesiumElement;
-      if (!viewer) return positions;
-
-      const currentTime = viewer.clock.currentTime;
-      if (!currentTime) return positions;
-
-      // +1 hour from now
-      for (let i = 0; i <= 3600; i += 30) {
-        const offsetTime = JulianDate.addSeconds(currentTime, i, new JulianDate());
-        const pos = satPositionProperty.getValue(offsetTime);
-        if (pos) positions.push(pos);
-      }
-      return positions;
-    }, false);
-  }, [showTle, satPositionProperty]);
 
   // Find the next scheduled contact window
   const nextContactWindow = useMemo(() => {
@@ -499,68 +560,6 @@ length: new CallbackProperty(() => {
     viewer.clock.onTick.addEventListener(updateDebugInfo);
     return () => viewer.clock.onTick.removeEventListener(updateDebugInfo);
   }, [satPositionProperty, inSight]);
-
-  const tleEntities = useMemo(() => {
-    if (!showTle) return null;
-
-    return (
-      <>
-        {showHistory && (
-          <Entity
-            name="TLE Path - Past"
-            polyline={{
-              positions: tleHistory,
-              width: 2,
-              material: Color.GRAY, // Past TLE in gray
-            }}
-          />
-        )}
-        {showHistory && tleFuture && (
-          <Entity
-            name="TLE Path - Future"
-            polyline={{
-              positions: tleFuture,
-              width: 2,
-              material: Color.GREEN, // Future TLE in green
-            }}
-          />
-        )}
-        {!showHistory && satPositionProperty && (
-          <Entity
-            name="TLE Path - Preview"
-            polyline={{
-              positions: new CallbackProperty(() => {
-                const positions: Cartesian3[] = [];
-                const now = JulianDate.now();
-                const durationSeconds = 3600; // 1 hour
-                const stepSeconds = 60; // 1-minute intervals
-                for (let i = 0; i <= durationSeconds; i += stepSeconds) {
-                  const time = JulianDate.addSeconds(now, i, new JulianDate());
-                  const pos = satPositionProperty.getValue(time);
-                  if (pos) positions.push(pos);
-                }
-                return positions;
-              }, false),
-              width: 2,
-              material: Color.BLUE.withAlpha(0.8), // Preview TLE in blue
-            }}
-          />
-        )}
-        <Entity
-          name="TLE Path - Current"
-          polyline={{
-            positions: satPositionProperty?.getValue(JulianDate.now())
-              ? [satPositionProperty.getValue(JulianDate.now())].filter(
-                  (pos): pos is Cartesian3 => pos !== undefined
-                )
-              : [],
-            width: 2,
-            material: Color.BLUE, // Current TLE in blue
-          }}
-        />
-      </>
-    );
-  }, [showTle, showHistory, tleHistory, tleFuture, satPositionProperty]);
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100vh" }}>
@@ -701,8 +700,8 @@ length: new CallbackProperty(() => {
         <Viewer ref={viewerRef} style={{ position: "absolute", inset: 0 }}>
           {visibilityConeEntities}
           <Clock shouldAnimate={true} />
-          {tleEntities}
-          {groundTrackEntities}
+
+          {/* Satellite with name label */}
           {satPositionProperty && (
             <Entity
               name="Satellite"
@@ -719,6 +718,8 @@ length: new CallbackProperty(() => {
               }}
             />
           )}
+
+          {/* Ground Station with AOS/LOS label */}
           {groundStationPos && (
             <Entity
               name="Ground Station"
@@ -728,23 +729,31 @@ length: new CallbackProperty(() => {
                 text: nextAosLosLabel,
                 font: "14px sans-serif",
                 fillColor: Color.WHITE,
-                style: 2, // LabelStyle.OUTLINE
+                style: 2,
                 outlineWidth: 2,
                 pixelOffset: new Cartesian2(0, -40),
                 showBackground: true,
               }}
             />
           )}
+
+          {/* TLE Paths */}
+          {tleEntities}
+
+          {/* Line of Sight */}
           {showLineOfSight && lineOfSightPositions.length === 2 && (
-    <Entity
-      name="Line of Sight"
-      polyline={{
-        positions: lineOfSightPositions,
-        width: 2,
-        material: Color.RED.withAlpha(0.8), // Line of sight in red
-      }}
-    />
-  )}
+            <Entity
+              name="Line of Sight"
+              polyline={{
+                positions: new CallbackProperty(() => lineOfSightPositions, false),
+                material: Color.BLUE,
+                width: 5,
+              }}
+            />
+          )}
+
+          {/* Ground Track */}
+          {groundTrackEntities}
         </Viewer>
       </div>
     </div>
