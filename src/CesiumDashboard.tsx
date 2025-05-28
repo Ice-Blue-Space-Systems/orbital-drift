@@ -36,10 +36,13 @@ import { fetchTleBySatelliteId } from "./store/tleSlice";
 import SatelliteStatusTable from "./components/SatelliteStatusTable";
 import ContactWindows from "./components/ContactWindows";
 import { selectContactWindows } from "./store/contactWindowsSlice";
+import LeftNavDrawer from "./components/LeftNavDrawer";
 
 function CesiumDashboard() {
   const dispatch: AppDispatch = useDispatch();
-  const { satellites, groundStations, status } = useSelector((state: RootState) => state.mongo);
+  const { satellites, groundStations, status } = useSelector(
+    (state: RootState) => state.mongo
+  );
   const contactWindows = useSelector(selectContactWindows);
 
   const [selectedSatId, setSelectedSatId] = useState("");
@@ -48,12 +51,18 @@ function CesiumDashboard() {
   const [showLineOfSight, setShowLineOfSight] = useState(false);
   const [showStatusTable, setShowStatusTable] = useState(true); // Default to checked
   const [inSight, setInSight] = useState(false);
-  const [showContactWindowsDrawer, setShowContactWindowsDrawer] = useState(false);
+  const [showContactWindowsDrawer, setShowContactWindowsDrawer] =
+    useState(false);
   const [showGroundTrack, setShowGroundTrack] = useState(false);
-  const [satPositionProperty, setSatPositionProperty] = useState<SampledPositionProperty | null>(null);
-  const [groundStationPos, setGroundStationPos] = useState<Cartesian3 | null>(null);
+  const [satPositionProperty, setSatPositionProperty] =
+    useState<SampledPositionProperty | null>(null);
+  const [groundStationPos, setGroundStationPos] = useState<Cartesian3 | null>(
+    null
+  );
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const [lineOfSightPositions, setLineOfSightPositions] = useState<Cartesian3[]>([]);
+  const [lineOfSightPositions, setLineOfSightPositions] = useState<
+    Cartesian3[]
+  >([]);
   const [showVisibilityCones, setShowVisibilityCones] = useState(false);
   const [debugInfo, setDebugInfo] = useState<{
     satellitePosition: Cartesian3 | null;
@@ -91,16 +100,23 @@ function CesiumDashboard() {
 
     const loadTleAndPosition = async () => {
       try {
-        let line1 = "", line2 = "";
+        let line1 = "",
+          line2 = "";
 
         if (satellite.type === "simulated" && satellite.currentTleId) {
-          const tle = await dispatch(fetchTleBySatelliteId(satellite.currentTleId)).unwrap();
+          const tle = await dispatch(
+            fetchTleBySatelliteId(satellite.currentTleId)
+          ).unwrap();
           line1 = tle.line1;
           line2 = tle.line2;
         } else if (satellite.type === "live" && satellite.noradId) {
-          const res = await fetch("https://celestrak.com/NORAD/elements/stations.txt");
+          const res = await fetch(
+            "https://celestrak.com/NORAD/elements/stations.txt"
+          );
           const lines = (await res.text()).split("\n");
-          const idx = lines.findIndex((l) => l.includes(String(satellite.noradId)));
+          const idx = lines.findIndex((l) =>
+            l.includes(String(satellite.noradId))
+          );
           if (idx !== -1) {
             line1 = lines[idx];
             line2 = lines[idx + 1];
@@ -108,7 +124,12 @@ function CesiumDashboard() {
         }
 
         if (line1 && line2) {
-          const positionProperty = getFuturePositionsWithTime(line1, line2, 1060, viewerRef.current?.cesiumElement?.clock);
+          const positionProperty = getFuturePositionsWithTime(
+            line1,
+            line2,
+            1060,
+            viewerRef.current?.cesiumElement?.clock
+          );
           setSatPositionProperty(positionProperty);
         } else {
           setSatPositionProperty(null);
@@ -125,7 +146,9 @@ function CesiumDashboard() {
   }, [selectedSatId, satellites, dispatch]);
 
   useEffect(() => {
-    const station = groundStations.find((gs) => gs._id === selectedGroundStationId);
+    const station = groundStations.find(
+      (gs) => gs._id === selectedGroundStationId
+    );
     if (station) {
       const { lat, lon, alt } = station.location;
       setGroundStationPos(Cartesian3.fromDegrees(lon, lat, alt * 1000)); // Convert altitude from kilometers to meters
@@ -135,7 +158,12 @@ function CesiumDashboard() {
   }, [selectedGroundStationId, groundStations]);
   // Check “inSight” once at load or whenever data changes
   useEffect(() => {
-    if (contactWindows.length > 0 && selectedSatId && selectedGroundStationId && viewerRef.current) {
+    if (
+      contactWindows.length > 0 &&
+      selectedSatId &&
+      selectedGroundStationId &&
+      viewerRef.current
+    ) {
       const viewer = viewerRef.current.cesiumElement;
       const clock = viewer?.clock;
       if (clock) {
@@ -174,36 +202,33 @@ function CesiumDashboard() {
   }, [satPositionProperty, groundStationPos]);
 
   // Helper function for orienting the cone
-function getQuaternionFromTo(fromVec: Cartesian3, toVec: Cartesian3): Quaternion {
-  const v0 = Cartesian3.normalize(fromVec, new Cartesian3());
-  const v1 = Cartesian3.normalize(toVec, new Cartesian3());
-  const dot = Cartesian3.dot(v0, v1);
+  function getQuaternionFromTo(
+    fromVec: Cartesian3,
+    toVec: Cartesian3
+  ): Quaternion {
+    const v0 = Cartesian3.normalize(fromVec, new Cartesian3());
+    const v1 = Cartesian3.normalize(toVec, new Cartesian3());
+    const dot = Cartesian3.dot(v0, v1);
 
-  if (dot > 0.9999) {
-    return Quaternion.IDENTITY; // Aligned
-  }
-  if (dot < -0.9999) {
-    // Opposite direction — rotate 180° around a perpendicular axis
-    const axis = Cartesian3.cross(Cartesian3.UNIT_X, v0, new Cartesian3());
-    if (Cartesian3.magnitude(axis) < 0.01) {
-      Cartesian3.cross(Cartesian3.UNIT_Y, v0, axis);
+    if (dot > 0.9999) {
+      return Quaternion.IDENTITY; // Aligned
     }
-    Cartesian3.normalize(axis, axis);
-    return Quaternion.fromAxisAngle(axis, Math.PI);
+    if (dot < -0.9999) {
+      // Opposite direction — rotate 180° around a perpendicular axis
+      const axis = Cartesian3.cross(Cartesian3.UNIT_X, v0, new Cartesian3());
+      if (Cartesian3.magnitude(axis) < 0.01) {
+        Cartesian3.cross(Cartesian3.UNIT_Y, v0, axis);
+      }
+      Cartesian3.normalize(axis, axis);
+      return Quaternion.fromAxisAngle(axis, Math.PI);
+    }
+
+    const axis = Cartesian3.cross(v0, v1, new Cartesian3());
+    const s = Math.sqrt((1 + dot) * 2);
+    const invs = 1 / s;
+
+    return new Quaternion(axis.x * invs, axis.y * invs, axis.z * invs, s * 0.5);
   }
-
-  const axis = Cartesian3.cross(v0, v1, new Cartesian3());
-  const s = Math.sqrt((1 + dot) * 2);
-  const invs = 1 / s;
-
-  return new Quaternion(
-    axis.x * invs,
-    axis.y * invs,
-    axis.z * invs,
-    s * 0.5
-  );
-}
-
 
   // Visibility cone
   const visibilityConeEntities = useMemo(() => {
@@ -221,17 +246,18 @@ function getQuaternionFromTo(fromVec: Cartesian3, toVec: Cartesian3): Quaternion
         key="visibility-cone"
         name="Visibility Cone"
         position={groundStationPos}
-orientation={new CallbackProperty(() => {
-  const satPos = satPositionProperty.getValue(JulianDate.now());
-  if (!satPos || !groundStationPos) return Quaternion.IDENTITY;
-  return getQuaternionFromTo(groundStationPos, satPos);
-}, false)}
-
+        orientation={
+          new CallbackProperty(() => {
+            const satPos = satPositionProperty.getValue(JulianDate.now());
+            if (!satPos || !groundStationPos) return Quaternion.IDENTITY;
+            return getQuaternionFromTo(groundStationPos, satPos);
+          }, false)
+        }
         cylinder={{
-length: new CallbackProperty(() => {
-  const satPos = satPositionProperty.getValue(JulianDate.now());
-  return satPos ? Cartesian3.distance(groundStationPos, satPos) : 0;
-}, false),
+          length: new CallbackProperty(() => {
+            const satPos = satPositionProperty.getValue(JulianDate.now());
+            return satPos ? Cartesian3.distance(groundStationPos, satPos) : 0;
+          }, false),
           topRadius: 500000, // Adjust as needed
           bottomRadius: 0,
           material: new ColorMaterialProperty(
@@ -270,7 +296,9 @@ length: new CallbackProperty(() => {
         rafId = requestAnimationFrame(checkInSight);
         return;
       }
-      const nowCesium = JulianDate.toDate(viewer.clock.currentTime ?? JulianDate.now());
+      const nowCesium = JulianDate.toDate(
+        viewer.clock.currentTime ?? JulianDate.now()
+      );
       const isNowInSight = contactWindows.some(
         (win: ContactWindow) =>
           win.satelliteId === selectedSatId &&
@@ -287,7 +315,12 @@ length: new CallbackProperty(() => {
       checkInSight();
       return () => cancelAnimationFrame(rafId);
     }
-  }, [contactWindows, selectedSatId, selectedGroundStationId, showVisibilityCones]);
+  }, [
+    contactWindows,
+    selectedSatId,
+    selectedGroundStationId,
+    showVisibilityCones,
+  ]);
 
   //
   // GROUND TRACK
@@ -295,7 +328,13 @@ length: new CallbackProperty(() => {
 
   // Use a ref-based array for the “past” ground track
   useEffect(() => {
-    if (!showGroundTrack || !showHistory || !satPositionProperty || !viewerRef.current) return;
+    if (
+      !showGroundTrack ||
+      !showHistory ||
+      !satPositionProperty ||
+      !viewerRef.current
+    )
+      return;
     const viewer = viewerRef.current.cesiumElement;
 
     const recordGroundTrack = () => {
@@ -305,7 +344,9 @@ length: new CallbackProperty(() => {
       if (pos) {
         const carto = Ellipsoid.WGS84.cartesianToCartographic(pos);
         carto.height = 0;
-        groundTrackHistoryRef.current.push(Ellipsoid.WGS84.cartographicToCartesian(carto));
+        groundTrackHistoryRef.current.push(
+          Ellipsoid.WGS84.cartographicToCartesian(carto)
+        );
       }
     };
 
@@ -343,7 +384,7 @@ length: new CallbackProperty(() => {
     }, false);
   }, [showGroundTrack, satPositionProperty]);
 
-    // Past TLE track (keeps growing)
+  // Past TLE track (keeps growing)
   const tleHistory = useMemo(() => {
     return new CallbackProperty(() => tleHistoryRef.current, false);
   }, []);
@@ -361,7 +402,11 @@ length: new CallbackProperty(() => {
 
       // +1 hour from now
       for (let i = 0; i <= 3600; i += 30) {
-        const offsetTime = JulianDate.addSeconds(currentTime, i, new JulianDate());
+        const offsetTime = JulianDate.addSeconds(
+          currentTime,
+          i,
+          new JulianDate()
+        );
         const pos = satPositionProperty.getValue(offsetTime);
         if (pos) positions.push(pos);
       }
@@ -373,115 +418,132 @@ length: new CallbackProperty(() => {
     if (!showGroundTrack) return null;
     return (
       <>
-      {showHistory && (
-        <Entity
-          name="Ground Track History"
-          polyline={{
-            positions: groundTrackHistory,
-            width: 2,
-            material: Color.GRAY, // Past ground track in gray
-          }}
-        />
-      )}
-      {showHistory && groundTrackFuture && (
-        <Entity
-          name="Ground Track Future"
-          polyline={{
-            positions: groundTrackFuture,
-            width: 2,
-            material: Color.YELLOW, // Future ground track in yellow
-          }}
-        />
-      )}
-      {!showHistory && satPositionProperty && (
-        <Entity
-          name="Ground Track - Preview"
-          polyline={{
-            positions: new CallbackProperty(() => {
-              const positions: Cartesian3[] = [];
-              const now = JulianDate.now();
-              const durationSeconds = 3600 // 24 hours
-              const stepSeconds = 60; // 1-minute intervals
-              for (let i = 0; i <= durationSeconds; i += stepSeconds) {
-                const time = JulianDate.addSeconds(now, i, new JulianDate());
-                const pos = satPositionProperty.getValue(time);
-                if (pos) {
-                  const carto = Ellipsoid.WGS84.cartesianToCartographic(pos);
-                  carto.height = 0; // Flatten altitude
-                  positions.push(Ellipsoid.WGS84.cartographicToCartesian(carto));
+        {showHistory && (
+          <Entity
+            name="Ground Track History"
+            polyline={{
+              positions: groundTrackHistory,
+              width: 2,
+              material: Color.GRAY, // Past ground track in gray
+            }}
+          />
+        )}
+        {showHistory && groundTrackFuture && (
+          <Entity
+            name="Ground Track Future"
+            polyline={{
+              positions: groundTrackFuture,
+              width: 2,
+              material: Color.YELLOW, // Future ground track in yellow
+            }}
+          />
+        )}
+        {!showHistory && satPositionProperty && (
+          <Entity
+            name="Ground Track - Preview"
+            polyline={{
+              positions: new CallbackProperty(() => {
+                const positions: Cartesian3[] = [];
+                const now = JulianDate.now();
+                const durationSeconds = 3600; // 24 hours
+                const stepSeconds = 60; // 1-minute intervals
+                for (let i = 0; i <= durationSeconds; i += stepSeconds) {
+                  const time = JulianDate.addSeconds(now, i, new JulianDate());
+                  const pos = satPositionProperty.getValue(time);
+                  if (pos) {
+                    const carto = Ellipsoid.WGS84.cartesianToCartographic(pos);
+                    carto.height = 0; // Flatten altitude
+                    positions.push(
+                      Ellipsoid.WGS84.cartographicToCartesian(carto)
+                    );
+                  }
                 }
-              }
-              return positions;
-            }, false),
-            width: 2,
-            material: Color.BLUE.withAlpha(0.8), // Preview ground track in blue
-          }}
-        />
-      )}
-    </>
+                return positions;
+              }, false),
+              width: 2,
+              material: Color.BLUE.withAlpha(0.8), // Preview ground track in blue
+            }}
+          />
+        )}
+      </>
     );
-  }, [showGroundTrack, showHistory, groundTrackHistory, groundTrackFuture, satPositionProperty]);
+  }, [
+    showGroundTrack,
+    showHistory,
+    groundTrackHistory,
+    groundTrackFuture,
+    satPositionProperty,
+  ]);
 
   const tleEntities = useMemo(() => {
     if (!showTle || !satPositionProperty) return null;
     return (
-      <>          {showTle && (
-            <>
-              {showHistory && (
-                <Entity
-                  name="TLE Path - Past"
-                  polyline={{
-                    positions: tleHistory,
-                    width: 2,
-                    material: Color.GRAY, // Past TLE in gray
-                  }}
-                />
-              )}
-              {showHistory && tleFuture && (
-                <Entity
-                  name="TLE Path - Future"
-                  polyline={{
-                    positions: tleFuture,
-                    width: 2,
-                    material: Color.GREEN, // Future TLE in green
-                  }}
-                />
-              )}
-              {!showHistory && satPositionProperty && (
-                <Entity
-                  name="TLE Path - Preview"
-                  polyline={{
-                    positions: new CallbackProperty(() => {
-                      const positions: Cartesian3[] = [];
-                      const now = JulianDate.now();
-                      const durationSeconds = 3600 // 1 hour
-                      const stepSeconds = 60; // 1-minute intervals
-                      for (let i = 0; i <= durationSeconds; i += stepSeconds) {
-                        const time = JulianDate.addSeconds(now, i, new JulianDate());
-                        const pos = satPositionProperty.getValue(time);
-                        if (pos) positions.push(pos);
-                      }
-                      return positions;
-                    }, false),
-                    width: 2,
-                    material: Color.BLUE.withAlpha(0.8), // Preview TLE in blue
-                  }}
-                />
-              )}
+      <>
+        {" "}
+        {showTle && (
+          <>
+            {showHistory && (
               <Entity
-                name="TLE Path - Current"
+                name="TLE Path - Past"
                 polyline={{
-                  positions: satPositionProperty?.getValue(JulianDate.now()) ? [satPositionProperty.getValue(JulianDate.now())].filter((pos): pos is Cartesian3 => pos !== undefined) : [],
+                  positions: tleHistory,
                   width: 2,
-                  material: Color.BLUE, // Current TLE in blue
+                  material: Color.GRAY, // Past TLE in gray
                 }}
               />
-            </>
-          )}
+            )}
+            {showHistory && tleFuture && (
+              <Entity
+                name="TLE Path - Future"
+                polyline={{
+                  positions: tleFuture,
+                  width: 2,
+                  material: Color.GREEN, // Future TLE in green
+                }}
+              />
+            )}
+            {!showHistory && satPositionProperty && (
+              <Entity
+                name="TLE Path - Preview"
+                polyline={{
+                  positions: new CallbackProperty(() => {
+                    const positions: Cartesian3[] = [];
+                    const now = JulianDate.now();
+                    const durationSeconds = 3600; // 1 hour
+                    const stepSeconds = 60; // 1-minute intervals
+                    for (let i = 0; i <= durationSeconds; i += stepSeconds) {
+                      const time = JulianDate.addSeconds(
+                        now,
+                        i,
+                        new JulianDate()
+                      );
+                      const pos = satPositionProperty.getValue(time);
+                      if (pos) positions.push(pos);
+                    }
+                    return positions;
+                  }, false),
+                  width: 2,
+                  material: Color.BLUE.withAlpha(0.8), // Preview TLE in blue
+                }}
+              />
+            )}
+            <Entity
+              name="TLE Path - Current"
+              polyline={{
+                positions: satPositionProperty?.getValue(JulianDate.now())
+                  ? [satPositionProperty.getValue(JulianDate.now())].filter(
+                      (pos): pos is Cartesian3 => pos !== undefined
+                    )
+                  : [],
+                width: 2,
+                material: Color.BLUE, // Current TLE in blue
+              }}
+            />
+          </>
+        )}
       </>
     );
   }, [showTle, showHistory, tleHistory, tleFuture, satPositionProperty]);
-
 
   //
   // TLE TRACK
@@ -489,7 +551,8 @@ length: new CallbackProperty(() => {
 
   // Use a ref-based array for the “past” TLE path
   useEffect(() => {
-    if (!showTle || !showHistory || !satPositionProperty || !viewerRef.current) return;
+    if (!showTle || !showHistory || !satPositionProperty || !viewerRef.current)
+      return;
     const viewer = viewerRef.current.cesiumElement;
 
     const recordTleTrack = () => {
@@ -510,18 +573,19 @@ length: new CallbackProperty(() => {
     if (!selectedSatId || !selectedGroundStationId) return null;
     const now = new Date();
     // Filter for future windows for the selected sat & GS
-    const futureWindows = contactWindows.filter((win: ContactWindow) =>
-      win.satelliteId === selectedSatId &&
-      win.groundStationId === selectedGroundStationId &&
-      new Date(win.scheduledLOS) > now
+    const futureWindows = contactWindows.filter(
+      (win: ContactWindow) =>
+        win.satelliteId === selectedSatId &&
+        win.groundStationId === selectedGroundStationId &&
+        new Date(win.scheduledLOS) > now
     );
 
     if (futureWindows.length === 0) return null;
 
     // Sort by earliest AOS
     futureWindows.sort(
-      (a: ContactWindow, b: ContactWindow) => 
-      new Date(a.scheduledAOS).getTime() - new Date(b.scheduledAOS).getTime()
+      (a: ContactWindow, b: ContactWindow) =>
+        new Date(a.scheduledAOS).getTime() - new Date(b.scheduledAOS).getTime()
     );
 
     return futureWindows[0];
@@ -534,7 +598,7 @@ length: new CallbackProperty(() => {
       "Next AOS: " +
       new Date(nextContactWindow.scheduledAOS).toISOString() + // Use UTC
       "\nLOS: " +
-      new Date(nextContactWindow.scheduledLOS).toISOString()  // Use UTC
+      new Date(nextContactWindow.scheduledLOS).toISOString() // Use UTC
     );
   }, [nextContactWindow]);
 
@@ -565,7 +629,11 @@ length: new CallbackProperty(() => {
     <div style={{ display: "flex", flexDirection: "column", height: "100vh" }}>
       <AppBar position="static">
         <Toolbar>
-          <IconButton color="inherit" edge="start" onClick={() => setDrawerOpen(true)}>
+          <IconButton
+            color="inherit"
+            edge="start"
+            onClick={() => setDrawerOpen(true)}
+          >
             <MenuIcon />
           </IconButton>
           <Typography variant="h6" style={{ flexGrow: 1 }}>
@@ -596,96 +664,29 @@ length: new CallbackProperty(() => {
       )}
 
       {/* Left Drawer */}
-      <Drawer anchor="left" open={drawerOpen} onClose={() => setDrawerOpen(false)}>
-        <Box style={{ width: 280, padding: 16 }}>
-          <FormControl size="small" fullWidth>
-            <InputLabel>Ground Station</InputLabel>
-            <Select
-              value={selectedGroundStationId}
-              onChange={(e) => setSelectedGroundStationId(e.target.value)}
-            >
-              {groundStations.map((gs) => (
-                <MenuItem key={gs._id} value={gs._id}>
-                  {gs.name}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-
-          <FormControl size="small" fullWidth style={{ marginTop: 16 }}>
-            <InputLabel>Satellite</InputLabel>
-            <Select value={selectedSatId} onChange={(e) => setSelectedSatId(e.target.value)}>
-              {satellites.map((sat) => (
-                <MenuItem key={sat._id} value={sat._id}>
-                  {sat.name} ({sat.type})
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-
-          <FormGroup style={{ marginTop: 16 }}>
-            <FormControlLabel
-              control={
-                <Checkbox
-                  checked={showHistory}
-                  onChange={(e) => setShowHistory(e.target.checked)}
-                />
-              }
-              label="Show History"
-            />
-            <FormControlLabel
-              control={<Checkbox checked={showTle} onChange={(e) => setShowTle(e.target.checked)} />}
-              label="Show TLE"
-            />
-            <FormControlLabel
-              control={
-                <Checkbox
-                  checked={showLineOfSight}
-                  onChange={(e) => setShowLineOfSight(e.target.checked)}
-                />
-              }
-              label="Show Line of Sight"
-            />
-            <FormControlLabel
-              control={
-                <Checkbox
-                  checked={showVisibilityCones}
-                  onChange={(e) => setShowVisibilityCones(e.target.checked)}
-                />
-              }
-              label="Show Visibility Cones"
-            />
-            <FormControlLabel
-              control={
-                <Checkbox
-                  checked={showGroundTrack}
-                  onChange={(e) => setShowGroundTrack(e.target.checked)}
-                />
-              }
-              label="Show Ground Track"
-            />
-            <FormControlLabel
-              control={
-                <Checkbox
-                  checked={showStatusTable}
-                  onChange={(e) => setShowStatusTable(e.target.checked)}
-                />
-              }
-              label="Show Debug"
-            />
-          </FormGroup>
-
-          {selectedSatId && selectedGroundStationId && (
-            <Button
-              variant="contained"
-              onClick={() => setShowContactWindowsDrawer(true)}
-              style={{ marginTop: 16 }}
-            >
-              View Contact Windows
-            </Button>
-          )}
-        </Box>
-      </Drawer>
+      <LeftNavDrawer
+        drawerOpen={drawerOpen}
+        onClose={() => setDrawerOpen(false)}
+        groundStations={groundStations}
+        satellites={satellites}
+        selectedGroundStationId={selectedGroundStationId}
+        selectedSatId={selectedSatId}
+        setSelectedGroundStationId={setSelectedGroundStationId}
+        setSelectedSatId={setSelectedSatId}
+        showHistory={showHistory}
+        setShowHistory={setShowHistory}
+        showTle={showTle}
+        setShowTle={setShowTle}
+        showLineOfSight={showLineOfSight}
+        setShowLineOfSight={setShowLineOfSight}
+        showVisibilityCones={showVisibilityCones}
+        setShowVisibilityCones={setShowVisibilityCones}
+        showGroundTrack={showGroundTrack}
+        setShowGroundTrack={setShowGroundTrack}
+        showStatusTable={showStatusTable}
+        setShowStatusTable={setShowStatusTable}
+        onViewContactWindows={() => setShowContactWindowsDrawer(true)}
+      />
 
       {/* Contact Windows Drawer */}
       <ContactWindows
@@ -708,7 +709,9 @@ length: new CallbackProperty(() => {
               position={satPositionProperty}
               point={{ pixelSize: 12, color: Color.YELLOW }}
               label={{
-                text: satellites.find((sat) => sat._id === selectedSatId)?.name || "Satellite",
+                text:
+                  satellites.find((sat) => sat._id === selectedSatId)?.name ||
+                  "Satellite",
                 font: "14px sans-serif",
                 fillColor: Color.WHITE,
                 style: 2, // LabelStyle.OUTLINE
@@ -745,7 +748,10 @@ length: new CallbackProperty(() => {
             <Entity
               name="Line of Sight"
               polyline={{
-                positions: new CallbackProperty(() => lineOfSightPositions, false),
+                positions: new CallbackProperty(
+                  () => lineOfSightPositions,
+                  false
+                ),
                 material: Color.BLUE,
                 width: 5,
               }}
