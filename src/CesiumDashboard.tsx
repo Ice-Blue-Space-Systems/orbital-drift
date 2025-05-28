@@ -406,137 +406,6 @@ function CesiumDashboard() {
     }, false);
   }, [showTle, satPositionProperty]);
 
-  const groundTrackEntities = useMemo(() => {
-    if (!showGroundTrack) return null;
-    return (
-      <>
-        {showHistory && (
-          <Entity
-            name="Ground Track History"
-            polyline={{
-              positions: groundTrackHistory,
-              width: 2,
-              material: Color.GRAY, // Past ground track in gray
-            }}
-          />
-        )}
-        {showHistory && groundTrackFuture && (
-          <Entity
-            name="Ground Track Future"
-            polyline={{
-              positions: groundTrackFuture,
-              width: 2,
-              material: Color.YELLOW, // Future ground track in yellow
-            }}
-          />
-        )}
-        {!showHistory && satPositionProperty && (
-          <Entity
-            name="Ground Track - Preview"
-            polyline={{
-              positions: new CallbackProperty(() => {
-                const positions: Cartesian3[] = [];
-                const now = JulianDate.now();
-                const durationSeconds = 3600; // 24 hours
-                const stepSeconds = 60; // 1-minute intervals
-                for (let i = 0; i <= durationSeconds; i += stepSeconds) {
-                  const time = JulianDate.addSeconds(now, i, new JulianDate());
-                  const pos = satPositionProperty.getValue(time);
-                  if (pos) {
-                    const carto = Ellipsoid.WGS84.cartesianToCartographic(pos);
-                    carto.height = 0; // Flatten altitude
-                    positions.push(
-                      Ellipsoid.WGS84.cartographicToCartesian(carto)
-                    );
-                  }
-                }
-                return positions;
-              }, false),
-              width: 2,
-              material: Color.BLUE.withAlpha(0.8), // Preview ground track in blue
-            }}
-          />
-        )}
-      </>
-    );
-  }, [
-    showGroundTrack,
-    showHistory,
-    groundTrackHistory,
-    groundTrackFuture,
-    satPositionProperty,
-  ]);
-
-  const tleEntities = useMemo(() => {
-    if (!showTle || !satPositionProperty) return null;
-    return (
-      <>
-        {" "}
-        {showTle && (
-          <>
-            {showHistory && (
-              <Entity
-                name="TLE Path - Past"
-                polyline={{
-                  positions: tleHistory,
-                  width: 2,
-                  material: Color.GRAY, // Past TLE in gray
-                }}
-              />
-            )}
-            {showHistory && tleFuture && (
-              <Entity
-                name="TLE Path - Future"
-                polyline={{
-                  positions: tleFuture,
-                  width: 2,
-                  material: Color.GREEN, // Future TLE in green
-                }}
-              />
-            )}
-            {!showHistory && satPositionProperty && (
-              <Entity
-                name="TLE Path - Preview"
-                polyline={{
-                  positions: new CallbackProperty(() => {
-                    const positions: Cartesian3[] = [];
-                    const now = JulianDate.now();
-                    const durationSeconds = 3600; // 1 hour
-                    const stepSeconds = 60; // 1-minute intervals
-                    for (let i = 0; i <= durationSeconds; i += stepSeconds) {
-                      const time = JulianDate.addSeconds(
-                        now,
-                        i,
-                        new JulianDate()
-                      );
-                      const pos = satPositionProperty.getValue(time);
-                      if (pos) positions.push(pos);
-                    }
-                    return positions;
-                  }, false),
-                  width: 2,
-                  material: Color.BLUE.withAlpha(0.8), // Preview TLE in blue
-                }}
-              />
-            )}
-            <Entity
-              name="TLE Path - Current"
-              polyline={{
-                positions: satPositionProperty?.getValue(JulianDate.now())
-                  ? [satPositionProperty.getValue(JulianDate.now())].filter(
-                      (pos): pos is Cartesian3 => pos !== undefined
-                    )
-                  : [],
-                width: 2,
-                material: Color.BLUE, // Current TLE in blue
-              }}
-            />
-          </>
-        )}
-      </>
-    );
-  }, [showTle, showHistory, tleHistory, tleFuture, satPositionProperty]);
-
   //
   // TLE TRACK
   //
@@ -691,17 +560,30 @@ function CesiumDashboard() {
       {/* Main Viewer */}
       <div style={{ flex: 1, position: "relative" }}>
         <CesiumViewer
-          viewerRef={viewerRef} // Pass viewerRef to CesiumViewer
+          viewerRef={viewerRef}
           visibilityConeEntities={visibilityConeEntities}
           satPositionProperty={satPositionProperty}
           satellites={satellites}
           selectedSatId={selectedSatId}
           groundStationPos={groundStationPos}
           nextAosLosLabel={nextAosLosLabel}
-          tleEntities={tleEntities}
+          showTle={showTle}
+          showHistory={showHistory}
+          tleHistory={tleHistoryRef.current}
+          tleFuture={
+            tleFuture instanceof CallbackProperty
+              ? tleFuture.getValue(JulianDate.now())
+              : tleFuture || []
+          }
+          showGroundTrack={showGroundTrack}
+          groundTrackHistory={groundTrackHistory.getValue(JulianDate.now())}
+          groundTrackFuture={
+            groundTrackFuture instanceof CallbackProperty
+              ? groundTrackFuture.getValue(JulianDate.now())
+              : []
+          }
           showLineOfSight={showLineOfSight}
           lineOfSightPositions={lineOfSightPositions}
-          groundTrackEntities={groundTrackEntities}
         />
       </div>
     </div>

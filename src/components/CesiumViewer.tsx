@@ -7,6 +7,8 @@ import {
   Cartesian2,
 } from "cesium";
 import { JSX } from "react/jsx-runtime";
+import TleEntities from "./TleEntities";
+import GroundTrackEntities from "./GroundTrackEntities";
 
 interface CesiumViewerProps {
   viewerRef: React.RefObject<any>;
@@ -16,10 +18,15 @@ interface CesiumViewerProps {
   selectedSatId: string;
   groundStationPos: Cartesian3 | null;
   nextAosLosLabel: string;
-  tleEntities: JSX.Element | null;
   showLineOfSight: boolean;
   lineOfSightPositions: Cartesian3[];
-  groundTrackEntities: JSX.Element | null;
+  showTle: boolean;
+  showHistory: boolean;
+  tleHistory: any[];
+  tleFuture: any[];
+  showGroundTrack: boolean;
+  groundTrackHistory: any[];
+  groundTrackFuture: any[];
 }
 
 const CesiumViewer: React.FC<CesiumViewerProps> = ({
@@ -30,10 +37,15 @@ const CesiumViewer: React.FC<CesiumViewerProps> = ({
   selectedSatId,
   groundStationPos,
   nextAosLosLabel,
-  tleEntities,
   showLineOfSight,
   lineOfSightPositions,
-  groundTrackEntities,
+  showTle,
+  showHistory,
+  tleHistory,
+  tleFuture,
+  showGroundTrack,
+  groundTrackHistory,
+  groundTrackFuture,
 }) => {
   return (
     <Viewer ref={viewerRef} style={{ position: "absolute", inset: 0 }}>
@@ -79,7 +91,13 @@ const CesiumViewer: React.FC<CesiumViewerProps> = ({
       )}
 
       {/* TLE Paths */}
-      {tleEntities}
+      <TleEntities
+        showTle={showTle}
+        showHistory={showHistory}
+        tleHistory={new CallbackProperty(() => tleHistory, false)}
+        tleFuture={new CallbackProperty(() => tleFuture, false)}
+        satPositionProperty={satPositionProperty}
+      />
 
       {/* Line of Sight */}
       {showLineOfSight && lineOfSightPositions.length === 2 && (
@@ -94,7 +112,17 @@ const CesiumViewer: React.FC<CesiumViewerProps> = ({
       )}
 
       {/* Ground Track */}
-      {groundTrackEntities}
+      <GroundTrackEntities
+        showGroundTrack={showGroundTrack}
+        showHistory={showHistory}
+        groundTrackHistory={
+          new CallbackProperty(() => groundTrackHistory, false)
+        }
+        groundTrackFuture={
+          new CallbackProperty(() => groundTrackFuture, false)
+        }
+        satPositionProperty={satPositionProperty}
+      />
     </Viewer>
   );
 };
