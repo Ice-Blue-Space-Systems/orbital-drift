@@ -18,6 +18,8 @@ import {
   selectContactWindowsError,
 } from "../store/contactWindowsSlice";
 import { AppDispatch } from "../store";
+import { toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 interface ContactWindowsProps {
   open: boolean;
@@ -25,6 +27,8 @@ interface ContactWindowsProps {
   satelliteId: string;
   groundStationId: string;
 }
+
+// Toast notifications are automatically configured in the latest version of react-toastify
 
 const ContactWindows: React.FC<ContactWindowsProps> = ({
   open,
@@ -46,14 +50,20 @@ const ContactWindows: React.FC<ContactWindowsProps> = ({
   const refreshContactWindows = async () => {
     try {
       await axios.post("http://localhost:5000/api/contact-windows/refresh");
-      alert("Contact windows refreshed successfully!");
+      toast.success("Contact windows refreshed successfully!", {
+        position: "top-right",
+        autoClose: 3000,
+      });
       // Re-fetch contact windows after refresh
       if (satelliteId && groundStationId) {
         dispatch(fetchContactWindows({ satelliteId, groundStationId }));
       }
     } catch (err) {
       console.error(err);
-      alert("Failed to refresh contact windows.");
+      toast.error("Failed to refresh contact windows.", {
+        position: "top-right",
+        autoClose: 3000,
+      });
     }
   };
 

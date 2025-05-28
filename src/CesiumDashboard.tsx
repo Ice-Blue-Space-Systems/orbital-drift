@@ -7,7 +7,8 @@ import {
   CallbackProperty,
   Ellipsoid,
   Quaternion,
-  ColorMaterialProperty, // <-- Make sure to import Quaternion
+  ColorMaterialProperty,
+  Cartesian2,
 } from "cesium";
 import { Entity, Viewer, Clock } from "resium";
 import {
@@ -160,35 +161,36 @@ function CesiumDashboard() {
   }, [satPositionProperty, groundStationPos]);
 
   // Helper function for orienting the cone
-  function getQuaternionFromTo(fromVec: Cartesian3, toVec: Cartesian3): Quaternion {
-    const v0 = Cartesian3.normalize(fromVec, new Cartesian3());
-    const v1 = Cartesian3.normalize(toVec, new Cartesian3());
-    const dot = Cartesian3.dot(v0, v1);
+function getQuaternionFromTo(fromVec: Cartesian3, toVec: Cartesian3): Quaternion {
+  const v0 = Cartesian3.normalize(fromVec, new Cartesian3());
+  const v1 = Cartesian3.normalize(toVec, new Cartesian3());
+  const dot = Cartesian3.dot(v0, v1);
 
-    if (dot > 0.9999) {
-      return Quaternion.IDENTITY; // Aligned
-    }
-    if (dot < -0.9999) {
-      // Opposite direction — rotate 180° around a perpendicular axis
-      const axis = Cartesian3.cross(Cartesian3.UNIT_X, v0, new Cartesian3());
-      if (Cartesian3.magnitude(axis) < 0.01) {
-        Cartesian3.cross(Cartesian3.UNIT_Y, v0, axis);
-      }
-      Cartesian3.normalize(axis, axis);
-      return Quaternion.fromAxisAngle(axis, Math.PI);
-    }
-
-    const axis = Cartesian3.cross(v0, v1, new Cartesian3());
-    const s = Math.sqrt((1 + dot) * 2);
-    const invs = 1 / s;
-
-    return new Quaternion(
-      axis.x * invs,
-      axis.y * invs,
-      axis.z * invs,
-      s * 0.5
-    );
+  if (dot > 0.9999) {
+    return Quaternion.IDENTITY; // Aligned
   }
+  if (dot < -0.9999) {
+    // Opposite direction — rotate 180° around a perpendicular axis
+    const axis = Cartesian3.cross(Cartesian3.UNIT_X, v0, new Cartesian3());
+    if (Cartesian3.magnitude(axis) < 0.01) {
+      Cartesian3.cross(Cartesian3.UNIT_Y, v0, axis);
+    }
+    Cartesian3.normalize(axis, axis);
+    return Quaternion.fromAxisAngle(axis, Math.PI);
+  }
+
+  const axis = Cartesian3.cross(v0, v1, new Cartesian3());
+  const s = Math.sqrt((1 + dot) * 2);
+  const invs = 1 / s;
+
+  return new Quaternion(
+    axis.x * invs,
+    axis.y * invs,
+    axis.z * invs,
+    s * 0.5
+  );
+}
+
 
   // Visibility cone
   const visibilityConeEntities = useMemo(() => {
@@ -206,17 +208,17 @@ function CesiumDashboard() {
         key="visibility-cone"
         name="Visibility Cone"
         position={groundStationPos}
-        orientation={new CallbackProperty(() => {
-          const satPos = satPositionProperty.getValue(JulianDate.now());
-          if (!satPos) return Quaternion.IDENTITY;
-          const direction = Cartesian3.subtract(satPos, groundStationPos, new Cartesian3());
-          return getQuaternionFromTo(Cartesian3.UNIT_Z, direction);
-        }, false)}
+orientation={new CallbackProperty(() => {
+  const satPos = satPositionProperty.getValue(JulianDate.now());
+  if (!satPos || !groundStationPos) return Quaternion.IDENTITY;
+  return getQuaternionFromTo(groundStationPos, satPos);
+}, false)}
+
         cylinder={{
-          length: new CallbackProperty(() => {
-            const satPos = satPositionProperty.getValue(JulianDate.now());
-            return satPos ? Cartesian3.distance(groundStationPos, satPos) : 0;
-          }, false),
+length: new CallbackProperty(() => {
+  const satPos = satPositionProperty.getValue(JulianDate.now());
+  return satPos ? Cartesian3.distance(groundStationPos, satPos) : 0;
+}, false),
           topRadius: 500000, // Adjust as needed
           bottomRadius: 0,
           material: new ColorMaterialProperty(
@@ -401,6 +403,39 @@ function CesiumDashboard() {
     }, false);
   }, [showTle, satPositionProperty]);
 
+  // Find the next scheduled contact window
+  const nextContactWindow = useMemo(() => {
+    if (!selectedSatId || !selectedGroundStationId) return null;
+    const now = new Date();
+    // Filter for future windows for the selected sat & GS
+    const futureWindows = contactWindows.filter((win: ContactWindow) =>
+      win.satelliteId === selectedSatId &&
+      win.groundStationId === selectedGroundStationId &&
+      new Date(win.scheduledLOS) > now
+    );
+
+    if (futureWindows.length === 0) return null;
+
+    // Sort by earliest AOS
+    futureWindows.sort(
+      (a: ContactWindow, b: ContactWindow) => 
+      new Date(a.scheduledAOS).getTime() - new Date(b.scheduledAOS).getTime()
+    );
+
+    return futureWindows[0];
+  }, [contactWindows, selectedSatId, selectedGroundStationId]);
+
+  // Text for label
+  const nextAosLosLabel = useMemo(() => {
+    if (!nextContactWindow) return "No upcoming contact";
+    return (
+      "Next AOS: " +
+      new Date(nextContactWindow.scheduledAOS).toISOString() + // Use UTC
+      "\nLOS: " +
+      new Date(nextContactWindow.scheduledLOS).toISOString()  // Use UTC
+    );
+  }, [nextContactWindow]);
+
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100vh" }}>
       <AppBar position="static">
@@ -527,12 +562,39 @@ function CesiumDashboard() {
           {visibilityConeEntities}
           <Clock shouldAnimate={true} />
 
-          {/* Satellite itself */}
+          {/* Satellite with name label */}
           {satPositionProperty && (
             <Entity
               name="Satellite"
               position={satPositionProperty}
               point={{ pixelSize: 12, color: Color.YELLOW }}
+              label={{
+                text: satellites.find((sat) => sat._id === selectedSatId)?.name || "Satellite",
+                font: "14px sans-serif",
+                fillColor: Color.WHITE,
+                style: 2, // LabelStyle.OUTLINE
+                outlineWidth: 2,
+                pixelOffset: new Cartesian2(0, -20),
+                showBackground: true,
+              }}
+            />
+          )}
+
+          {/* Ground Station with AOS/LOS label */}
+          {groundStationPos && (
+            <Entity
+              name="Ground Station"
+              position={groundStationPos}
+              point={{ pixelSize: 8, color: Color.RED }}
+              label={{
+                text: nextAosLosLabel,
+                font: "14px sans-serif",
+                fillColor: Color.WHITE,
+                style: 2,
+                outlineWidth: 2,
+                pixelOffset: new Cartesian2(0, -40),
+                showBackground: true,
+              }}
             />
           )}
 
@@ -558,15 +620,6 @@ function CesiumDashboard() {
                 />
               )}
             </>
-          )}
-
-          {/* Ground Station */}
-          {groundStationPos && (
-            <Entity
-              name="Ground Station"
-              position={groundStationPos}
-              point={{ pixelSize: 8, color: Color.RED }}
-            />
           )}
 
           {/* Line of Sight */}

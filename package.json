@@ -42,6 +42,7 @@
     "react-dom": "^19.1.0",
     "react-redux": "^9.2.0",
     "react-scripts": "^5.0.1",
+    "react-toastify": "^11.0.5",
     "resium": "^1.19.0-beta.1",
     "satellite.js": "^6.0.0"
   },
