@@ -1,36 +1,48 @@
-import { Cartesian3, JulianDate, SampledPositionProperty } from "cesium";
-import { propagate, twoline2satrec } from "satellite.js";
+import {
+  Cartesian3,
+  JulianDate,
+  SampledPositionProperty,
+  Transforms,
+  Matrix3,
+} from "cesium";
+import { propagate, twoline2satrec, gstime } from "satellite.js";
 
 /**
  * Generates a SampledPositionProperty for a satellite's future positions based on TLE data.
- * @param line1 - The first line of the TLE.
- * @param line2 - The second line of the TLE.
- * @param durationMinutes - The duration in minutes for which to calculate positions.
- * @returns A SampledPositionProperty containing time-dynamic positions.
+ * Converts from ECI to ECEF so Cesium displays it correctly on the globe.
  */
 export function getFuturePositionsWithTime(
   line1: string,
   line2: string,
-  durationMinutes: number
+  durationMinutes: number,
+  cesiumClock: any
 ): SampledPositionProperty {
-  const satrec = twoline2satrec(line1, line2); // Parse the TLE into a satellite record
+  const satrec = twoline2satrec(line1, line2);
   const positionProperty = new SampledPositionProperty();
-
-  const now = JulianDate.now(); // Current time
-  const stepSeconds = 10; // Time step in seconds for position calculation
+  const now = cesiumClock.currentTime;
+  const stepSeconds = 10;
 
   for (let i = 0; i <= durationMinutes * 60; i += stepSeconds) {
-    const time = JulianDate.addSeconds(now, i, new JulianDate()); // Future time
-    const date = JulianDate.toDate(time); // Convert JulianDate to JavaScript Date
+    const time = JulianDate.addSeconds(now, i, new JulianDate());
+    const date = JulianDate.toDate(time);
 
-    // Propagate the satellite's position at the given time
-    const positionAndVelocity = propagate(satrec, date);
-    if (positionAndVelocity && positionAndVelocity.position) {
-      const { x, y, z } = positionAndVelocity.position;
+    const posVel = propagate(satrec, date);
+    if (!posVel || !posVel.position) continue;
 
-      // Add the position to the SampledPositionProperty
-      positionProperty.addSample(time, Cartesian3.fromElements(x * 1000, y * 1000, z * 1000)); // Convert km to meters
-    }
+    // ECI position in meters
+    const eci = new Cartesian3(
+      posVel.position.x * 1000,
+      posVel.position.y * 1000,
+      posVel.position.z * 1000
+    );
+
+    // ECI → ECEF
+    const fixedMatrix = Transforms.computeIcrfToFixedMatrix(time);
+    const ecef = fixedMatrix
+      ? Matrix3.multiplyByVector(fixedMatrix, eci, new Cartesian3())
+      : eci; // fallback: better than nothing
+
+    positionProperty.addSample(time, ecef);
   }
 
   return positionProperty;

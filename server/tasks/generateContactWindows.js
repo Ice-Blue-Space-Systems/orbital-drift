@@ -13,7 +13,7 @@ const GroundStation = require("../models/GroundStation");
 async function generateContactWindows(satellite, groundStation, timeRangeMinutes = 1440) {
   // Access TLE data from the populated currentTleId field
   const { line1, line2 } = satellite.currentTleId;
-  const { lat, lon, alt } = groundStation.location;
+  const { lat, lon, alt } = groundStation.location; // alt stored in kilometers
 
   const satrec = twoline2satrec(line1, line2);
   const now = new Date();
@@ -33,8 +33,9 @@ async function generateContactWindows(satellite, groundStation, timeRangeMinutes
       const geo = eciToGeodetic(positionAndVelocity.position, gmst);
       const satLat = degreesLat(geo.latitude);
       const satLon = degreesLong(geo.longitude);
-      const satAlt = geo.height;
+      const satAlt = geo.height; // Satellite altitude in kilometers
 
+      // Calculate elevation angle using kilometers for both satellite and ground station altitudes
       const elevation = calculateElevationAngle(satLat, satLon, satAlt, lat, lon, alt);
 
       if (elevation > 0) {
@@ -71,50 +72,27 @@ async function generateContactWindows(satellite, groundStation, timeRangeMinutes
  * Calculates the elevation angle of a satellite relative to a ground station.
  */
 function calculateElevationAngle(satLat, satLon, satAlt, stationLat, stationLon, stationAlt) {
-  const deg2rad = (deg) => (deg * Math.PI) / 180;
-  const rad2deg = (rad) => (rad * 180) / Math.PI;
+  const earthRadiusKm = 6371; // Earth's radius in kilometers
 
-  const earthRadiusKm = 6371;
+  const satX = (earthRadiusKm + satAlt) * Math.cos((satLat * Math.PI) / 180) * Math.cos((satLon * Math.PI) / 180);
+  const satY = (earthRadiusKm + satAlt) * Math.cos((satLat * Math.PI) / 180) * Math.sin((satLon * Math.PI) / 180);
+  const satZ = (earthRadiusKm + satAlt) * Math.sin((satLat * Math.PI) / 180);
 
-  // Convert to radians
-  const phi = deg2rad(stationLat); // latitude
-  const lambda = deg2rad(stationLon); // longitude
+  const stationX =
+    (earthRadiusKm + stationAlt) * Math.cos((stationLat * Math.PI) / 180) * Math.cos((stationLon * Math.PI) / 180);
+  const stationY =
+    (earthRadiusKm + stationAlt) * Math.cos((stationLat * Math.PI) / 180) * Math.sin((stationLon * Math.PI) / 180);
+  const stationZ = (earthRadiusKm + stationAlt) * Math.sin((stationLat * Math.PI) / 180);
 
-  const rho = earthRadiusKm + stationAlt;
-
-  // Position of ground station in ECEF
-  const stationX = rho * Math.cos(phi) * Math.cos(lambda);
-  const stationY = rho * Math.cos(phi) * Math.sin(lambda);
-  const stationZ = rho * Math.sin(phi);
-
-  const satRho = earthRadiusKm + satAlt;
-  const satPhi = deg2rad(satLat);
-  const satLambda = deg2rad(satLon);
-
-  const satX = satRho * Math.cos(satPhi) * Math.cos(satLambda);
-  const satY = satRho * Math.cos(satPhi) * Math.sin(satLambda);
-  const satZ = satRho * Math.sin(satPhi);
-
-  // Vector from station to satellite
   const dx = satX - stationX;
   const dy = satY - stationY;
   const dz = satZ - stationZ;
 
-  // Topocentric transformation (East-North-Up)
-  const sinPhi = Math.sin(phi);
-  const cosPhi = Math.cos(phi);
-  const sinLambda = Math.sin(lambda);
-  const cosLambda = Math.cos(lambda);
+  const distance = Math.sqrt(dx * dx + dy * dy + dz * dz);
+  const dotProduct = (dx * stationX + dy * stationY + dz * stationZ) / (distance * earthRadiusKm);
+  const elevationAngleRadians = Math.asin(dotProduct);
 
-  const topX = -sinLambda * dx + cosLambda * dy; // East
-  const topY = -cosLambda * sinPhi * dx - sinLambda * sinPhi * dy + cosPhi * dz; // North
-  const topZ = cosLambda * cosPhi * dx + sinLambda * cosPhi * dy + sinPhi * dz; // Up
-
-  const slantRange = Math.sqrt(topX ** 2 + topY ** 2 + topZ ** 2);
-  const elevation = Math.asin(topZ / slantRange);
-
-  return rad2deg(elevation);
+  return elevationAngleRadians * (180 / Math.PI); // Convert radians to degrees
 }
-
 
 module.exports = generateContactWindows;

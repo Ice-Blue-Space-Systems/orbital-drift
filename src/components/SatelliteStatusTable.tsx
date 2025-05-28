@@ -1,118 +1,88 @@
 import React from "react";
 import { Cartesian3 } from "cesium";
-import { cartesianToLatLonAlt } from "../utils/coordinateUtils";
 
-export interface SatelliteStatusTableProps {
-  stationName: string | null;
-  stationLat: number | null;
-  stationLon: number | null;
-  stationAlt: number | null;
-  satName: string | null;
-  satPosition: Cartesian3;
-  trueTlePosition: Cartesian3 | null;
-  deviation: number | null;
-  expectedInSight: boolean;
-  confirmedInSight: boolean;
+interface SatelliteStatusTableProps {
+  debugInfo: {
+    satellitePosition: Cartesian3 | null;
+    tlePosition: Cartesian3 | null;
+    groundTrackPosition: Cartesian3 | null;
+    currentTime: Date | null;
+    inSight: boolean;
+  };
+  groundStations: any[];
+  satellites: any[];
+  selectedSatId: string;
+  selectedGroundStationId: string;
 }
 
-export function SatelliteStatusTable({ ...props }: SatelliteStatusTableProps) {
-  // Convert satPosition to lat/lon/alt for display
-  let satCoords = { lat: "-", lon: "-", alt: "-" };
-  let tleCoords = { lat: "-", lon: "-", alt: "-" };
-
-  if (props.satPosition) {
-    const { lat, lon, alt } = cartesianToLatLonAlt(props.satPosition);
-    satCoords = {
-      lat: lat.toFixed(4),
-      lon: lon.toFixed(4),
-      alt: alt.toFixed(1),
-    };
-  }
-  if (props.trueTlePosition) {
-    const { lat, lon, alt } = cartesianToLatLonAlt(props.trueTlePosition);
-    tleCoords = {
-      lat: lat.toFixed(4),
-      lon: lon.toFixed(4),
-      alt: alt.toFixed(1),
-    };
-  }
-
+const SatelliteStatusTable: React.FC<SatelliteStatusTableProps> = ({
+  debugInfo,
+  groundStations,
+  satellites,
+  selectedSatId,
+  selectedGroundStationId,
+}) => {
   return (
     <div
       style={{
         position: "absolute",
-        top: 60,
-        right: 20,
-        width: 300,
-        // Make background transparent and text green
-        background: "rgba(0,0,0,0.5)",
-        color: "limegreen",
-        padding: 10,
-        border: "1px solid #ccc",
-        zIndex: 999,
+        top: 10,
+        right: 10, // Move to the right side
+        backgroundColor: "rgba(0, 0, 0, 0.7)",
+        color: "white",
+        padding: "10px",
+        borderRadius: "5px",
+        zIndex: 1000,
+        width: "300px", // Adjust width for better readability
       }}
     >
-      <h3>Tracking Info</h3>
-      <table style={{ width: "100%", borderCollapse: "collapse" }}>
-        <tbody>
-          <tr>
-            <th style={{ textAlign: "left" }}>Station</th>
-            <td>{props.stationName || "-"}</td>
-          </tr>
-          <tr>
-            <th style={{ textAlign: "left" }}>Station Lat</th>
-            <td>{props.stationLat !== null ? props.stationLat.toFixed(4) : "-"}</td>
-          </tr>
-          <tr>
-            <th style={{ textAlign: "left" }}>Station Lon</th>
-            <td>{props.stationLon !== null ? props.stationLon.toFixed(4) : "-"}</td>
-          </tr>
-          <tr>
-            <th style={{ textAlign: "left" }}>Station Alt</th>
-            <td>{props.stationAlt !== null ? props.stationAlt.toFixed(1) : "-"}</td>
-          </tr>
-          <tr>
-            <th style={{ textAlign: "left" }}>Satellite</th>
-            <td>{props.satName || "-"}</td>
-          </tr>
-          <tr>
-            <th style={{ textAlign: "left" }}>Sat. Lat</th>
-            <td>{satCoords.lat}</td>
-          </tr>
-          <tr>
-            <th style={{ textAlign: "left" }}>Sat. Lon</th>
-            <td>{satCoords.lon}</td>
-          </tr>
-          <tr>
-            <th style={{ textAlign: "left" }}>Sat. Alt</th>
-            <td>{satCoords.alt}</td>
-          </tr>
-          <tr>
-            <th style={{ textAlign: "left" }}>TLE Lat</th>
-            <td>{tleCoords.lat}</td>
-          </tr>
-          <tr>
-            <th style={{ textAlign: "left" }}>TLE Lon</th>
-            <td>{tleCoords.lon}</td>
-          </tr>
-          <tr>
-            <th style={{ textAlign: "left" }}>TLE Alt</th>
-            <td>{tleCoords.alt}</td>
-          </tr>
-          <tr>
-            <th style={{ textAlign: "left" }}>Deviation (m)</th>
-            <td>{props.deviation !== null ? props.deviation.toFixed(2) : "-"}</td>
-          </tr>
-          <tr>
-            <th style={{ textAlign: "left" }}>Expected In Sight?</th>
-            <td>{props.expectedInSight ? "Yes" : "No"}</td>
-          </tr>
-          <tr>
-            <th style={{ textAlign: "left" }}>Confirmed In Sight?</th>
-            <td>{props.confirmedInSight ? "Yes" : "No"}</td>
-          </tr>
-        </tbody>
-      </table>
+      <h4>Satellite Status</h4>
+      <p>
+        <strong>Current Time:</strong> {debugInfo.currentTime?.toISOString() || "N/A"}
+      </p>
+      <p>
+        <strong>Satellite Position:</strong>{" "}
+        {debugInfo.satellitePosition
+          ? `X: ${debugInfo.satellitePosition.x.toFixed(2)}, Y: ${debugInfo.satellitePosition.y.toFixed(2)}, Z: ${debugInfo.satellitePosition.z.toFixed(2)}`
+          : "N/A"}
+      </p>
+      <p>
+        <strong>TLE Position:</strong>{" "}
+        {debugInfo.tlePosition
+          ? `X: ${debugInfo.tlePosition.x.toFixed(2)}, Y: ${debugInfo.tlePosition.y.toFixed(2)}, Z: ${debugInfo.tlePosition.z.toFixed(2)}`
+          : "N/A"}
+      </p>
+      <p>
+        <strong>Ground Track Position:</strong>{" "}
+        {debugInfo.groundTrackPosition
+          ? `X: ${debugInfo.groundTrackPosition.x.toFixed(2)}, Y: ${debugInfo.groundTrackPosition.y.toFixed(2)}, Z: ${debugInfo.groundTrackPosition.z.toFixed(2)}`
+          : "N/A"}
+      </p>
+      <p>
+        <strong>In Sight:</strong> {debugInfo.inSight ? "Yes" : "No"}
+      </p>
+      <p>
+        <strong>Station Name:</strong>{" "}
+        {groundStations.find((gs) => gs._id === selectedGroundStationId)?.name || "N/A"}
+      </p>
+      <p>
+        <strong>Station Lat:</strong>{" "}
+        {groundStations.find((gs) => gs._id === selectedGroundStationId)?.location.lat || "N/A"}
+      </p>
+      <p>
+        <strong>Station Lon:</strong>{" "}
+        {groundStations.find((gs) => gs._id === selectedGroundStationId)?.location.lon || "N/A"}
+      </p>
+      <p>
+        <strong>Station Alt:</strong>{" "}
+        {groundStations.find((gs) => gs._id === selectedGroundStationId)?.location.alt * 1000 || "N/A"} {/* Convert km to meters */}
+      </p>
+      <p>
+        <strong>Satellite Name:</strong>{" "}
+        {satellites.find((sat) => sat._id === selectedSatId)?.name || "N/A"}
+      </p>
     </div>
   );
-}
+};
+
+export default SatelliteStatusTable;

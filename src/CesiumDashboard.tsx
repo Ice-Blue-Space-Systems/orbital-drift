@@ -33,7 +33,7 @@ import { useSelector, useDispatch } from "react-redux";
 import { RootState, AppDispatch } from "./store";
 import { ContactWindow, fetchMongoData } from "./store/mongoSlice";
 import { fetchTleBySatelliteId } from "./store/tleSlice";
-import { SatelliteStatusTable } from "./components/SatelliteStatusTable";
+import SatelliteStatusTable from "./components/SatelliteStatusTable";
 import ContactWindows from "./components/ContactWindows";
 import { selectContactWindows } from "./store/contactWindowsSlice";
 
@@ -46,7 +46,7 @@ function CesiumDashboard() {
   const [selectedGroundStationId, setSelectedGroundStationId] = useState("");
   const [showTle, setShowTle] = useState(false);
   const [showLineOfSight, setShowLineOfSight] = useState(false);
-  const [showStatusTable, setShowStatusTable] = useState(false);
+  const [showStatusTable, setShowStatusTable] = useState(true); // Default to checked
   const [inSight, setInSight] = useState(false);
   const [showContactWindowsDrawer, setShowContactWindowsDrawer] = useState(false);
   const [showGroundTrack, setShowGroundTrack] = useState(false);
@@ -55,6 +55,20 @@ function CesiumDashboard() {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [lineOfSightPositions, setLineOfSightPositions] = useState<Cartesian3[]>([]);
   const [showVisibilityCones, setShowVisibilityCones] = useState(false);
+  const [debugInfo, setDebugInfo] = useState<{
+    satellitePosition: Cartesian3 | null;
+    tlePosition: Cartesian3 | null;
+    groundTrackPosition: Cartesian3 | null;
+    currentTime: Date | null;
+    inSight: boolean;
+  }>({
+    satellitePosition: null,
+    tlePosition: null,
+    groundTrackPosition: null,
+    currentTime: null,
+    inSight: false,
+  });
+  const [showHistory, setShowHistory] = useState(false); // Default to unchecked
 
   const viewerRef = useRef<any>(null);
 
@@ -94,7 +108,7 @@ function CesiumDashboard() {
         }
 
         if (line1 && line2) {
-          const positionProperty = getFuturePositionsWithTime(line1, line2, 1060);
+          const positionProperty = getFuturePositionsWithTime(line1, line2, 1060, viewerRef.current?.cesiumElement?.clock);
           setSatPositionProperty(positionProperty);
         } else {
           setSatPositionProperty(null);
@@ -114,12 +128,11 @@ function CesiumDashboard() {
     const station = groundStations.find((gs) => gs._id === selectedGroundStationId);
     if (station) {
       const { lat, lon, alt } = station.location;
-      setGroundStationPos(Cartesian3.fromDegrees(lon, lat, alt));
+      setGroundStationPos(Cartesian3.fromDegrees(lon, lat, alt * 1000)); // Convert altitude from kilometers to meters
     } else {
       setGroundStationPos(null);
     }
   }, [selectedGroundStationId, groundStations]);
-
   // Check “inSight” once at load or whenever data changes
   useEffect(() => {
     if (contactWindows.length > 0 && selectedSatId && selectedGroundStationId && viewerRef.current) {
@@ -282,7 +295,7 @@ length: new CallbackProperty(() => {
 
   // Use a ref-based array for the “past” ground track
   useEffect(() => {
-    if (!showGroundTrack || !satPositionProperty || !viewerRef.current) return;
+    if (!showGroundTrack || !showHistory || !satPositionProperty || !viewerRef.current) return;
     const viewer = viewerRef.current.cesiumElement;
 
     const recordGroundTrack = () => {
@@ -290,7 +303,6 @@ length: new CallbackProperty(() => {
       if (!now) return;
       const pos = satPositionProperty.getValue(now);
       if (pos) {
-        // Convert to “flattened” carto so height is 0
         const carto = Ellipsoid.WGS84.cartesianToCartographic(pos);
         carto.height = 0;
         groundTrackHistoryRef.current.push(Ellipsoid.WGS84.cartographicToCartesian(carto));
@@ -299,7 +311,7 @@ length: new CallbackProperty(() => {
 
     viewer.clock.onTick.addEventListener(recordGroundTrack);
     return () => viewer.clock.onTick.removeEventListener(recordGroundTrack);
-  }, [showGroundTrack, satPositionProperty]);
+  }, [showGroundTrack, showHistory, satPositionProperty]);
 
   // Past ground track (keeps growing)
   const groundTrackHistory = useMemo(() => {
@@ -332,28 +344,57 @@ length: new CallbackProperty(() => {
   }, [showGroundTrack, satPositionProperty]);
 
   const groundTrackEntities = useMemo(() => {
-    if (!showGroundTrack || !groundTrackFuture) return null;
+    if (!showGroundTrack) return null;
     return (
       <>
+      {showHistory && (
         <Entity
           name="Ground Track History"
           polyline={{
             positions: groundTrackHistory,
             width: 2,
-            material: Color.GRAY, // Past in gray
+            material: Color.GRAY, // Past ground track in gray
           }}
         />
+      )}
+      {showHistory && groundTrackFuture && (
         <Entity
           name="Ground Track Future"
           polyline={{
             positions: groundTrackFuture,
             width: 2,
-            material: Color.YELLOW, // Future in yellow
+            material: Color.YELLOW, // Future ground track in yellow
           }}
         />
-      </>
+      )}
+      {!showHistory && satPositionProperty && (
+        <Entity
+          name="Ground Track - Preview"
+          polyline={{
+            positions: new CallbackProperty(() => {
+              const positions: Cartesian3[] = [];
+              const now = JulianDate.now();
+              const durationSeconds = 3600 // 24 hours
+              const stepSeconds = 60; // 1-minute intervals
+              for (let i = 0; i <= durationSeconds; i += stepSeconds) {
+                const time = JulianDate.addSeconds(now, i, new JulianDate());
+                const pos = satPositionProperty.getValue(time);
+                if (pos) {
+                  const carto = Ellipsoid.WGS84.cartesianToCartographic(pos);
+                  carto.height = 0; // Flatten altitude
+                  positions.push(Ellipsoid.WGS84.cartographicToCartesian(carto));
+                }
+              }
+              return positions;
+            }, false),
+            width: 2,
+            material: Color.BLUE.withAlpha(0.8), // Preview ground track in blue
+          }}
+        />
+      )}
+    </>
     );
-  }, [showGroundTrack, groundTrackHistory, groundTrackFuture]);
+  }, [showGroundTrack, showHistory, groundTrackHistory, groundTrackFuture, satPositionProperty]);
 
   //
   // TLE TRACK
@@ -361,7 +402,7 @@ length: new CallbackProperty(() => {
 
   // Use a ref-based array for the “past” TLE path
   useEffect(() => {
-    if (!showTle || !satPositionProperty || !viewerRef.current) return;
+    if (!showTle || !showHistory || !satPositionProperty || !viewerRef.current) return;
     const viewer = viewerRef.current.cesiumElement;
 
     const recordTleTrack = () => {
@@ -375,7 +416,7 @@ length: new CallbackProperty(() => {
 
     viewer.clock.onTick.addEventListener(recordTleTrack);
     return () => viewer.clock.onTick.removeEventListener(recordTleTrack);
-  }, [showTle, satPositionProperty]);
+  }, [showTle, showHistory, satPositionProperty]);
 
   // Past TLE track (keeps growing)
   const tleHistory = useMemo(() => {
@@ -436,6 +477,91 @@ length: new CallbackProperty(() => {
     );
   }, [nextContactWindow]);
 
+  useEffect(() => {
+    const viewer = viewerRef.current?.cesiumElement;
+    if (!viewer || !satPositionProperty) return;
+
+    const updateDebugInfo = () => {
+      const currentTime = viewer.clock.currentTime;
+      const satPos = satPositionProperty.getValue(currentTime);
+      const tlePos = tleHistoryRef.current[0]; // First position in TLE history
+      const groundTrackPos = groundTrackHistoryRef.current[0]; // First position in ground track history
+
+      setDebugInfo({
+        satellitePosition: satPos || null,
+        tlePosition: tlePos,
+        groundTrackPosition: groundTrackPos,
+        currentTime: JulianDate.toDate(currentTime),
+        inSight,
+      });
+    };
+
+    viewer.clock.onTick.addEventListener(updateDebugInfo);
+    return () => viewer.clock.onTick.removeEventListener(updateDebugInfo);
+  }, [satPositionProperty, inSight]);
+
+  const tleEntities = useMemo(() => {
+    if (!showTle) return null;
+
+    return (
+      <>
+        {showHistory && (
+          <Entity
+            name="TLE Path - Past"
+            polyline={{
+              positions: tleHistory,
+              width: 2,
+              material: Color.GRAY, // Past TLE in gray
+            }}
+          />
+        )}
+        {showHistory && tleFuture && (
+          <Entity
+            name="TLE Path - Future"
+            polyline={{
+              positions: tleFuture,
+              width: 2,
+              material: Color.GREEN, // Future TLE in green
+            }}
+          />
+        )}
+        {!showHistory && satPositionProperty && (
+          <Entity
+            name="TLE Path - Preview"
+            polyline={{
+              positions: new CallbackProperty(() => {
+                const positions: Cartesian3[] = [];
+                const now = JulianDate.now();
+                const durationSeconds = 3600; // 1 hour
+                const stepSeconds = 60; // 1-minute intervals
+                for (let i = 0; i <= durationSeconds; i += stepSeconds) {
+                  const time = JulianDate.addSeconds(now, i, new JulianDate());
+                  const pos = satPositionProperty.getValue(time);
+                  if (pos) positions.push(pos);
+                }
+                return positions;
+              }, false),
+              width: 2,
+              material: Color.BLUE.withAlpha(0.8), // Preview TLE in blue
+            }}
+          />
+        )}
+        <Entity
+          name="TLE Path - Current"
+          polyline={{
+            positions: satPositionProperty?.getValue(JulianDate.now())
+              ? [satPositionProperty.getValue(JulianDate.now())].filter(
+                  (pos): pos is Cartesian3 => pos !== undefined
+                )
+              : [],
+            width: 2,
+            material: Color.BLUE, // Current TLE in blue
+          }}
+        />
+      </>
+    );
+  }, [showTle, showHistory, tleHistory, tleFuture, satPositionProperty]);
+
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100vh" }}>
       <AppBar position="static">
@@ -443,9 +569,32 @@ length: new CallbackProperty(() => {
           <IconButton color="inherit" edge="start" onClick={() => setDrawerOpen(true)}>
             <MenuIcon />
           </IconButton>
-          <Typography variant="h6">Cesium Dashboard</Typography>
+          <Typography variant="h6" style={{ flexGrow: 1 }}>
+            Cesium Dashboard
+          </Typography>
+          <FormControlLabel
+            control={
+              <Checkbox
+                checked={showStatusTable}
+                onChange={(e) => setShowStatusTable(e.target.checked)}
+              />
+            }
+            label="Show Status Table"
+            style={{ color: "white" }}
+          />
         </Toolbar>
       </AppBar>
+
+      {/* Conditionally Render Satellite Status Table */}
+      {showStatusTable && (
+        <SatelliteStatusTable
+          debugInfo={debugInfo}
+          groundStations={groundStations}
+          satellites={satellites}
+          selectedSatId={selectedSatId}
+          selectedGroundStationId={selectedGroundStationId}
+        />
+      )}
 
       {/* Left Drawer */}
       <Drawer anchor="left" open={drawerOpen} onClose={() => setDrawerOpen(false)}>
@@ -477,6 +626,15 @@ length: new CallbackProperty(() => {
 
           <FormGroup style={{ marginTop: 16 }}>
             <FormControlLabel
+              control={
+                <Checkbox
+                  checked={showHistory}
+                  onChange={(e) => setShowHistory(e.target.checked)}
+                />
+              }
+              label="Show History"
+            />
+            <FormControlLabel
               control={<Checkbox checked={showTle} onChange={(e) => setShowTle(e.target.checked)} />}
               label="Show TLE"
             />
@@ -501,20 +659,20 @@ length: new CallbackProperty(() => {
             <FormControlLabel
               control={
                 <Checkbox
-                  checked={showStatusTable}
-                  onChange={(e) => setShowStatusTable(e.target.checked)}
-                />
-              }
-              label="Show Status Table"
-            />
-            <FormControlLabel
-              control={
-                <Checkbox
                   checked={showGroundTrack}
                   onChange={(e) => setShowGroundTrack(e.target.checked)}
                 />
               }
               label="Show Ground Track"
+            />
+            <FormControlLabel
+              control={
+                <Checkbox
+                  checked={showStatusTable}
+                  onChange={(e) => setShowStatusTable(e.target.checked)}
+                />
+              }
+              label="Show Debug"
             />
           </FormGroup>
 
@@ -538,31 +696,13 @@ length: new CallbackProperty(() => {
         groundStationId={selectedGroundStationId}
       />
 
-      {/* Right Drawer (Status Table) */}
-      <Drawer anchor="right" open={showStatusTable} onClose={() => setShowStatusTable(false)}>
-        <Box style={{ width: 300, padding: 16 }}>
-          <SatelliteStatusTable
-            stationName={groundStations.find((gs) => gs._id === selectedGroundStationId)?.name || null}
-            stationLat={groundStations.find((gs) => gs._id === selectedGroundStationId)?.location.lat || null}
-            stationLon={groundStations.find((gs) => gs._id === selectedGroundStationId)?.location.lon || null}
-            stationAlt={groundStations.find((gs) => gs._id === selectedGroundStationId)?.location.alt || null}
-            satName={satellites.find((sat) => sat._id === selectedSatId)?.name || null}
-            satPosition={lineOfSightPositions[1] || null}
-            trueTlePosition={satPositionProperty?.getValue(JulianDate.now()) || null}
-            deviation={null}
-            expectedInSight={inSight}
-            confirmedInSight={false}
-          />
-        </Box>
-      </Drawer>
-
       {/* Main Viewer */}
       <div style={{ flex: 1, position: "relative" }}>
         <Viewer ref={viewerRef} style={{ position: "absolute", inset: 0 }}>
           {visibilityConeEntities}
           <Clock shouldAnimate={true} />
-
-          {/* Satellite with name label */}
+          {tleEntities}
+          {groundTrackEntities}
           {satPositionProperty && (
             <Entity
               name="Satellite"
@@ -579,8 +719,6 @@ length: new CallbackProperty(() => {
               }}
             />
           )}
-
-          {/* Ground Station with AOS/LOS label */}
           {groundStationPos && (
             <Entity
               name="Ground Station"
@@ -590,52 +728,23 @@ length: new CallbackProperty(() => {
                 text: nextAosLosLabel,
                 font: "14px sans-serif",
                 fillColor: Color.WHITE,
-                style: 2,
+                style: 2, // LabelStyle.OUTLINE
                 outlineWidth: 2,
                 pixelOffset: new Cartesian2(0, -40),
                 showBackground: true,
               }}
             />
           )}
-
-          {/* TLE Paths */}
-          {showTle && (
-            <>
-              <Entity
-                name="TLE Path - Past"
-                polyline={{
-                  positions: tleHistory,
-                  width: 2,
-                  material: Color.GRAY, // Past TLE in gray
-                }}
-              />
-              {tleFuture && (
-                <Entity
-                  name="TLE Path - Future"
-                  polyline={{
-                    positions: tleFuture,
-                    width: 2,
-                    material: Color.GREEN, // Future TLE in green
-                  }}
-                />
-              )}
-            </>
-          )}
-
-          {/* Line of Sight */}
           {showLineOfSight && lineOfSightPositions.length === 2 && (
-            <Entity
-              name="Line of Sight"
-              polyline={{
-                positions: new CallbackProperty(() => lineOfSightPositions, false),
-                material: Color.BLUE,
-                width: 5,
-              }}
-            />
-          )}
-
-          {/* Ground Track */}
-          {groundTrackEntities}
+    <Entity
+      name="Line of Sight"
+      polyline={{
+        positions: lineOfSightPositions,
+        width: 2,
+        material: Color.RED.withAlpha(0.8), // Line of sight in red
+      }}
+    />
+  )}
         </Viewer>
       </div>
     </div>
