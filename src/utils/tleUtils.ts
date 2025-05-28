@@ -1,54 +1,37 @@
-import { Cartesian3 } from "cesium";
-import * as satellite from "satellite.js";
+import { Cartesian3, JulianDate, SampledPositionProperty } from "cesium";
+import { propagate, twoline2satrec } from "satellite.js";
 
 /**
- * Given TLE lines for a satellite and a number of minutes ahead,
- * calculates predicted positions at each minute from "now."
- *
- * @param tleLine1      First line of the satellite's TLE
- * @param tleLine2      Second line of the satellite's TLE
- * @param minutesAhead  Number of future minutes to calculate
- * @returns             An array of Cesium Cartesian3 points
+ * Generates a SampledPositionProperty for a satellite's future positions based on TLE data.
+ * @param line1 - The first line of the TLE.
+ * @param line2 - The second line of the TLE.
+ * @param durationMinutes - The duration in minutes for which to calculate positions.
+ * @returns A SampledPositionProperty containing time-dynamic positions.
  */
-export function getFuturePositions(
-  tleLine1: string,
-  tleLine2: string,
-  minutesAhead = 90
-): Cartesian3[] {
-  // Convert the TLE lines into a satellite record
-  const satrec = satellite.twoline2satrec(tleLine1, tleLine2);
+export function getFuturePositionsWithTime(
+  line1: string,
+  line2: string,
+  durationMinutes: number
+): SampledPositionProperty {
+  const satrec = twoline2satrec(line1, line2); // Parse the TLE into a satellite record
+  const positionProperty = new SampledPositionProperty();
 
-  // Starting time for predictions
-  const now = new Date();
+  const now = JulianDate.now(); // Current time
+  const stepSeconds = 10; // Time step in seconds for position calculation
 
-  // Store each future position as a Cartesian3
-  const positions: Cartesian3[] = [];
+  for (let i = 0; i <= durationMinutes * 60; i += stepSeconds) {
+    const time = JulianDate.addSeconds(now, i, new JulianDate()); // Future time
+    const date = JulianDate.toDate(time); // Convert JulianDate to JavaScript Date
 
-  // Generate a position at each minute from now until 'minutesAhead'
-  for (let i = 0; i < minutesAhead; i++) {
-    // Calculate the future timestamp
-    const time = new Date(now.getTime() + i * 60_000);
+    // Propagate the satellite's position at the given time
+    const positionAndVelocity = propagate(satrec, date);
+    if (positionAndVelocity && positionAndVelocity.position) {
+      const { x, y, z } = positionAndVelocity.position;
 
-    // Propagate the satellite's position & velocity at that time
-    const posVel = satellite.propagate(satrec, time);
-    if (posVel && posVel.position) {
-      // Compute the sidereal time & convert ECI (Earth-centered inertial)
-      // coordinates to geodetic coordinates (lat, lon, height)
-      const gmst = satellite.gstime(time);
-      const geo = satellite.eciToGeodetic(posVel.position, gmst);
-
-      // Convert from radians to degrees for longitude/latitude
-      const longitude = satellite.degreesLong(geo.longitude);
-      const latitude = satellite.degreesLat(geo.latitude);
-
-      // Convert altitude from kilometers to meters
-      const altitude = geo.height * 1000;
-
-      // Convert lat, lon, alt to Cartesian3 format for use in Cesium
-      positions.push(Cartesian3.fromDegrees(longitude, latitude, altitude));
+      // Add the position to the SampledPositionProperty
+      positionProperty.addSample(time, Cartesian3.fromElements(x * 1000, y * 1000, z * 1000)); // Convert km to meters
     }
   }
 
-  // Return the future positions for plotting
-  return positions;
+  return positionProperty;
 }
