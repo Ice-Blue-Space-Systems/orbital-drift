@@ -5,7 +5,7 @@ import {
   Transforms,
   Matrix3,
 } from "cesium";
-import { propagate, twoline2satrec, gstime } from "satellite.js";
+import { propagate, twoline2satrec } from "satellite.js";
 
 /**
  * Generates a SampledPositionProperty for a satellite's future positions based on TLE data.
