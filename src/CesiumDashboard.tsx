@@ -10,12 +10,11 @@ import { useSelector, useDispatch } from 'react-redux';
 import { RootState, AppDispatch } from './store';
 import { ContactWindow, fetchMongoData } from './store/mongoSlice';
 import { fetchTleBySatelliteId } from './store/tleSlice';
-import SatelliteStatusTable from './components/SatelliteStatusTable';
 import ContactWindows from './components/ContactWindows';
 import { selectContactWindows } from './store/contactWindowsSlice';
 import CesiumViewer from './components/CesiumViewer';
-import CesiumOptions from './components/CesiumOptions';
 import { getFuturePositionsWithTime } from './utils/tleUtils';
+import GlobeTools from './components/GlobeTools';
 
 function CesiumDashboard() {
   const dispatch: AppDispatch = useDispatch();
@@ -26,7 +25,6 @@ function CesiumDashboard() {
   const [selectedGroundStationId, setSelectedGroundStationId] = useState('');
   const [showTle, setShowTle] = useState(false);
   const [showLineOfSight, setShowLineOfSight] = useState(false);
-  const [showStatusTable, setShowStatusTable] = useState(true);
   const [showContactWindowsDrawer, setShowContactWindowsDrawer] = useState(false);
   const [showGroundTrack, setShowGroundTrack] = useState(false);
   const [satPositionProperty, setSatPositionProperty] = useState<SampledPositionProperty | null>(
@@ -36,7 +34,6 @@ function CesiumDashboard() {
   const [lineOfSightPositions, setLineOfSightPositions] = useState<Cartesian3[]>([]);
   const [showVisibilityCones, setShowVisibilityCones] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
-  const [showToolbox, setShowToolbox] = useState(true);
 
   type DebugInfo = {
     satellitePosition: Cartesian3 | null;
@@ -291,24 +288,9 @@ function CesiumDashboard() {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 64px)' }}>
-      {/* Optionally show/hide the status table */}
-      {showStatusTable && (
-        <SatelliteStatusTable
-          debugInfo={debugInfo}
-          groundStations={groundStations}
-          satellites={satellites}
-          selectedSatId={selectedSatId}
-          selectedGroundStationId={selectedGroundStationId}
-          satPositionProperty={satPositionProperty}
-          tleHistoryRef={tleHistoryRef}
-          groundTrackHistoryRef={groundTrackHistoryRef}
-        />
-      )}
 
-      {/* Our collapsible toolbox on the right (CesiumOptions) */}
-      <CesiumOptions
-        showToolbox={showToolbox}
-        setShowToolbox={setShowToolbox}
+      {/* Our collapsible toolbox on the right (GlobeTools) */}
+      <GlobeTools
         groundStations={groundStations}
         satellites={satellites}
         selectedGroundStationId={selectedGroundStationId}
@@ -325,9 +307,11 @@ function CesiumDashboard() {
         setShowVisibilityCones={setShowVisibilityCones}
         showGroundTrack={showGroundTrack}
         setShowGroundTrack={setShowGroundTrack}
-        showStatusTable={showStatusTable}
-        setShowStatusTable={setShowStatusTable}
         onViewContactWindows={() => setShowContactWindowsDrawer(true)}
+        debugInfo={debugInfo}
+        satPositionProperty={satPositionProperty}
+        tleHistoryRef={tleHistoryRef}
+        groundTrackHistoryRef={groundTrackHistoryRef}
       />
 
       {/* ContactWindows drawer */}
