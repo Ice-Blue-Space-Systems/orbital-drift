@@ -376,11 +376,6 @@ function CesiumDashboard() {
     }, false);
   }, [showGroundTrack, satPositionProperty]);
 
-  // Past TLE track (keeps growing)
-  const tleHistory = useMemo(() => {
-    return new CallbackProperty(() => tleHistoryRef.current, false);
-  }, []);
-
   // Future TLE track
   const tleFuture = useMemo(() => {
     if (!showTle || !satPositionProperty) return null;
@@ -412,8 +407,7 @@ function CesiumDashboard() {
 
   // Use a ref-based array for the “past” TLE path
   useEffect(() => {
-    if (!showTle || !showHistory || !satPositionProperty || !viewerRef.current)
-      return;
+    if (!showTle || !satPositionProperty || !viewerRef.current) return;
     const viewer = viewerRef.current.cesiumElement;
 
     const recordTleTrack = () => {
@@ -421,7 +415,14 @@ function CesiumDashboard() {
       if (!now) return;
       const pos = satPositionProperty.getValue(now);
       if (pos) {
-        tleHistoryRef.current.push(pos);
+        // If "Show History" is off, either push only the latest or reset the trail
+        if (showHistory) {
+          tleHistoryRef.current.push(pos);
+        } else {
+          // Optional: keep just the latest point or clear the array
+          tleHistoryRef.current.length = 0;
+          tleHistoryRef.current.push(pos);
+        }
       }
     };
 

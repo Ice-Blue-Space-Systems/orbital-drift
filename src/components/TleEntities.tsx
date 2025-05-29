@@ -1,6 +1,6 @@
 import React from "react";
 import { Entity } from "resium";
-import { Cartesian3, CallbackProperty, Color } from "cesium";
+import { CallbackProperty, Color } from "cesium";
 
 interface TleEntitiesProps {
   showTle: boolean;
@@ -21,6 +21,7 @@ const TleEntities: React.FC<TleEntitiesProps> = ({
 
   return (
     <>
+      {/* If "Show TLE" is on, we show the TLE path. If "Show History" is on, render the entire (past + future). Otherwise, show just the current/future. */}
       {showHistory && tleHistory && (
         <Entity
           name="TLE Path - Past"
@@ -31,34 +32,14 @@ const TleEntities: React.FC<TleEntitiesProps> = ({
           }}
         />
       )}
-      {showHistory && tleFuture && (
+      {/* Always show future, or a simplified “Preview” (depending on your preference). */}
+      {tleFuture && (
         <Entity
           name="TLE Path - Future"
           polyline={{
             positions: tleFuture,
             width: 2,
             material: Color.GREEN, // Future TLE in green
-          }}
-        />
-      )}
-      {!showHistory && (
-        <Entity
-          name="TLE Path - Preview"
-          polyline={{
-            positions: new CallbackProperty(() => {
-              const positions: Cartesian3[] = [];
-              const now = new Date();
-              const durationSeconds = 3600; // 1 hour
-              const stepSeconds = 60; // 1-minute intervals
-              for (let i = 0; i <= durationSeconds; i += stepSeconds) {
-                const time = new Date(now.getTime() + i * 1000);
-                const pos = satPositionProperty.getValue(time);
-                if (pos) positions.push(pos);
-              }
-              return positions;
-            }, false),
-            width: 2,
-            material: Color.BLUE.withAlpha(0.8), // Preview TLE in blue
           }}
         />
       )}

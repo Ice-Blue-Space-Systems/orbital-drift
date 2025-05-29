@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Cartesian3, JulianDate } from "cesium";
+import { Cartesian3 } from "cesium";
 
 interface SatelliteStatusTableProps {
   debugInfo: {
@@ -36,8 +36,6 @@ const SatelliteStatusTable: React.FC<SatelliteStatusTableProps> = ({
     if (!satPositionProperty) return;
 
     const updatePositions = () => {
-      const now = JulianDate.now();
-
       // Update TLE position
       const tlePos = tleHistoryRef.current.length > 0 ? tleHistoryRef.current[0] : null;
       setTlePosition(tlePos);
