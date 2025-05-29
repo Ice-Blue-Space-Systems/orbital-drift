@@ -20,6 +20,7 @@ import { useDispatch } from 'react-redux';
 import { fetchContactWindows } from '../store/contactWindowsSlice';
 import { AppDispatch } from '../store';
 import SatelliteStatusTable from './SatelliteStatusTable';
+import ContactWindows from './ContactWindows'; // Import ContactWindows component
 
 interface GlobeToolsProps {
   groundStations: any[];
@@ -48,7 +49,6 @@ interface GlobeToolsProps {
   satPositionProperty: any;
   tleHistoryRef: React.MutableRefObject<any[]>;
   groundTrackHistoryRef: React.MutableRefObject<any[]>;
-  onViewContactWindows: () => void;
 }
 
 const GlobeTools: React.FC<GlobeToolsProps> = ({
@@ -72,12 +72,11 @@ const GlobeTools: React.FC<GlobeToolsProps> = ({
   satPositionProperty,
   tleHistoryRef,
   groundTrackHistoryRef,
-  onViewContactWindows,
 }) => {
   const dispatch = useDispatch<AppDispatch>();
 
   // State to track which popover is open
-  const [openPopover, setOpenPopover] = useState<'satellite' | 'groundStation' | 'toolbox' | null>(null);
+  const [openPopover, setOpenPopover] = useState<'satellite' | 'groundStation' | 'toolbox' | 'contactWindow' | null>(null);
   const [satelliteFilter, setSatelliteFilter] = useState('');
   const [groundStationFilter, setGroundStationFilter] = useState('');
 
@@ -92,29 +91,19 @@ const GlobeTools: React.FC<GlobeToolsProps> = ({
     }
   }, [selectedSatId, selectedGroundStationId, dispatch]);
 
-  const filteredSatellites = satellites.filter((sat) =>
-    sat.name.toLowerCase().includes(satelliteFilter.toLowerCase())
-  );
-
-  const filteredGroundStations = groundStations.filter((gs) =>
-    gs.name.toLowerCase().includes(groundStationFilter.toLowerCase())
-  );
-
-  const iconStyle = (active: boolean): React.CSSProperties => ({
-    color: active ? '#00ff00' : '#888888', // Brighter green for active, noticeable gray for inactive
-  });
+  console.log("Current openPopover:", openPopover);
 
   return (
     <div style={{ position: 'relative' }}>
-      {/* Satellite, Ground Station, and Toolbox Buttons */}
+      {/* Satellite, Ground Station, Toolbox, and Contact Windows Buttons */}
       <div
         style={{
-          position: 'absolute', // Float above the globe
-          top: '64px', // Adjust to be below the navigation bar
-          left: '16px', // Adjust to align with the left edge
+          position: 'absolute',
+          top: '64px',
+          left: '16px',
           display: 'flex',
           gap: '16px',
-          zIndex: 1000, // Ensure it appears above other elements
+          zIndex: 1000,
         }}
       >
         {/* Satellite Button */}
@@ -126,7 +115,7 @@ const GlobeTools: React.FC<GlobeToolsProps> = ({
           <Tooltip title="Select Satellite" arrow>
             <IconButton
               style={{
-                color: selectedSatId ? '#00ff00' : '#888888', // Brighter green for selected, gray otherwise
+                color: selectedSatId ? '#00ff00' : '#888888',
               }}
             >
               <SatelliteIcon />
@@ -138,12 +127,12 @@ const GlobeTools: React.FC<GlobeToolsProps> = ({
             <div
               style={{
                 position: 'absolute',
-                top: '48px', // Position below the button
+                top: '48px',
                 left: '0',
-                backgroundColor: 'rgba(13, 13, 13, 0.9)', // Console-style dark background
-                border: '1px solid #00ff00', // Green border
-                color: '#00ff00', // Green text
-                fontFamily: 'Courier New, Courier, monospace', // Console-style font
+                backgroundColor: 'rgba(13, 13, 13, 0.9)',
+                border: '1px solid #00ff00',
+                color: '#00ff00',
+                fontFamily: 'Courier New, Courier, monospace',
                 borderRadius: '4px',
                 padding: '8px',
                 width: '200px',
@@ -164,6 +153,72 @@ const GlobeTools: React.FC<GlobeToolsProps> = ({
                 }}
               ></div>
 
+              {/* Show TLE, History, and Ground Track Toggles */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '8px' }}>
+                <Tooltip
+                  title="Toggle TLE"
+                  arrow
+                  placement="top"
+                  style={{
+                    backgroundColor: 'rgba(50, 50, 50, 0.9)', // Space grey background
+                    color: '#00ff00', // Bright green text
+                    fontFamily: 'Courier New, Courier, monospace',
+                    fontSize: '12px',
+                  }}
+                >
+                  <IconButton
+                    onClick={() => setShowTle(!showTle)}
+                    style={{
+                      color: selectedSatId ? (showTle ? '#00ff00' : '#88ff88') : '#555555', // Bright green if selected, muted green if available, grey if disabled
+                    }}
+                  >
+                    <SatelliteIcon />
+                  </IconButton>
+                </Tooltip>
+
+                <Tooltip
+                  title="Toggle History"
+                  arrow
+                  placement="top"
+                  style={{
+                    backgroundColor: 'rgba(50, 50, 50, 0.9)', // Space grey background
+                    color: '#00ff00', // Bright green text
+                    fontFamily: 'Courier New, Courier, monospace',
+                    fontSize: '12px',
+                  }}
+                >
+                  <IconButton
+                    onClick={() => setShowHistory(!showHistory)}
+                    style={{
+                      color: selectedSatId ? (showHistory ? '#00ff00' : '#88ff88') : '#555555', // Bright green if selected, muted green if available, grey if disabled
+                    }}
+                  >
+                    <HistoryIcon />
+                  </IconButton>
+                </Tooltip>
+
+                <Tooltip
+                  title="Toggle Ground Track"
+                  arrow
+                  placement="top"
+                  style={{
+                    backgroundColor: 'rgba(50, 50, 50, 0.9)', // Space grey background
+                    color: '#00ff00', // Bright green text
+                    fontFamily: 'Courier New, Courier, monospace',
+                    fontSize: '12px',
+                  }}
+                >
+                  <IconButton
+                    onClick={() => setShowGroundTrack(!showGroundTrack)}
+                    style={{
+                      color: selectedSatId ? (showGroundTrack ? '#00ff00' : '#88ff88') : '#555555', // Bright green if selected, muted green if available, grey if disabled
+                    }}
+                  >
+                    <PublicIcon />
+                  </IconButton>
+                </Tooltip>
+              </div>
+
               {/* Filter and List */}
               <TextField
                 fullWidth
@@ -180,7 +235,7 @@ const GlobeTools: React.FC<GlobeToolsProps> = ({
                 }}
               />
               <List>
-                {filteredSatellites.map((sat) => (
+                {satellites.map((sat) => (
                   <ListItem key={sat._id} disablePadding>
                     <ListItemButton
                       onClick={() => {
@@ -245,6 +300,55 @@ const GlobeTools: React.FC<GlobeToolsProps> = ({
                 }}
               ></div>
 
+              {/* Line of Sight and Visibility Cones Toggles */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '8px' }}>
+                <Tooltip
+                  title="Toggle Line of Sight"
+                  arrow
+                  placement="top"
+                  style={{
+                    backgroundColor: 'rgba(50, 50, 50, 0.9)', // Space grey background
+                    color: '#00ff00', // Bright green text
+                    fontFamily: 'Courier New, Courier, monospace',
+                    fontSize: '12px',
+                  }}
+                >
+                  <IconButton
+                    onClick={() => setShowLineOfSight(!showLineOfSight)}
+                    style={{
+                      color: selectedGroundStationId
+                        ? (showLineOfSight ? '#00ff00' : '#88ff88') // Bright green if selected, muted green if available, grey if disabled
+                        : '#555555',
+                    }}
+                  >
+                    <VisibilityIcon />
+                  </IconButton>
+                </Tooltip>
+
+                <Tooltip
+                  title="Toggle Visibility Cones"
+                  arrow
+                  placement="top"
+                  style={{
+                    backgroundColor: 'rgba(50, 50, 50, 0.9)', // Space grey background
+                    color: '#00ff00', // Bright green text
+                    fontFamily: 'Courier New, Courier, monospace',
+                    fontSize: '12px',
+                  }}
+                >
+                  <IconButton
+                    onClick={() => setShowVisibilityCones(!showVisibilityCones)}
+                    style={{
+                      color: selectedGroundStationId
+                        ? (showVisibilityCones ? '#00ff00' : '#88ff88') // Bright green if selected, muted green if available, grey if disabled
+                        : '#555555',
+                    }}
+                  >
+                    <RadarIcon />
+                  </IconButton>
+                </Tooltip>
+              </div>
+
               {/* Filter and List */}
               <TextField
                 fullWidth
@@ -261,7 +365,7 @@ const GlobeTools: React.FC<GlobeToolsProps> = ({
                 }}
               />
               <List>
-                {filteredGroundStations.map((gs) => (
+                {groundStations.map((gs) => (
                   <ListItem key={gs._id} disablePadding>
                     <ListItemButton
                       onClick={() => {
@@ -280,12 +384,13 @@ const GlobeTools: React.FC<GlobeToolsProps> = ({
         </div>
 
         {/* Toolbox Button */}
-        <div style={{ position: 'relative' }}>
+        <div
+          style={{ position: 'relative' }}
+          onMouseEnter={() => setOpenPopover('toolbox')}
+          onMouseLeave={() => setOpenPopover(null)}
+        >
           <Tooltip title="Toggle Toolbox" arrow>
             <IconButton
-              onClick={() =>
-                setOpenPopover(openPopover === 'toolbox' ? null : 'toolbox')
-              }
               style={{
                 color: selectedSatId || selectedGroundStationId ? '#00ff00' : '#555555',
               }}
@@ -299,15 +404,15 @@ const GlobeTools: React.FC<GlobeToolsProps> = ({
             <div
               style={{
                 position: 'absolute',
-                top: '48px', // Position below the button
+                top: '48px',
                 left: '0',
-                backgroundColor: 'rgba(13, 13, 13, 0.9)', // Console-style dark background
-                border: '1px solid #00ff00', // Green border
-                color: '#00ff00', // Green text
-                fontFamily: 'Courier New, Courier, monospace', // Console-style font
+                backgroundColor: 'rgba(13, 13, 13, 0.9)',
+                border: '1px solid #00ff00',
+                color: '#00ff00',
+                fontFamily: 'Courier New, Courier, monospace',
                 borderRadius: '4px',
                 padding: '8px',
-                width: '350px', // Match the original toolbox width
+                width: '350px',
                 zIndex: 1001,
               }}
             >
@@ -327,50 +432,6 @@ const GlobeTools: React.FC<GlobeToolsProps> = ({
 
               {/* Toolbox Content */}
               <div style={{ maxHeight: '400px', overflowY: 'auto' }}>
-                {/* Icon toggles row */}
-                <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', marginTop: '8px' }}>
-                  <div style={{ color: showHistory ? '#00ff00' : '#555555' }}>
-                    <IconButton
-                      onClick={() => setShowHistory(!showHistory)}
-                      title="Toggle History"
-                    >
-                      <HistoryIcon />
-                    </IconButton>
-                  </div>
-
-                  <div style={{ color: showTle ? '#00ff00' : '#555555' }}>
-                    <IconButton onClick={() => setShowTle(!showTle)} title="Toggle TLE">
-                      <SatelliteIcon />
-                    </IconButton>
-                  </div>
-
-                  <div style={{ color: showLineOfSight ? '#00ff00' : '#555555' }}>
-                    <IconButton
-                      onClick={() => setShowLineOfSight(!showLineOfSight)}
-                      title="Toggle Line of Sight"
-                    >
-                      <VisibilityIcon />
-                    </IconButton>
-                  </div>
-
-                  <div style={{ color: showVisibilityCones ? '#00ff00' : '#555555' }}>
-                    <IconButton
-                      onClick={() => setShowVisibilityCones(!showVisibilityCones)}
-                      title="Toggle Visibility Cones"
-                    >
-                      <RadarIcon />
-                    </IconButton>
-                  </div>
-
-                  <div style={{ color: showGroundTrack ? '#00ff00' : '#555555' }}>
-                    <IconButton
-                      onClick={() => setShowGroundTrack(!showGroundTrack)}
-                      title="Toggle Ground Track"
-                    >
-                      <PublicIcon />
-                    </IconButton>
-                  </div>
-                </div>
 
                 {/* Satellite Status Table */}
                 <SatelliteStatusTable
@@ -387,30 +448,50 @@ const GlobeTools: React.FC<GlobeToolsProps> = ({
             </div>
           )}
         </div>
-      </div>
 
-      {/* Contact Windows Icon Button */}
-      {selectedSatId && selectedGroundStationId && (
-        <div
-          style={{
-            position: 'absolute',
-            top: '120px',
-            left: '16px',
-            zIndex: 1000,
-          }}
-        >
-          <Tooltip title="View Contact Windows" arrow>
-            <IconButton
-              onClick={onViewContactWindows}
-              style={{
-                color: '#00ff00', // Bright green to make it visible
-              }}
-            >
-              <EventIcon />
-            </IconButton>
-          </Tooltip>
-        </div>
-      )}
+        {/* Contact Windows Button */}
+        {selectedSatId && selectedGroundStationId && (
+          <div
+            style={{ position: 'relative' }}
+            onMouseEnter={() => setOpenPopover('contactWindow')}
+            onMouseLeave={() => setOpenPopover(null)}
+          >
+            <Tooltip title="View Contact Windows" arrow>
+              <IconButton
+                style={{
+                  color: '#00ff00', // Bright green to make it visible
+                }}
+              >
+                <EventIcon />
+              </IconButton>
+            </Tooltip>
+
+            {/* Contact Windows Popover */}
+            {openPopover === 'contactWindow' && (
+              <div
+                style={{
+                  position: 'absolute',
+                  top: '48px',
+                  left: '0',
+                  backgroundColor: 'rgba(13, 13, 13, 0.9)', // Console-style dark background
+                  border: '1px solid #00ff00', // Green border
+                  color: '#00ff00', // Green text
+                  fontFamily: 'Courier New, Courier, monospace', // Console-style font
+                  borderRadius: '4px',
+                  padding: '16px',
+                  width: '360px',
+                  zIndex: 1001,
+                }}
+              >
+                <ContactWindows
+                  satelliteId={selectedSatId}
+                  groundStationId={selectedGroundStationId}
+                />
+              </div>
+            )}
+          </div>
+        )}
+      </div>
     </div>
   );
 };

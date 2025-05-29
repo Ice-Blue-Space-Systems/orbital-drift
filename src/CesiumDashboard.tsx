@@ -10,7 +10,6 @@ import { useSelector, useDispatch } from 'react-redux';
 import { RootState, AppDispatch } from './store';
 import { ContactWindow, fetchMongoData } from './store/mongoSlice';
 import { fetchTleBySatelliteId } from './store/tleSlice';
-import ContactWindows from './components/ContactWindows';
 import { selectContactWindows } from './store/contactWindowsSlice';
 import CesiumViewer from './components/CesiumViewer';
 import { getFuturePositionsWithTime } from './utils/tleUtils';
@@ -25,7 +24,6 @@ function CesiumDashboard() {
   const [selectedGroundStationId, setSelectedGroundStationId] = useState('');
   const [showTle, setShowTle] = useState(false);
   const [showLineOfSight, setShowLineOfSight] = useState(false);
-  const [showContactWindowsDrawer, setShowContactWindowsDrawer] = useState(false);
   const [showGroundTrack, setShowGroundTrack] = useState(false);
   const [satPositionProperty, setSatPositionProperty] = useState<SampledPositionProperty | null>(
     null
@@ -307,19 +305,10 @@ function CesiumDashboard() {
         setShowVisibilityCones={setShowVisibilityCones}
         showGroundTrack={showGroundTrack}
         setShowGroundTrack={setShowGroundTrack}
-        onViewContactWindows={() => setShowContactWindowsDrawer(true)}
         debugInfo={debugInfo}
         satPositionProperty={satPositionProperty}
         tleHistoryRef={tleHistoryRef}
         groundTrackHistoryRef={groundTrackHistoryRef}
-      />
-
-      {/* ContactWindows drawer */}
-      <ContactWindows
-        open={showContactWindowsDrawer}
-        onClose={() => setShowContactWindowsDrawer(false)}
-        satelliteId={selectedSatId}
-        groundStationId={selectedGroundStationId}
       />
 
       {/* Main Cesium globe, stretched to fill the remaining space */}
