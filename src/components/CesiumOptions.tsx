@@ -1,6 +1,5 @@
-import React, { useEffect } from "react";
+import React, { useEffect } from 'react';
 import {
-  Drawer,
   Box,
   FormControl,
   InputLabel,
@@ -10,14 +9,21 @@ import {
   FormControlLabel,
   Checkbox,
   Button,
-} from "@mui/material";
-import { useDispatch } from "react-redux";
-import { fetchContactWindows } from "../store/contactWindowsSlice"; // Import your fetch action
-import { AppDispatch } from "../store"; // Import your AppDispatch type
+  Typography,
+  IconButton
+} from '@mui/material';
+import ExpandLessIcon from '@mui/icons-material/ExpandLess';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import { useDispatch } from 'react-redux';
 
-interface LeftNavDrawerProps {
-  drawerOpen: boolean;
-  onClose: () => void;
+import { fetchContactWindows } from '../store/contactWindowsSlice';
+import { AppDispatch } from '../store';
+
+interface CesiumOptionsProps {
+  // We remove isOpen/onClose for a simpler approach
+  showToolbox: boolean;
+  setShowToolbox: React.Dispatch<React.SetStateAction<boolean>>;
+
   groundStations: any[];
   satellites: any[];
   selectedGroundStationId: string;
@@ -39,9 +45,9 @@ interface LeftNavDrawerProps {
   onViewContactWindows: () => void;
 }
 
-const LeftNavDrawer: React.FC<LeftNavDrawerProps> = ({
-  drawerOpen,
-  onClose,
+const CesiumOptions: React.FC<CesiumOptionsProps> = ({
+  showToolbox,
+  setShowToolbox,
   groundStations,
   satellites,
   selectedGroundStationId,
@@ -64,7 +70,6 @@ const LeftNavDrawer: React.FC<LeftNavDrawerProps> = ({
 }) => {
   const dispatch = useDispatch<AppDispatch>();
 
-  // Fetch contact windows when both satellite and ground station are selected
   useEffect(() => {
     if (selectedSatId && selectedGroundStationId) {
       dispatch(
@@ -76,9 +81,42 @@ const LeftNavDrawer: React.FC<LeftNavDrawerProps> = ({
     }
   }, [selectedSatId, selectedGroundStationId, dispatch]);
 
+  const containerStyle: React.CSSProperties = {
+    position: 'absolute',
+    right: 0,
+    top: 64,
+    width: 300,
+    backgroundColor: '#fff',
+    borderLeft: '1px solid #ccc',
+    zIndex: 999,
+  };
+
+  const headerStyle: React.CSSProperties = {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: '0.5rem 1rem',
+    borderBottom: '1px solid #ccc',
+    cursor: 'pointer',
+  };
+
+  const bodyStyle: React.CSSProperties = {
+    padding: '1rem',
+    display: showToolbox ? 'block' : 'none',
+    overflowY: 'auto',
+    maxHeight: 'calc(100vh - 64px - 40px)',
+  };
+
   return (
-    <Drawer anchor="left" open={drawerOpen} onClose={onClose}>
-      <Box style={{ width: 280, padding: 16 }}>
+    <Box style={containerStyle}>
+      <div style={headerStyle} onClick={() => setShowToolbox(!showToolbox)}>
+        <Typography variant="subtitle1">Cesium Toolbox</Typography>
+        <IconButton size="small" onClick={() => setShowToolbox(!showToolbox)}>
+          {showToolbox ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+        </IconButton>
+      </div>
+
+      <div style={bodyStyle}>
         <FormControl size="small" fullWidth>
           <InputLabel>Ground Station</InputLabel>
           <Select
@@ -95,7 +133,10 @@ const LeftNavDrawer: React.FC<LeftNavDrawerProps> = ({
 
         <FormControl size="small" fullWidth style={{ marginTop: 16 }}>
           <InputLabel>Satellite</InputLabel>
-          <Select value={selectedSatId} onChange={(e) => setSelectedSatId(e.target.value)}>
+          <Select
+            value={selectedSatId}
+            onChange={(e) => setSelectedSatId(e.target.value)}
+          >
             {satellites.map((sat) => (
               <MenuItem key={sat._id} value={sat._id}>
                 {sat.name} ({sat.type})
@@ -115,7 +156,12 @@ const LeftNavDrawer: React.FC<LeftNavDrawerProps> = ({
             label="Show History"
           />
           <FormControlLabel
-            control={<Checkbox checked={showTle} onChange={(e) => setShowTle(e.target.checked)} />}
+            control={
+              <Checkbox
+                checked={showTle}
+                onChange={(e) => setShowTle(e.target.checked)}
+              />
+            }
             label="Show TLE"
           />
           <FormControlLabel
@@ -165,9 +211,9 @@ const LeftNavDrawer: React.FC<LeftNavDrawerProps> = ({
             View Contact Windows
           </Button>
         )}
-      </Box>
-    </Drawer>
+      </div>
+    </Box>
   );
 };
 
-export default LeftNavDrawer;
+export default CesiumOptions;
