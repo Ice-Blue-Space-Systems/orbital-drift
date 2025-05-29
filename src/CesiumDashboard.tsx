@@ -521,6 +521,9 @@ function CesiumDashboard() {
           satellites={satellites}
           selectedSatId={selectedSatId}
           selectedGroundStationId={selectedGroundStationId}
+          satPositionProperty={satPositionProperty}
+          tleHistoryRef={tleHistoryRef}
+          groundTrackHistoryRef={groundTrackHistoryRef}
         />
       )}
 
