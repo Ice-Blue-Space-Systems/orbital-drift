@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import {
   Drawer,
   Box,
@@ -11,6 +11,9 @@ import {
   Checkbox,
   Button,
 } from "@mui/material";
+import { useDispatch } from "react-redux";
+import { fetchContactWindows } from "../store/contactWindowsSlice"; // Import your fetch action
+import { AppDispatch } from "../store"; // Import your AppDispatch type
 
 interface LeftNavDrawerProps {
   drawerOpen: boolean;
@@ -59,6 +62,20 @@ const LeftNavDrawer: React.FC<LeftNavDrawerProps> = ({
   setShowStatusTable,
   onViewContactWindows,
 }) => {
+  const dispatch = useDispatch<AppDispatch>();
+
+  // Fetch contact windows when both satellite and ground station are selected
+  useEffect(() => {
+    if (selectedSatId && selectedGroundStationId) {
+      dispatch(
+        fetchContactWindows({
+          satelliteId: selectedSatId,
+          groundStationId: selectedGroundStationId,
+        })
+      );
+    }
+  }, [selectedSatId, selectedGroundStationId, dispatch]);
+
   return (
     <Drawer anchor="left" open={drawerOpen} onClose={onClose}>
       <Box style={{ width: 280, padding: 16 }}>
