@@ -15,7 +15,15 @@ import CesiumViewer from './components/CesiumViewer';
 import { getFuturePositionsWithTime } from './utils/tleUtils';
 import GlobeTools from './components/GlobeTools';
 
-function CesiumDashboard() {
+interface CesiumDashboardProps {
+  showCesiumOptions: boolean;
+  setShowCesiumOptions: (value: boolean) => void;
+}
+
+function CesiumDashboard({
+  showCesiumOptions,
+  setShowCesiumOptions,
+}: CesiumDashboardProps) {
   const dispatch: AppDispatch = useDispatch();
   const { satellites, groundStations, status } = useSelector((state: RootState) => state.mongo);
   const contactWindows = useSelector(selectContactWindows);
@@ -308,8 +316,7 @@ function CesiumDashboard() {
         debugInfo={debugInfo}
         satPositionProperty={satPositionProperty}
         tleHistoryRef={tleHistoryRef}
-        groundTrackHistoryRef={groundTrackHistoryRef}
-      />
+        groundTrackHistoryRef={groundTrackHistoryRef} showCesiumOptions={showCesiumOptions} setShowCesiumOptions={setShowCesiumOptions}      />
 
       {/* Main Cesium globe, stretched to fill the remaining space */}
       <div style={{ flex: 1, position: 'relative' }}>
@@ -333,7 +340,8 @@ function CesiumDashboard() {
             ? groundTrackFuture.getValue(JulianDate.now())
             : []}
           showLineOfSight={showLineOfSight}
-          visibilityConeEntities={[]}        />
+          visibilityConeEntities={[]}
+          showCesiumOptions={showCesiumOptions}        />
       </div>
     </div>
   );

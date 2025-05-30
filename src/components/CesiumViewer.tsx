@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import { Viewer, Entity, Clock } from "resium";
 import {
   Cartesian3,
@@ -9,8 +9,6 @@ import {
 import { JSX } from "react/jsx-runtime";
 import TleEntities from "./TleEntities";
 import GroundTrackEntities from "./GroundTrackEntities";
-import SettingsIcon from "@mui/icons-material/Settings"; // Import an icon for the toggle button
-import IconButton from "@mui/material/IconButton";
 
 interface CesiumViewerProps {
   viewerRef: React.RefObject<any>;
@@ -29,9 +27,11 @@ interface CesiumViewerProps {
   showGroundTrack: boolean;
   groundTrackHistory: any[];
   groundTrackFuture: any[];
+  showCesiumOptions: boolean; // New prop
 }
 
-const CesiumViewer: React.FC<CesiumViewerProps> = ({
+const 
+CesiumViewer: React.FC<CesiumViewerProps> = ({
   viewerRef,
   visibilityConeEntities,
   satPositionProperty,
@@ -48,15 +48,14 @@ const CesiumViewer: React.FC<CesiumViewerProps> = ({
   showGroundTrack,
   groundTrackHistory,
   groundTrackFuture,
+  showCesiumOptions,
 }) => {
-  const [showCesiumOptions, setShowCesiumOptions] = useState(false);
-
   return (
     <div style={{ position: "relative", height: "100%" }}>
       {/* Cesium Viewer */}
       <Viewer
         ref={viewerRef}
-        style={{ position: "absolute", inset: 0 }}
+        style={{ position: 'absolute', inset: 0 }}
         homeButton={showCesiumOptions}
         sceneModePicker={showCesiumOptions}
         baseLayerPicker={showCesiumOptions}
@@ -141,27 +140,6 @@ const CesiumViewer: React.FC<CesiumViewerProps> = ({
           satPositionProperty={satPositionProperty}
         />
       </Viewer>
-
-      {/* Toggle Icon Button for Cesium Options */}
-      <div
-        style={{
-          position: "absolute",
-          top: "16px",
-          right: "16px", // Move to the right
-          zIndex: 1001,
-        }}
-      >
-        <IconButton
-          onClick={() => setShowCesiumOptions(!showCesiumOptions)}
-          title="Toggle Cesium Options"
-          style={{
-            color: showCesiumOptions ? "#00ff00" : "#555555", // Bright green when active, grey when inactive
-            backgroundColor: "rgba(13, 13, 13, 0.9)", // Console-style dark background
-          }}
-        >
-          <SettingsIcon />
-        </IconButton>
-      </div>
     </div>
   );
 };

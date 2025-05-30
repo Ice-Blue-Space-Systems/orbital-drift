@@ -13,14 +13,16 @@ import SatelliteIcon from '@mui/icons-material/SatelliteAlt';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import RadarIcon from '@mui/icons-material/Radar';
 import PublicIcon from '@mui/icons-material/Public';
-import AntennaIcon from '@mui/icons-material/SettingsInputAntenna'; // Ground station antenna icon
-import BuildIcon from '@mui/icons-material/Build'; // Toolbox icon
 import EventIcon from '@mui/icons-material/Event'; // Import an icon for the Contact Windows button
+import CodeIcon from '@mui/icons-material/Code'; // Import Console icon
+import SettingsIcon from '@mui/icons-material/Settings'; // Import Settings icon
 import { useDispatch } from 'react-redux';
 import { fetchContactWindows } from '../store/contactWindowsSlice';
 import { AppDispatch } from '../store';
 import SatelliteStatusTable from './SatelliteStatusTable';
 import ContactWindows from './ContactWindows'; // Import ContactWindows component
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faSatelliteDish } from '@fortawesome/free-solid-svg-icons'; // Import the satellite dish icon
 
 interface GlobeToolsProps {
   groundStations: any[];
@@ -49,6 +51,8 @@ interface GlobeToolsProps {
   satPositionProperty: any;
   tleHistoryRef: React.MutableRefObject<any[]>;
   groundTrackHistoryRef: React.MutableRefObject<any[]>;
+  showCesiumOptions: boolean; // Add this prop
+  setShowCesiumOptions: (value: boolean) => void; // Add this prop
 }
 
 const GlobeTools: React.FC<GlobeToolsProps> = ({
@@ -72,11 +76,13 @@ const GlobeTools: React.FC<GlobeToolsProps> = ({
   satPositionProperty,
   tleHistoryRef,
   groundTrackHistoryRef,
+  showCesiumOptions, // Add this prop
+  setShowCesiumOptions, // Add this prop
 }) => {
   const dispatch = useDispatch<AppDispatch>();
 
   // State to track which popover is open
-  const [openPopover, setOpenPopover] = useState<'satellite' | 'groundStation' | 'toolbox' | 'contactWindow' | null>(null);
+  const [openPopover, setOpenPopover] = useState<'satellite' | 'groundStation' | 'toolbox' | 'contactWindow' | 'console' | 'cesiumOptions' | null>(null);
   const [satelliteFilter, setSatelliteFilter] = useState('');
   const [groundStationFilter, setGroundStationFilter] = useState('');
 
@@ -116,7 +122,12 @@ const GlobeTools: React.FC<GlobeToolsProps> = ({
             <IconButton
               style={{
                 color: selectedSatId ? '#00ff00' : '#888888',
+                transition: 'color 0.2s ease-in-out',
               }}
+              onMouseEnter={(e) => (e.currentTarget.style.color = '#00ff00')}
+              onMouseLeave={(e) =>
+                (e.currentTarget.style.color = selectedSatId ? '#00ff00' : '#888888')
+              }
             >
               <SatelliteIcon />
             </IconButton>
@@ -262,10 +273,18 @@ const GlobeTools: React.FC<GlobeToolsProps> = ({
           <Tooltip title="Select Ground Station" arrow>
             <IconButton
               style={{
-                color: selectedGroundStationId ? '#00ff00' : '#888888', // Brighter green for selected, gray otherwise
+                color: selectedGroundStationId ? '#00ff00' : '#888888',
+                transition: 'color 0.2s ease-in-out',
               }}
+              onMouseEnter={(e) => (e.currentTarget.style.color = '#00ff00')}
+              onMouseLeave={(e) =>
+                (e.currentTarget.style.color = selectedGroundStationId ? '#00ff00' : '#888888')
+              }
             >
-              <AntennaIcon />
+              <FontAwesomeIcon
+                icon={faSatelliteDish}
+                style={{ fontSize: '24px' }} // Match Material-UI icon size
+              />
             </IconButton>
           </Tooltip>
 
@@ -317,9 +336,16 @@ const GlobeTools: React.FC<GlobeToolsProps> = ({
                     onClick={() => setShowLineOfSight(!showLineOfSight)}
                     style={{
                       color: selectedGroundStationId
-                        ? (showLineOfSight ? '#00ff00' : '#88ff88') // Bright green if selected, muted green if available, grey if disabled
+                        ? (showLineOfSight ? '#00ff00' : '#88ff88')
                         : '#555555',
+                      transition: 'color 0.2s ease-in-out', // Smooth transition for hover effect
                     }}
+                    onMouseEnter={(e) => (e.currentTarget.style.color = '#00ff00')} // Bright green on hover
+                    onMouseLeave={(e) =>
+                      (e.currentTarget.style.color = selectedGroundStationId
+                        ? (showLineOfSight ? '#00ff00' : '#88ff88')
+                        : '#555555')
+                    }
                   >
                     <VisibilityIcon />
                   </IconButton>
@@ -340,9 +366,16 @@ const GlobeTools: React.FC<GlobeToolsProps> = ({
                     onClick={() => setShowVisibilityCones(!showVisibilityCones)}
                     style={{
                       color: selectedGroundStationId
-                        ? (showVisibilityCones ? '#00ff00' : '#88ff88') // Bright green if selected, muted green if available, grey if disabled
+                        ? (showVisibilityCones ? '#00ff00' : '#88ff88')
                         : '#555555',
+                      transition: 'color 0.2s ease-in-out',
                     }}
+                    onMouseEnter={(e) => (e.currentTarget.style.color = '#00ff00')}
+                    onMouseLeave={(e) =>
+                      (e.currentTarget.style.color = selectedGroundStationId
+                        ? (showVisibilityCones ? '#00ff00' : '#88ff88')
+                        : '#555555')
+                    }
                   >
                     <RadarIcon />
                   </IconButton>
@@ -383,24 +416,76 @@ const GlobeTools: React.FC<GlobeToolsProps> = ({
           )}
         </div>
 
-        {/* Toolbox Button */}
+        {/* Contact Windows Button */}
+        {selectedSatId && selectedGroundStationId && (
+          <div
+            style={{ position: 'relative' }}
+            onMouseEnter={() => setOpenPopover('contactWindow')}
+            onMouseLeave={() => setOpenPopover(null)}
+          >
+            <Tooltip title="View Contact Windows" arrow>
+              <IconButton
+                style={{
+                  color: '#00ff00', // Bright green to make it visible
+                  transition: 'color 0.2s ease-in-out',
+                }}
+                onMouseEnter={(e) => (e.currentTarget.style.color = '#00ff00')}
+                onMouseLeave={(e) => (e.currentTarget.style.color = '#00ff00')}
+              >
+                <EventIcon />
+              </IconButton>
+            </Tooltip>
+
+            {/* Contact Windows Popover */}
+            {openPopover === 'contactWindow' && (
+              <div
+                style={{
+                  position: 'absolute',
+                  top: '48px',
+                  left: '0',
+                  backgroundColor: 'rgba(13, 13, 13, 0.9)', // Match console-style dark transparent background
+                  border: '1px solid #00ff00', // Green border
+                  color: '#00ff00', // Green text
+                  fontFamily: 'Courier New, Courier, monospace', // Console-style font
+                  borderRadius: '4px',
+                  padding: '16px',
+                  width: '400px',
+                  zIndex: 1001,
+                }}
+              >
+                <ContactWindows
+                  satelliteId={selectedSatId}
+                  groundStationId={selectedGroundStationId}
+                />
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Console Button */}
         <div
           style={{ position: 'relative' }}
-          onMouseEnter={() => setOpenPopover('toolbox')}
+          onMouseEnter={() => setOpenPopover('console')}
           onMouseLeave={() => setOpenPopover(null)}
         >
-          <Tooltip title="Toggle Toolbox" arrow>
+          <Tooltip title="Open Console" arrow>
             <IconButton
               style={{
                 color: selectedSatId || selectedGroundStationId ? '#00ff00' : '#555555',
+                transition: 'color 0.2s ease-in-out',
               }}
+              onMouseEnter={(e) => (e.currentTarget.style.color = '#00ff00')}
+              onMouseLeave={(e) =>
+                (e.currentTarget.style.color =
+                  selectedSatId || selectedGroundStationId ? '#00ff00' : '#555555')
+              }
             >
-              <BuildIcon />
+              <CodeIcon />
             </IconButton>
           </Tooltip>
 
-          {/* Toolbox Popover */}
-          {openPopover === 'toolbox' && (
+          {/* Console Popover */}
+          {openPopover === 'console' && (
             <div
               style={{
                 position: 'absolute',
@@ -430,9 +515,8 @@ const GlobeTools: React.FC<GlobeToolsProps> = ({
                 }}
               ></div>
 
-              {/* Toolbox Content */}
+              {/* Console Content */}
               <div style={{ maxHeight: '400px', overflowY: 'auto' }}>
-
                 {/* Satellite Status Table */}
                 <SatelliteStatusTable
                   debugInfo={debugInfo}
@@ -449,48 +533,76 @@ const GlobeTools: React.FC<GlobeToolsProps> = ({
           )}
         </div>
 
-        {/* Contact Windows Button */}
-        {selectedSatId && selectedGroundStationId && (
-          <div
-            style={{ position: 'relative' }}
-            onMouseEnter={() => setOpenPopover('contactWindow')}
-            onMouseLeave={() => setOpenPopover(null)}
-          >
-            <Tooltip title="View Contact Windows" arrow>
-              <IconButton
-                style={{
-                  color: '#00ff00', // Bright green to make it visible
-                }}
-              >
-                <EventIcon />
-              </IconButton>
-            </Tooltip>
+        {/* Cesium Options Button */}
+        <div
+          style={{ position: 'relative' }}
+          onMouseEnter={() => setOpenPopover('cesiumOptions')}
+          onMouseLeave={() => setOpenPopover(null)}
+        >
+          <Tooltip title="Cesium Options" arrow>
+            <IconButton
+              style={{
+                color: '#888888',
+                transition: 'color 0.2s ease-in-out',
+              }}
+              onMouseEnter={(e) => (e.currentTarget.style.color = '#00ff00')}
+              onMouseLeave={(e) => (e.currentTarget.style.color = '#888888')}
+            >
+              <SettingsIcon />
+            </IconButton>
+          </Tooltip>
 
-            {/* Contact Windows Popover */}
-            {openPopover === 'contactWindow' && (
+          {/* Cesium Options Popover */}
+          {openPopover === 'cesiumOptions' && (
+            <div
+              style={{
+                position: 'absolute',
+                top: '48px',
+                left: '0',
+                backgroundColor: 'rgba(13, 13, 13, 0.9)', // Console-style dark background
+                border: '1px solid #00ff00', // Green border
+                color: '#00ff00', // Green text
+                fontFamily: 'Courier New, Courier, monospace', // Console-style font
+                borderRadius: '4px',
+                padding: '8px',
+                width: '200px',
+                zIndex: 1001,
+              }}
+            >
+              {/* Arrow */}
               <div
                 style={{
                   position: 'absolute',
-                  top: '48px',
-                  left: '0',
-                  backgroundColor: 'rgba(13, 13, 13, 0.9)', // Console-style dark background
-                  border: '1px solid #00ff00', // Green border
-                  color: '#00ff00', // Green text
-                  fontFamily: 'Courier New, Courier, monospace', // Console-style font
-                  borderRadius: '4px',
-                  padding: '16px',
-                  width: '360px',
-                  zIndex: 1001,
+                  top: '-8px',
+                  left: '16px',
+                  width: '0',
+                  height: '0',
+                  borderLeft: '8px solid transparent',
+                  borderRight: '8px solid transparent',
+                  borderBottom: '8px solid #00ff00', // Green arrow
                 }}
-              >
-                <ContactWindows
-                  satelliteId={selectedSatId}
-                  groundStationId={selectedGroundStationId}
-                />
+              ></div>
+
+              {/* Toggle Cesium Options */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Tooltip title="Toggle Cesium Options" arrow>
+                  <IconButton
+                    onClick={() => setShowCesiumOptions(!showCesiumOptions)}
+                    style={{
+                      color: showCesiumOptions ? '#00ff00' : '#888888',
+                      transition: 'color 0.2s ease-in-out',
+                    }}
+                  >
+                    <SettingsIcon />
+                  </IconButton>
+                </Tooltip>
+                <span style={{ fontSize: '14px' }}>
+                  {showCesiumOptions ? 'Disable Options' : 'Enable Options'}
+                </span>
               </div>
-            )}
-          </div>
-        )}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

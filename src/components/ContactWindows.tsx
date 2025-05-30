@@ -72,17 +72,22 @@ const ContactWindows: React.FC<ContactWindowsProps> = ({
       style={{
         width: "100%",
         height: "100%", // Ensure the component fills the height
-        backgroundColor: "rgba(13, 13, 13, 0.9)", // Console-style dark background
         color: "#00ff00", // Green text
         fontFamily: "Courier New, Courier, monospace", // Console-style font
-        padding: "16px",
+        padding: "0", // Remove extra padding
         borderRadius: "4px",
         display: "flex",
         flexDirection: "column",
         overflow: "hidden", // Prevent content from overflowing
       }}
     >
-      <h3 style={{ margin: 0, marginBottom: "16px", color: "#00ff00" }}>
+      <h3
+        style={{
+          margin: "8px 0", // Add some spacing above and below the title
+          padding: "0 8px", // Add padding to align with the table
+          color: "#00ff00",
+        }}
+      >
         Contact Windows
       </h3>
 
@@ -91,7 +96,7 @@ const ContactWindows: React.FC<ContactWindowsProps> = ({
         variant="contained"
         onClick={refreshContactWindows}
         style={{
-          marginBottom: 16,
+          margin: "8px", // Add consistent margin around the button
           backgroundColor: "#00ff00",
           color: "#000000",
           fontFamily: "Courier New, Courier, monospace",
@@ -100,11 +105,11 @@ const ContactWindows: React.FC<ContactWindowsProps> = ({
         Refresh Contact Windows
       </Button>
 
-      {status === "loading" && <div>Loading...</div>}
-      {error && <div style={{ color: "red" }}>{error}</div>}
+      {status === "loading" && <div style={{ padding: "8px" }}>Loading...</div>}
+      {error && <div style={{ color: "red", padding: "8px" }}>{error}</div>}
 
       {status === "succeeded" && contactWindows.length === 0 && (
-        <div>No contact windows found.</div>
+        <div style={{ padding: "8px" }}>No contact windows found.</div>
       )}
 
       {status === "succeeded" && contactWindows.length > 0 && (
@@ -112,12 +117,12 @@ const ContactWindows: React.FC<ContactWindowsProps> = ({
           style={{
             flex: 1, // Allow the table to grow and fill available space
             overflow: "auto", // Enable scrolling if content overflows
+            padding: "0 8px", // Add padding to align the table with the popover
           }}
         >
           <Table
             size="small"
             style={{
-              backgroundColor: "rgba(13, 13, 13, 0.9)", // Match console background
               color: "#00ff00", // Green text
               borderCollapse: "collapse", // Remove gaps between borders
               width: "100%", // Ensure the table fills the width
@@ -129,12 +134,40 @@ const ContactWindows: React.FC<ContactWindowsProps> = ({
                   borderBottom: "1px solid #00ff00", // Green border for header
                 }}
               >
-                <TableCell style={{ color: "#00ff00", border: "none" }}>AOS</TableCell>
-                <TableCell style={{ color: "#00ff00", border: "none" }}>LOS</TableCell>
-                <TableCell style={{ color: "#00ff00", border: "none" }}>
+                <TableCell
+                  style={{
+                    color: "#00ff00",
+                    border: "none",
+                    padding: "4px 8px", // Add consistent padding
+                  }}
+                >
+                  AOS
+                </TableCell>
+                <TableCell
+                  style={{
+                    color: "#00ff00",
+                    border: "none",
+                    padding: "4px 8px",
+                  }}
+                >
+                  LOS
+                </TableCell>
+                <TableCell
+                  style={{
+                    color: "#00ff00",
+                    border: "none",
+                    padding: "4px 8px",
+                  }}
+                >
                   Duration (min)
                 </TableCell>
-                <TableCell style={{ color: "#00ff00", border: "none" }}>
+                <TableCell
+                  style={{
+                    color: "#00ff00",
+                    border: "none",
+                    padding: "4px 8px",
+                  }}
+                >
                   Max Elev (deg)
                 </TableCell>
               </TableRow>
@@ -147,16 +180,40 @@ const ContactWindows: React.FC<ContactWindowsProps> = ({
                     borderBottom: "1px solid rgba(0, 255, 0, 0.3)", // Subtle green border for rows
                   }}
                 >
-                  <TableCell style={{ color: "#00ff00", border: "none" }}>
+                  <TableCell
+                    style={{
+                      color: "#00ff00",
+                      border: "none",
+                      padding: "4px 8px",
+                    }}
+                  >
                     {new Date(win.scheduledAOS).toISOString()}
                   </TableCell>
-                  <TableCell style={{ color: "#00ff00", border: "none" }}>
+                  <TableCell
+                    style={{
+                      color: "#00ff00",
+                      border: "none",
+                      padding: "4px 8px",
+                    }}
+                  >
                     {new Date(win.scheduledLOS).toISOString()}
                   </TableCell>
-                  <TableCell style={{ color: "#00ff00", border: "none" }}>
+                  <TableCell
+                    style={{
+                      color: "#00ff00",
+                      border: "none",
+                      padding: "4px 8px",
+                    }}
+                  >
                     {(win.durationSeconds / 60).toFixed(0)}
                   </TableCell>
-                  <TableCell style={{ color: "#00ff00", border: "none" }}>
+                  <TableCell
+                    style={{
+                      color: "#00ff00",
+                      border: "none",
+                      padding: "4px 8px",
+                    }}
+                  >
                     {win.maxElevationDeg.toFixed(1)}
                   </TableCell>
                 </TableRow>
