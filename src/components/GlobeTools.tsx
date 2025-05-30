@@ -214,75 +214,36 @@ const GlobeTools: React.FC<GlobeToolsProps> = ({
                   marginBottom: "8px",
                 }}
               >
-                <Tooltip
-                  title="Toggle TLE"
-                  arrow
-                  placement="top"
-                  style={{
-                    backgroundColor: "rgba(50, 50, 50, 0.9)", // Space grey background
-                    color: "#00ff00", // Bright green text
-                    fontFamily: "Courier New, Courier, monospace",
-                    fontSize: "12px",
-                  }}
-                >
+                <Tooltip title="Toggle TLE" arrow placement="top">
                   <IconButton
                     onClick={() => setShowTle(!showTle)}
                     style={{
-                      color: selectedSatId
-                        ? showTle
-                          ? "#00ff00"
-                          : "#88ff88"
-                        : "#555555", // Bright green if selected, muted green if available, grey if disabled
+                      color: showTle ? "#00ff00" : "#888888", // Bright green if active, grey if inactive
+                      transition: "color 0.2s ease-in-out",
                     }}
                   >
                     <SatelliteIcon />
                   </IconButton>
                 </Tooltip>
 
-                <Tooltip
-                  title="Toggle History"
-                  arrow
-                  placement="top"
-                  style={{
-                    backgroundColor: "rgba(50, 50, 50, 0.9)", // Space grey background
-                    color: "#00ff00", // Bright green text
-                    fontFamily: "Courier New, Courier, monospace",
-                    fontSize: "12px",
-                  }}
-                >
+                <Tooltip title="Toggle History" arrow placement="top">
                   <IconButton
                     onClick={() => setShowHistory(!showHistory)}
                     style={{
-                      color: selectedSatId
-                        ? showHistory
-                          ? "#00ff00"
-                          : "#88ff88"
-                        : "#555555", // Bright green if selected, muted green if available, grey if disabled
+                      color: showHistory ? "#00ff00" : "#888888", // Bright green if active, grey if inactive
+                      transition: "color 0.2s ease-in-out",
                     }}
                   >
                     <HistoryIcon />
                   </IconButton>
                 </Tooltip>
 
-                <Tooltip
-                  title="Toggle Ground Track"
-                  arrow
-                  placement="top"
-                  style={{
-                    backgroundColor: "rgba(50, 50, 50, 0.9)", // Space grey background
-                    color: "#00ff00", // Bright green text
-                    fontFamily: "Courier New, Courier, monospace",
-                    fontSize: "12px",
-                  }}
-                >
+                <Tooltip title="Toggle Ground Track" arrow placement="top">
                   <IconButton
                     onClick={() => setShowGroundTrack(!showGroundTrack)}
                     style={{
-                      color: selectedSatId
-                        ? showGroundTrack
-                          ? "#00ff00"
-                          : "#88ff88"
-                        : "#555555", // Bright green if selected, muted green if available, grey if disabled
+                      color: showGroundTrack ? "#00ff00" : "#888888", // Bright green if active, grey if inactive
+                      transition: "color 0.2s ease-in-out",
                     }}
                   >
                     <PublicIcon />
@@ -390,73 +351,25 @@ const GlobeTools: React.FC<GlobeToolsProps> = ({
                   marginBottom: "8px",
                 }}
               >
-                <Tooltip
-                  title="Toggle Line of Sight"
-                  arrow
-                  placement="top"
-                  style={{
-                    backgroundColor: "rgba(50, 50, 50, 0.9)", // Space grey background
-                    color: "#00ff00", // Bright green text
-                    fontFamily: "Courier New, Courier, monospace",
-                    fontSize: "12px",
-                  }}
-                >
+                <Tooltip title="Toggle Line of Sight" arrow placement="top">
                   <IconButton
                     onClick={() => setShowLineOfSight(!showLineOfSight)}
                     style={{
-                      color: selectedGroundStationId
-                        ? showLineOfSight
-                          ? "#00ff00"
-                          : "#88ff88"
-                        : "#555555",
-                      transition: "color 0.2s ease-in-out", // Smooth transition for hover effect
+                      color: showLineOfSight ? "#00ff00" : "#888888", // Bright green if active, grey if inactive
+                      transition: "color 0.2s ease-in-out",
                     }}
-                    onMouseEnter={(e) =>
-                      (e.currentTarget.style.color = "#00ff00")
-                    } // Bright green on hover
-                    onMouseLeave={(e) =>
-                      (e.currentTarget.style.color = selectedGroundStationId
-                        ? showLineOfSight
-                          ? "#00ff00"
-                          : "#88ff88"
-                        : "#555555")
-                    }
                   >
                     <VisibilityIcon />
                   </IconButton>
                 </Tooltip>
 
-                <Tooltip
-                  title="Toggle Visibility Cones"
-                  arrow
-                  placement="top"
-                  style={{
-                    backgroundColor: "rgba(50, 50, 50, 0.9)", // Space grey background
-                    color: "#00ff00", // Bright green text
-                    fontFamily: "Courier New, Courier, monospace",
-                    fontSize: "12px",
-                  }}
-                >
+                <Tooltip title="Toggle Visibility Cones" arrow placement="top">
                   <IconButton
                     onClick={() => setShowVisibilityCones(!showVisibilityCones)}
                     style={{
-                      color: selectedGroundStationId
-                        ? showVisibilityCones
-                          ? "#00ff00"
-                          : "#88ff88"
-                        : "#555555",
+                      color: showVisibilityCones ? "#00ff00" : "#888888", // Bright green if active, grey if inactive
                       transition: "color 0.2s ease-in-out",
                     }}
-                    onMouseEnter={(e) =>
-                      (e.currentTarget.style.color = "#00ff00")
-                    }
-                    onMouseLeave={(e) =>
-                      (e.currentTarget.style.color = selectedGroundStationId
-                        ? showVisibilityCones
-                          ? "#00ff00"
-                          : "#88ff88"
-                        : "#555555")
-                    }
                   >
                     <RadarIcon />
                   </IconButton>
