@@ -53,7 +53,14 @@ function GlobalAppBar({
         boxShadow: 'none',
       }}
     >
-      <Toolbar>
+      <Toolbar
+        style={{
+          display: 'flex',
+          gap: '16px', // Add 16px spacing between buttons
+          justifyContent: 'flex-start', // Align buttons to the left
+          padding: '0 16px', // Add padding to match the Globe Tools panel
+        }}
+      >
         {/* Globe Icon */}
         <IconButton
           onClick={() => navigate('/globe')}
@@ -67,7 +74,7 @@ function GlobalAppBar({
               currentPath === '/globe' ? '#00ff00' : '#888888')
           }
         >
-          <PublicIcon />
+          <PublicIcon style={{ fontSize: '24px' }} />
         </IconButton>
 
         {/* Timeline Icon */}
@@ -83,7 +90,7 @@ function GlobalAppBar({
               currentPath === '/timeline' ? '#00ff00' : '#888888')
           }
         >
-          <TimelineIcon />
+          <TimelineIcon style={{ fontSize: '24px' }} />
         </IconButton>
 
         {/* Satellites Icon */}
@@ -99,7 +106,7 @@ function GlobalAppBar({
               currentPath === '/sats' ? '#00ff00' : '#888888')
           }
         >
-          <SatelliteIcon />
+          <SatelliteIcon style={{ fontSize: '24px' }} />
         </IconButton>
 
         {/* Ground Stations Icon */}
@@ -115,7 +122,7 @@ function GlobalAppBar({
               currentPath === '/gs' ? '#00ff00' : '#888888')
           }
         >
-          <RadarIcon />
+          <RadarIcon style={{ fontSize: '24px' }} />
         </IconButton>
 
         {/* Theme Switcher */}
@@ -133,7 +140,7 @@ function GlobalAppBar({
               onMouseEnter={(e) => (e.currentTarget.style.color = '#00ff00')}
               onMouseLeave={(e) => (e.currentTarget.style.color = '#888888')}
             >
-              <Brightness4Icon />
+              <Brightness4Icon style={{ fontSize: '24px' }} />
             </IconButton>
           </Tooltip>
 

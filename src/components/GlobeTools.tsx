@@ -106,19 +106,44 @@ const GlobeTools: React.FC<GlobeToolsProps> = ({
     }
   }, [selectedSatId, selectedGroundStationId, dispatch]);
 
+  // Determine the active page and calculate the arrow's position
+  const currentPath = window.location.pathname;
+  const arrowPosition = {
+    "/globe": "28px", // Position under the PublicIcon button
+    "/timeline": "92px", // Adjust based on the Timeline button's position
+    "/sats": "156px", // Adjust based on the Satellite button's position
+    "/gs": "220px", // Adjust based on the Ground Station button's position
+  }[currentPath] || "16px"; // Default to Globe if no match
+
   return (
     <div
       style={{
         position: "absolute",
-        top: "84px", // Position just below the top navigation bar
-        left: "16px", // Align to the left
+        borderTop: "1px solid #00ff00", // Green top border
+        top: "64px", // Position just below the top navigation bar
+        left: "0px", // Align to the left
         backgroundColor: "rgba(50, 50, 50, 0.3)", // Transparent space-grey background
-        borderRadius: "8px", // Rounded corners
-        padding: "16px", // Add padding around the buttons
+        // borderRadius: "8px", // Rounded corners
+        padding: "12px", // Add padding around the buttons
         zIndex: 1000, // Ensure it appears above other elements
         boxShadow: "0px 4px 8px rgba(0, 0, 0, 0.2)", // Subtle shadow for depth
       }}
     >
+      {/* Green Arrow */}
+      <div
+        style={{
+          position: "absolute",
+          top: "-8px", // Position above the Globe Tools panel
+          left: arrowPosition, // Dynamically position the arrow
+          width: "0",
+          height: "0",
+          borderLeft: "8px solid transparent",
+          borderRight: "8px solid transparent",
+          borderBottom: "8px solid #00ff00", // Green arrow
+          zIndex: 1001, // Ensure it appears above the panel
+        }}
+      ></div>
+
       {/* Satellite, Ground Station, Toolbox, and Contact Windows Buttons */}
       <div
         style={{

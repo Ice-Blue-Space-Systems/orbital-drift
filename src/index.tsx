@@ -1,6 +1,8 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
 
+import "./index.css"; // Import your global styles
+
 
 import { Provider } from "react-redux";
 import { store } from "./store";
