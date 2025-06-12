@@ -274,23 +274,35 @@ function CesiumDashboard({
 
   // Example of continuously updating debugInfo each frame for SatelliteStatusTable
   useEffect(() => {
-    if (!viewerRef.current?.cesiumElement || !satPositionProperty) return;
+    if (!viewerRef.current?.cesiumElement || !contactWindows || !selectedSatId || !selectedGroundStationId) return;
+
     const viewer = viewerRef.current.cesiumElement;
 
     const updateDebugInfo = () => {
-      const curTime = viewer.clock.currentTime;
-      const satPos = satPositionProperty.getValue(curTime) || null;
-      // For demo, we assume no specialized inSight check—just false
+      const curTime = JulianDate.toDate(viewer.clock.currentTime);
+
+      // Check if the satellite is in sight based on contact windows
+      const currentContactWindow = contactWindows.find(
+        (win: { satelliteId: string; groundStationId: string; scheduledAOS: string | number | Date; scheduledLOS: string | number | Date; }) =>
+          win.satelliteId === selectedSatId &&
+          win.groundStationId === selectedGroundStationId &&
+          new Date(win.scheduledAOS) <= curTime &&
+          new Date(win.scheduledLOS) >= curTime
+      );
+
+      const inSight = !!currentContactWindow; // True if a valid contact window exists
+
       setDebugInfo((prev) => ({
         ...prev,
-        satellitePosition: satPos,
-        currentTime: JulianDate.toDate(curTime),
+        satellitePosition: satPositionProperty?.getValue(viewer.clock.currentTime) || null,
+        currentTime: curTime,
+        inSight, // Update inSight based on contact windows
       }));
     };
 
     viewer.clock.onTick.addEventListener(updateDebugInfo);
     return () => viewer.clock.onTick.removeEventListener(updateDebugInfo);
-  }, [satPositionProperty]);
+  }, [contactWindows, selectedSatId, selectedGroundStationId, satPositionProperty]);
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 64px)' }}>

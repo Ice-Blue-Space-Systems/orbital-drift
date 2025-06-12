@@ -24,6 +24,7 @@ import ContactWindows from "./ContactWindows"; // Import ContactWindows componen
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faSatelliteDish } from "@fortawesome/free-solid-svg-icons"; // Import the satellite dish icon
 import DockableComponent from "./DockableComponent";
+import "./GlobeTools.css";
 
 interface GlobeToolsProps {
   groundStations: any[];
@@ -108,12 +109,13 @@ const GlobeTools: React.FC<GlobeToolsProps> = ({
 
   // Determine the active page and calculate the arrow's position
   const currentPath = window.location.pathname;
-  const arrowPosition = {
-    "/globe": "28px", // Position under the PublicIcon button
-    "/timeline": "92px", // Adjust based on the Timeline button's position
-    "/sats": "156px", // Adjust based on the Satellite button's position
-    "/gs": "220px", // Adjust based on the Ground Station button's position
-  }[currentPath] || "16px"; // Default to Globe if no match
+  const arrowPosition =
+    {
+      "/globe": "28px", // Position under the PublicIcon button
+      "/timeline": "92px", // Adjust based on the Timeline button's position
+      "/sats": "156px", // Adjust based on the Satellite button's position
+      "/gs": "220px", // Adjust based on the Ground Station button's position
+    }[currentPath] || "16px"; // Default to Globe if no match
 
   return (
     <div
@@ -157,22 +159,20 @@ const GlobeTools: React.FC<GlobeToolsProps> = ({
           onMouseEnter={() => setOpenPopover("satellite")}
           onMouseLeave={() => setOpenPopover(null)}
         >
-          <Tooltip title="Select Satellite" arrow>
-            <IconButton
-              style={{
-                color: selectedSatId ? "#00ff00" : "#888888",
-                transition: "color 0.2s ease-in-out",
-              }}
-              onMouseEnter={(e) => (e.currentTarget.style.color = "#00ff00")}
-              onMouseLeave={(e) =>
-                (e.currentTarget.style.color = selectedSatId
-                  ? "#00ff00"
-                  : "#888888")
-              }
-            >
-              <SatelliteIcon />
-            </IconButton>
-          </Tooltip>
+          <IconButton
+            style={{
+              color: selectedSatId ? "#00ff00" : "#888888",
+              transition: "color 0.2s ease-in-out",
+            }}
+            onMouseEnter={(e) => (e.currentTarget.style.color = "#00ff00")}
+            onMouseLeave={(e) =>
+              (e.currentTarget.style.color = selectedSatId
+                ? "#00ff00"
+                : "#888888")
+            }
+          >
+            <SatelliteIcon />
+          </IconButton>
 
           {/* Satellite Popover */}
           {openPopover === "satellite" && (
@@ -214,11 +214,11 @@ const GlobeTools: React.FC<GlobeToolsProps> = ({
                   marginBottom: "8px",
                 }}
               >
-                <Tooltip title="Toggle TLE" arrow placement="top">
+                <Tooltip title="Toggle TLE" arrow placement="bottom">
                   <IconButton
                     onClick={() => setShowTle(!showTle)}
                     style={{
-                      color: showTle ? "#00ff00" : "#888888", // Bright green if active, grey if inactive
+                      color: showGroundTrack ? "#00ff00" : "#888888", // Bright green if active, grey if inactive
                       transition: "color 0.2s ease-in-out",
                     }}
                   >
@@ -226,7 +226,7 @@ const GlobeTools: React.FC<GlobeToolsProps> = ({
                   </IconButton>
                 </Tooltip>
 
-                <Tooltip title="Toggle History" arrow placement="top">
+                <Tooltip title="Toggle History" arrow placement="bottom">
                   <IconButton
                     onClick={() => setShowHistory(!showHistory)}
                     style={{
@@ -238,7 +238,7 @@ const GlobeTools: React.FC<GlobeToolsProps> = ({
                   </IconButton>
                 </Tooltip>
 
-                <Tooltip title="Toggle Ground Track" arrow placement="top">
+                <Tooltip title="Toggle Ground Track" arrow placement="bottom">
                   <IconButton
                     onClick={() => setShowGroundTrack(!showGroundTrack)}
                     style={{
@@ -291,25 +291,23 @@ const GlobeTools: React.FC<GlobeToolsProps> = ({
           onMouseEnter={() => setOpenPopover("groundStation")}
           onMouseLeave={() => setOpenPopover(null)}
         >
-          <Tooltip title="Select Ground Station" arrow>
-            <IconButton
-              style={{
-                color: selectedGroundStationId ? "#00ff00" : "#888888",
-                transition: "color 0.2s ease-in-out",
-              }}
-              onMouseEnter={(e) => (e.currentTarget.style.color = "#00ff00")}
-              onMouseLeave={(e) =>
-                (e.currentTarget.style.color = selectedGroundStationId
-                  ? "#00ff00"
-                  : "#888888")
-              }
-            >
-              <FontAwesomeIcon
-                icon={faSatelliteDish}
-                style={{ fontSize: "24px" }} // Match Material-UI icon size
-              />
-            </IconButton>
-          </Tooltip>
+          <IconButton
+            style={{
+              color: selectedGroundStationId ? "#00ff00" : "#888888",
+              transition: "color 0.2s ease-in-out",
+            }}
+            onMouseEnter={(e) => (e.currentTarget.style.color = "#00ff00")}
+            onMouseLeave={(e) =>
+              (e.currentTarget.style.color = selectedGroundStationId
+                ? "#00ff00"
+                : "#888888")
+            }
+          >
+            <FontAwesomeIcon
+              icon={faSatelliteDish}
+              style={{ fontSize: "24px" }} // Match Material-UI icon size
+            />
+          </IconButton>
 
           {/* Ground Station Popover */}
           {openPopover === "groundStation" && (
@@ -351,7 +349,7 @@ const GlobeTools: React.FC<GlobeToolsProps> = ({
                   marginBottom: "8px",
                 }}
               >
-                <Tooltip title="Toggle Line of Sight" arrow placement="top">
+                <Tooltip title="Toggle Line of Sight" arrow placement="bottom">
                   <IconButton
                     onClick={() => setShowLineOfSight(!showLineOfSight)}
                     style={{
@@ -363,7 +361,7 @@ const GlobeTools: React.FC<GlobeToolsProps> = ({
                   </IconButton>
                 </Tooltip>
 
-                <Tooltip title="Toggle Visibility Cones" arrow placement="top">
+                <Tooltip title="Toggle Visibility Cones" arrow placement="bottom">
                   <IconButton
                     onClick={() => setShowVisibilityCones(!showVisibilityCones)}
                     style={{
@@ -417,18 +415,16 @@ const GlobeTools: React.FC<GlobeToolsProps> = ({
             onMouseEnter={() => setOpenPopover("contactWindow")}
             onMouseLeave={() => setOpenPopover(null)}
           >
-            <Tooltip title="View Contact Windows" arrow>
-              <IconButton
-                style={{
-                  color: "#00ff00", // Bright green to make it visible
-                  transition: "color 0.2s ease-in-out",
-                }}
-                onMouseEnter={(e) => (e.currentTarget.style.color = "#00ff00")}
-                onMouseLeave={(e) => (e.currentTarget.style.color = "#00ff00")}
-              >
-                <EventIcon />
-              </IconButton>
-            </Tooltip>
+            <IconButton
+              style={{
+                color: "#00ff00", // Bright green to make it visible
+                transition: "color 0.2s ease-in-out",
+              }}
+              onMouseEnter={(e) => (e.currentTarget.style.color = "#00ff00")}
+              onMouseLeave={(e) => (e.currentTarget.style.color = "#00ff00")}
+            >
+              <EventIcon />
+            </IconButton>
 
             {/* Contact Windows Popover */}
             {openPopover === "contactWindow" && (
@@ -447,19 +443,19 @@ const GlobeTools: React.FC<GlobeToolsProps> = ({
                   zIndex: 1001,
                 }}
               >
-                              {/* Arrow */}
-              <div
-                style={{
-                  position: "absolute",
-                  top: "-8px",
-                  left: "16px",
-                  width: "0",
-                  height: "0",
-                  borderLeft: "8px solid transparent",
-                  borderRight: "8px solid transparent",
-                  borderBottom: "8px solid #00ff00", // Green arrow
-                }}
-              ></div>
+                {/* Arrow */}
+                <div
+                  style={{
+                    position: "absolute",
+                    top: "-8px",
+                    left: "16px",
+                    width: "0",
+                    height: "0",
+                    borderLeft: "8px solid transparent",
+                    borderRight: "8px solid transparent",
+                    borderBottom: "8px solid #00ff00", // Green arrow
+                  }}
+                ></div>
                 <ContactWindows
                   satelliteId={selectedSatId}
                   groundStationId={selectedGroundStationId}
@@ -475,22 +471,24 @@ const GlobeTools: React.FC<GlobeToolsProps> = ({
           onMouseEnter={() => setOpenPopover("console")}
           onMouseLeave={() => setOpenPopover(null)}
         >
-          <Tooltip title="Open Console" arrow>
-            <IconButton
-              style={{
-                color:
-                  selectedSatId || selectedGroundStationId ? "#00ff00" : "#555555",
-                transition: "color 0.2s ease-in-out",
-              }}
-              onMouseEnter={(e) => (e.currentTarget.style.color = "#00ff00")}
-              onMouseLeave={(e) =>
-                (e.currentTarget.style.color =
-                  selectedSatId || selectedGroundStationId ? "#00ff00" : "#555555")
-              }
-            >
-              <CodeIcon />
-            </IconButton>
-          </Tooltip>
+          <IconButton
+            style={{
+              color:
+                selectedSatId || selectedGroundStationId
+                  ? "#00ff00"
+                  : "#555555",
+              transition: "color 0.2s ease-in-out",
+            }}
+            onMouseEnter={(e) => (e.currentTarget.style.color = "#00ff00")}
+            onMouseLeave={(e) =>
+              (e.currentTarget.style.color =
+                selectedSatId || selectedGroundStationId
+                  ? "#00ff00"
+                  : "#555555")
+            }
+          >
+            <CodeIcon />
+          </IconButton>
 
           {/* Console Popover */}
           {openPopover === "console" && (
@@ -528,18 +526,16 @@ const GlobeTools: React.FC<GlobeToolsProps> = ({
           onMouseEnter={() => setOpenPopover("cesiumOptions")}
           onMouseLeave={() => setOpenPopover(null)}
         >
-          <Tooltip title="Cesium Options" arrow>
-            <IconButton
-              style={{
-                color: "#888888",
-                transition: "color 0.2s ease-in-out",
-              }}
-              onMouseEnter={(e) => (e.currentTarget.style.color = "#00ff00")}
-              onMouseLeave={(e) => (e.currentTarget.style.color = "#888888")}
-            >
-              <SettingsIcon />
-            </IconButton>
-          </Tooltip>
+          <IconButton
+            style={{
+              color: "#888888",
+              transition: "color 0.2s ease-in-out",
+            }}
+            onMouseEnter={(e) => (e.currentTarget.style.color = "#00ff00")}
+            onMouseLeave={(e) => (e.currentTarget.style.color = "#888888")}
+          >
+            <SettingsIcon />
+          </IconButton>
 
           {/* Cesium Options Popover */}
           {openPopover === "cesiumOptions" && (

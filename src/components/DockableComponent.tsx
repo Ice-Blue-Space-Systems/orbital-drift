@@ -28,7 +28,7 @@ const DockableComponent: React.FC<DockableComponentProps> = ({
           style={{
             ...popoverStyle,
             position: 'absolute',
-            top: buttonRef?.current?.offsetHeight || '48px', // Position below the button
+            top: '6px', // Position below the button
             left: '0', // Align with the button
           }}
         >
