@@ -214,11 +214,12 @@ const GlobeTools: React.FC<GlobeToolsProps> = ({
                   marginBottom: "8px",
                 }}
               >
+                {/* Toggle TLE */}
                 <Tooltip title="Toggle TLE" arrow placement="bottom">
                   <IconButton
                     onClick={() => setShowTle(!showTle)}
                     style={{
-                      color: showGroundTrack ? "#00ff00" : "#888888", // Bright green if active, grey if inactive
+                      color: showTle ? "#00ff00" : "#888888", // Bright green if active, grey if inactive
                       transition: "color 0.2s ease-in-out",
                     }}
                   >
@@ -226,6 +227,7 @@ const GlobeTools: React.FC<GlobeToolsProps> = ({
                   </IconButton>
                 </Tooltip>
 
+                {/* Toggle History */}
                 <Tooltip title="Toggle History" arrow placement="bottom">
                   <IconButton
                     onClick={() => setShowHistory(!showHistory)}
@@ -238,6 +240,7 @@ const GlobeTools: React.FC<GlobeToolsProps> = ({
                   </IconButton>
                 </Tooltip>
 
+                {/* Toggle Ground Track */}
                 <Tooltip title="Toggle Ground Track" arrow placement="bottom">
                   <IconButton
                     onClick={() => setShowGroundTrack(!showGroundTrack)}
