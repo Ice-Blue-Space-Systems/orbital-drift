@@ -244,23 +244,28 @@ function CesiumDashboard({
     return () => viewer.clock.onTick.removeEventListener(recordTleTrack);
   }, [showTle, showHistory, satPositionProperty]);
 
-  // Next contact window
-  const nextContactWindow = useMemo(() => {
-    if (!selectedSatId || !selectedGroundStationId) return null;
-    const now = new Date();
-    const futureWindows = contactWindows.filter(
-      (win: ContactWindow) =>
-        win.satelliteId === selectedSatId &&
-        win.groundStationId === selectedGroundStationId &&
-        new Date(win.scheduledLOS) > now
-    );
-    if (!futureWindows.length) return null;
-    futureWindows.sort(
-      (a: ContactWindow, b: ContactWindow) =>
-        new Date(a.scheduledAOS).getTime() - new Date(b.scheduledAOS).getTime()
-    );
-    return futureWindows[0];
-  }, [contactWindows, selectedSatId, selectedGroundStationId]);
+// Calculate the next contact window
+const nextContactWindow: ContactWindow | null = useMemo(() => {
+  if (!selectedSatId || !selectedGroundStationId || !debugInfo.currentTime) return null;
+
+  // Use debugInfo.currentTime directly as it is already a Date object
+  const cesiumCurrentTime = debugInfo.currentTime;
+
+  const futureWindows = contactWindows.filter(
+    (win: ContactWindow) =>
+      win.satelliteId === selectedSatId &&
+      win.groundStationId === selectedGroundStationId &&
+      new Date(win.scheduledLOS) > cesiumCurrentTime // Compare against Cesium clock time
+  );
+
+  if (!futureWindows.length) return null;
+
+  // Sort by AOS and return the first one
+  return futureWindows.sort(
+    (a: ContactWindow, b: ContactWindow) =>
+      new Date(a.scheduledAOS).getTime() - new Date(b.scheduledAOS).getTime()
+  )[0];
+}, [contactWindows, selectedSatId, selectedGroundStationId, debugInfo.currentTime]);
 
   const nextAosLosLabel = useMemo(() => {
     if (!nextContactWindow) return 'No upcoming contact';

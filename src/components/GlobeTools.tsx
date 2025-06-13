@@ -26,6 +26,7 @@ import { faSatelliteDish } from "@fortawesome/free-solid-svg-icons"; // Import t
 import DockableComponent from "./DockableComponent";
 import "./GlobeTools.css";
 import { ContactWindow } from "../store/mongoSlice";
+import { JulianDate } from "cesium";
 
 interface GlobeToolsProps {
   groundStations: any[];
@@ -112,26 +113,28 @@ const GlobeTools: React.FC<GlobeToolsProps> = ({
     }
   }, [selectedSatId, selectedGroundStationId, dispatch]);
 
-  // Calculate the next contact window
-  const nextContactWindow: ContactWindow | null = useMemo(() => {
-    if (!selectedSatId || !selectedGroundStationId) return null;
+// Calculate the next contact window
+const nextContactWindow: ContactWindow | null = useMemo(() => {
+  if (!selectedSatId || !selectedGroundStationId || !debugInfo.currentTime) return null;
 
-    const now = new Date();
-    const futureWindows = contactWindows.filter(
-      (win: ContactWindow) =>
-        win.satelliteId === selectedSatId &&
-        win.groundStationId === selectedGroundStationId &&
-        new Date(win.scheduledLOS) > now
-    );
+  // Convert Cesium clock's currentTime (JulianDate) to a JavaScript Date
+  const cesiumCurrentTime = debugInfo.currentTime;
 
-    if (!futureWindows.length) return null;
+  const futureWindows = contactWindows.filter(
+    (win: ContactWindow) =>
+      win.satelliteId === selectedSatId &&
+      win.groundStationId === selectedGroundStationId &&
+      new Date(win.scheduledLOS) > cesiumCurrentTime // Compare against Cesium clock time
+  );
 
-    // Sort by AOS and return the first one
-    return futureWindows.sort(
-      (a: ContactWindow, b: ContactWindow) =>
+  if (!futureWindows.length) return null;
+
+  // Sort by AOS and return the first one
+  return futureWindows.sort(
+    (a: ContactWindow, b: ContactWindow) =>
       new Date(a.scheduledAOS).getTime() - new Date(b.scheduledAOS).getTime()
-    )[0];
-  }, [contactWindows, selectedSatId, selectedGroundStationId]);
+  )[0];
+}, [contactWindows, selectedSatId, selectedGroundStationId, debugInfo.currentTime]);
 
   // Determine the active page and calculate the arrow's position
   const currentPath = window.location.pathname;
