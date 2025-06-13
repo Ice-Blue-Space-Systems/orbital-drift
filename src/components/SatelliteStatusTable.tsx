@@ -16,6 +16,10 @@ interface SatelliteStatusTableProps {
   satPositionProperty: any;
   tleHistoryRef: React.MutableRefObject<Cartesian3[]>;
   groundTrackHistoryRef: React.MutableRefObject<Cartesian3[]>;
+  nextContactWindow: {
+    scheduledAOS: string;
+    scheduledLOS: string;
+  } | null; // Add nextContactWindow as a prop
 }
 
 const SatelliteStatusTable: React.FC<SatelliteStatusTableProps> = ({
@@ -27,6 +31,7 @@ const SatelliteStatusTable: React.FC<SatelliteStatusTableProps> = ({
   satPositionProperty,
   tleHistoryRef,
   groundTrackHistoryRef,
+  nextContactWindow, // Destructure nextContactWindow
 }) => {
   const [tlePosition, setTlePosition] = useState<Cartesian3 | null>(null);
   const [groundTrackPosition, setGroundTrackPosition] = useState<Cartesian3 | null>(null);
@@ -86,6 +91,18 @@ const SatelliteStatusTable: React.FC<SatelliteStatusTableProps> = ({
       <p>
         <strong>Satellite Name:</strong>{" "}
         {satellites.find((sat) => sat._id === selectedSatId)?.name || "N/A"}
+      </p>
+      <p>
+        <strong>Next Contact Window:</strong>{" "}
+        {nextContactWindow ? (
+          <>
+            AOS (UTC): {new Date(nextContactWindow.scheduledAOS).toISOString()}
+            <br />
+            LOS (UTC): {new Date(nextContactWindow.scheduledLOS).toISOString()}
+          </>
+        ) : (
+          "No upcoming contact"
+        )}
       </p>
     </div>
   );

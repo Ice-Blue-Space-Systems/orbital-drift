@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import {
   IconButton,
   Tooltip,
@@ -16,8 +16,8 @@ import PublicIcon from "@mui/icons-material/Public";
 import EventIcon from "@mui/icons-material/Event"; // Import an icon for the Contact Windows button
 import CodeIcon from "@mui/icons-material/Code"; // Import Console icon
 import SettingsIcon from "@mui/icons-material/Settings"; // Import Settings icon
-import { useDispatch } from "react-redux";
-import { fetchContactWindows } from "../store/contactWindowsSlice";
+import { useDispatch, useSelector } from "react-redux";
+import { fetchContactWindows, selectContactWindows } from "../store/contactWindowsSlice";
 import { AppDispatch } from "../store";
 import SatelliteStatusTable from "./SatelliteStatusTable";
 import ContactWindows from "./ContactWindows"; // Import ContactWindows component
@@ -25,6 +25,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faSatelliteDish } from "@fortawesome/free-solid-svg-icons"; // Import the satellite dish icon
 import DockableComponent from "./DockableComponent";
 import "./GlobeTools.css";
+import { ContactWindow } from "../store/mongoSlice";
 
 interface GlobeToolsProps {
   groundStations: any[];
@@ -83,6 +84,9 @@ const GlobeTools: React.FC<GlobeToolsProps> = ({
 }) => {
   const dispatch = useDispatch<AppDispatch>();
 
+  // Retrieve contact windows from Redux
+  const contactWindows = useSelector(selectContactWindows);
+
   // State to track which popover is open
   const [openPopover, setOpenPopover] = useState<
     | "satellite"
@@ -96,6 +100,7 @@ const GlobeTools: React.FC<GlobeToolsProps> = ({
   const [satelliteFilter, setSatelliteFilter] = useState("");
   const [groundStationFilter, setGroundStationFilter] = useState("");
 
+  // Fetch contact windows when satellite or ground station changes
   useEffect(() => {
     if (selectedSatId && selectedGroundStationId) {
       dispatch(
@@ -106,6 +111,27 @@ const GlobeTools: React.FC<GlobeToolsProps> = ({
       );
     }
   }, [selectedSatId, selectedGroundStationId, dispatch]);
+
+  // Calculate the next contact window
+  const nextContactWindow: ContactWindow | null = useMemo(() => {
+    if (!selectedSatId || !selectedGroundStationId) return null;
+
+    const now = new Date();
+    const futureWindows = contactWindows.filter(
+      (win: ContactWindow) =>
+        win.satelliteId === selectedSatId &&
+        win.groundStationId === selectedGroundStationId &&
+        new Date(win.scheduledLOS) > now
+    );
+
+    if (!futureWindows.length) return null;
+
+    // Sort by AOS and return the first one
+    return futureWindows.sort(
+      (a: ContactWindow, b: ContactWindow) =>
+      new Date(a.scheduledAOS).getTime() - new Date(b.scheduledAOS).getTime()
+    )[0];
+  }, [contactWindows, selectedSatId, selectedGroundStationId]);
 
   // Determine the active page and calculate the arrow's position
   const currentPath = window.location.pathname;
@@ -517,6 +543,7 @@ const GlobeTools: React.FC<GlobeToolsProps> = ({
                   satPositionProperty={satPositionProperty}
                   tleHistoryRef={tleHistoryRef}
                   groundTrackHistoryRef={groundTrackHistoryRef}
+                  nextContactWindow={nextContactWindow}
                 />
               }
             />
