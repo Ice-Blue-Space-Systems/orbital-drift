@@ -304,6 +304,18 @@ function CesiumDashboard({
     return () => viewer.clock.onTick.removeEventListener(updateDebugInfo);
   }, [contactWindows, selectedSatId, selectedGroundStationId, satPositionProperty]);
 
+  // Cleanup on unmount: Destroy Cesium viewer
+  useEffect(() => {
+    const viewer = viewerRef.current?.cesiumElement;
+
+    return () => {
+      if (viewer) {
+        viewer.destroy(); // Destroy the Cesium viewer
+        console.log("Cesium viewer destroyed");
+      }
+    };
+  }, []);
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 64px)' }}>
 

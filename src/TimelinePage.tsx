@@ -69,7 +69,9 @@ const TimelinePage: React.FC = () => {
     const items = contactWindows.map(
       (win: { scheduledAOS: string | number | Date; scheduledLOS: string | number | Date }, index: number) => ({
         id: index,
-        content: `Contact Window ${index + 1}`,
+        content: `<div style="background-color: rgba(50, 50, 50, 0.9); color: #00ff00; padding: 4px; border-radius: 4px;">
+                    Contact Window ${index + 1}
+                  </div>`,
         start: new Date(win.scheduledAOS),
         end: new Date(win.scheduledLOS),
       })
@@ -154,9 +156,8 @@ const TimelinePage: React.FC = () => {
         style={{
           flex: 1,
           marginTop: "120px", // Push the timeline down to avoid overlap with tools
+          height: "80vh", // Increase the height of the timeline
           backgroundColor: "rgba(0, 0, 0, 0.8)", // Transparent black background
-          border: "1px solid #00ff00", // Bright green border
-          borderRadius: "4px",
         }}
       />
     </div>

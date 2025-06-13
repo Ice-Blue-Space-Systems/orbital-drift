@@ -10,12 +10,12 @@
 }
 
 .timeline-tools .icon-button {
-  color: #00ff00;
-  transition: color 0.2s ease-in-out;
+  color: #888888; /* Default grey color */
+  transition: color 0.2s ease-in-out; /* Smooth transition for hover effect */
 }
 
 .timeline-tools .icon-button:hover {
-  color: #00ff00;
+  color: #00ff00; /* Bright green on hover */
 }
 
 .timeline-tools-arrow {
