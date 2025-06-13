@@ -127,9 +127,17 @@ const TimelinePage: React.FC = () => {
   };
 
   return (
-    <div style={{ height: "100vh", display: "flex", flexDirection: "column" }}>
+    <div
+      style={{
+        height: "100vh",
+        backgroundColor: "black", // Set the entire page background to black
+        display: "flex",
+        flexDirection: "column",
+      }}
+    >
       {/* Timeline Tools */}
       <div className="timeline-tools-container">
+        <div className="timeline-tools-arrow"></div> {/* Add the arrow */}
         <TimelineTools
           onJumpToNext={jumpToNextContactWindow}
           onJumpToStart={jumpToStart}
