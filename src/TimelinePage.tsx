@@ -9,6 +9,8 @@ import {
   selectContactWindowsError,
 } from "./store/contactWindowsSlice";
 import TimelineTools from "./components/TimelineTools";
+import "./components/TimelineTools.css"; // Ensure the CSS file is imported
+import { ContactWindow } from "./store/mongoSlice";
 
 const TimelinePage: React.FC = () => {
   const timelineRef = useRef<HTMLDivElement>(null);
@@ -31,7 +33,8 @@ const TimelinePage: React.FC = () => {
 
     // Sort by AOS and return the first one
     return futureWindows.sort(
-      (a: { scheduledAOS: string | number | Date; }, b: { scheduledAOS: string | number | Date; }) => new Date(a.scheduledAOS).getTime() - new Date(b.scheduledAOS).getTime()
+      (a: ContactWindow, b: ContactWindow) =>
+      new Date(a.scheduledAOS).getTime() - new Date(b.scheduledAOS).getTime()
     )[0];
   }, [contactWindows]);
 
@@ -124,28 +127,25 @@ const TimelinePage: React.FC = () => {
   };
 
   return (
-    <div style={{ padding: "16px", backgroundColor: "rgba(13, 13, 13, 0.9)", borderRadius: "8px" }}>
-      <h1 style={{ color: "#00ff00" }}>Timeline</h1>
-
-      {/* Show loading or error messages */}
-      {status === "loading" && <p>Loading contact windows...</p>}
-      {status === "failed" && <p style={{ color: "red" }}>Error: {error}</p>}
-
+    <div style={{ height: "100vh", display: "flex", flexDirection: "column" }}>
       {/* Timeline Tools */}
-      <TimelineTools
-        onJumpToNext={jumpToNextContactWindow}
-        onJumpToStart={jumpToStart}
-        onJumpToNow={jumpToNow}
-        onZoomIn={zoomIn}
-        onZoomOut={zoomOut}
-        onFitAll={fitAllWindows}
-      />
+      <div className="timeline-tools-container">
+        <TimelineTools
+          onJumpToNext={jumpToNextContactWindow}
+          onJumpToStart={jumpToStart}
+          onJumpToNow={jumpToNow}
+          onZoomIn={zoomIn}
+          onZoomOut={zoomOut}
+          onFitAll={fitAllWindows}
+        />
+      </div>
 
       {/* Timeline container */}
       <div
         ref={timelineRef}
         style={{
-          height: "300px",
+          flex: 1,
+          marginTop: "120px", // Push the timeline down to avoid overlap with tools
           backgroundColor: "rgba(0, 0, 0, 0.8)", // Transparent black background
           border: "1px solid #00ff00", // Bright green border
           borderRadius: "4px",

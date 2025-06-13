@@ -1,0 +1,31 @@
+.timeline-tools-container {
+  position: absolute;
+  border-top: 1px solid #00ff00; /* Bright green top border */
+  top: 64px; /* Position just below the top navigation bar */
+  left: 0px; /* Align to the left */
+  background-color: rgba(50, 50, 50, 0.3); /* Transparent space-grey background */
+  padding: 12px;
+  z-index: 1000;
+  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2); /* Subtle shadow for depth */
+}
+
+.timeline-tools .icon-button {
+  color: #00ff00;
+  transition: color 0.2s ease-in-out;
+}
+
+.timeline-tools .icon-button:hover {
+  color: #00ff00;
+}
+
+.timeline-tools-arrow {
+  position: absolute;
+  top: -8px; /* Position above the Timeline Tools panel */
+  left: 92px; /* Adjust based on the Timeline button's position in the top nav */
+  width: 0;
+  height: 0;
+  border-left: 8px solid transparent;
+  border-right: 8px solid transparent;
+  border-bottom: 8px solid #00ff00; /* Bright green arrow */
+  z-index: 1001;
+}
