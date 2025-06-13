@@ -5,8 +5,6 @@ import { Timeline } from "vis-timeline/standalone";
 import "vis-timeline/styles/vis-timeline-graph2d.min.css";
 import {
   selectContactWindows,
-  selectContactWindowsStatus,
-  selectContactWindowsError,
 } from "./store/contactWindowsSlice";
 import TimelineTools from "./components/TimelineTools";
 import "./components/TimelineTools.css"; // Ensure the CSS file is imported
@@ -18,8 +16,6 @@ const TimelinePage: React.FC = () => {
 
   // Get contact windows data, status, and error from Redux
   const contactWindows = useSelector(selectContactWindows);
-  const status = useSelector(selectContactWindowsStatus);
-  const error = useSelector(selectContactWindowsError);
 
   // Calculate the next contact window
   const nextContactWindow = useMemo(() => {

@@ -26,7 +26,6 @@ import { faSatelliteDish } from "@fortawesome/free-solid-svg-icons"; // Import t
 import DockableComponent from "./DockableComponent";
 import "./GlobeTools.css";
 import { ContactWindow } from "../store/mongoSlice";
-import { JulianDate } from "cesium";
 
 interface GlobeToolsProps {
   groundStations: any[];
