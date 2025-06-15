@@ -62,68 +62,76 @@ function GlobalAppBar({
         }}
       >
         {/* Globe Icon */}
-        <IconButton
-          onClick={() => navigate('/globe')}
-          style={{
-            color: currentPath === '/globe' ? '#00ff00' : '#888888',
-            transition: 'color 0.2s ease-in-out',
-          }}
-          onMouseEnter={(e) => (e.currentTarget.style.color = '#00ff00')}
-          onMouseLeave={(e) =>
-            (e.currentTarget.style.color =
-              currentPath === '/globe' ? '#00ff00' : '#888888')
-          }
-        >
-          <PublicIcon style={{ fontSize: '24px' }} />
-        </IconButton>
+        <Tooltip title="Globe" arrow>
+          <IconButton
+            onClick={() => navigate('/globe')}
+            style={{
+              color: currentPath === '/globe' ? '#00ff00' : '#888888',
+              transition: 'color 0.2s ease-in-out',
+            }}
+            onMouseEnter={(e) => (e.currentTarget.style.color = '#00ff00')}
+            onMouseLeave={(e) =>
+              (e.currentTarget.style.color =
+                currentPath === '/globe' ? '#00ff00' : '#888888')
+            }
+          >
+            <PublicIcon style={{ fontSize: '24px' }} />
+          </IconButton>
+        </Tooltip>
 
         {/* Timeline Icon */}
-        <IconButton
-          onClick={() => navigate('/timeline')}
-          style={{
-            color: currentPath === '/timeline' ? '#00ff00' : '#888888',
-            transition: 'color 0.2s ease-in-out',
-          }}
-          onMouseEnter={(e) => (e.currentTarget.style.color = '#00ff00')}
-          onMouseLeave={(e) =>
-            (e.currentTarget.style.color =
-              currentPath === '/timeline' ? '#00ff00' : '#888888')
-          }
-        >
-          <TimelineIcon style={{ fontSize: '24px' }} />
-        </IconButton>
+        <Tooltip title="Timeline" arrow>
+          <IconButton
+            onClick={() => navigate('/timeline')}
+            style={{
+              color: currentPath === '/timeline' ? '#00ff00' : '#888888',
+              transition: 'color 0.2s ease-in-out',
+            }}
+            onMouseEnter={(e) => (e.currentTarget.style.color = '#00ff00')}
+            onMouseLeave={(e) =>
+              (e.currentTarget.style.color =
+                currentPath === '/timeline' ? '#00ff00' : '#888888')
+            }
+          >
+            <TimelineIcon style={{ fontSize: '24px' }} />
+          </IconButton>
+        </Tooltip>
 
         {/* Satellites Icon */}
-        <IconButton
-          onClick={() => navigate('/sats')}
-          style={{
-            color: currentPath === '/sats' ? '#00ff00' : '#888888',
-            transition: 'color 0.2s ease-in-out',
-          }}
-          onMouseEnter={(e) => (e.currentTarget.style.color = '#00ff00')}
-          onMouseLeave={(e) =>
-            (e.currentTarget.style.color =
-              currentPath === '/sats' ? '#00ff00' : '#888888')
-          }
-        >
-          <SatelliteIcon style={{ fontSize: '24px' }} />
-        </IconButton>
+        <Tooltip title="Satellites" arrow>
+          <IconButton
+            onClick={() => navigate('/sats')}
+            style={{
+              color: currentPath === '/sats' ? '#00ff00' : '#888888',
+              transition: 'color 0.2s ease-in-out',
+            }}
+            onMouseEnter={(e) => (e.currentTarget.style.color = '#00ff00')}
+            onMouseLeave={(e) =>
+              (e.currentTarget.style.color =
+                currentPath === '/sats' ? '#00ff00' : '#888888')
+            }
+          >
+            <SatelliteIcon style={{ fontSize: '24px' }} />
+          </IconButton>
+        </Tooltip>
 
         {/* Ground Stations Icon */}
-        <IconButton
-          onClick={() => navigate('/gs')}
-          style={{
-            color: currentPath === '/gs' ? '#00ff00' : '#888888',
-            transition: 'color 0.2s ease-in-out',
-          }}
-          onMouseEnter={(e) => (e.currentTarget.style.color = '#00ff00')}
-          onMouseLeave={(e) =>
-            (e.currentTarget.style.color =
-              currentPath === '/gs' ? '#00ff00' : '#888888')
-          }
-        >
-          <RadarIcon style={{ fontSize: '24px' }} />
-        </IconButton>
+        <Tooltip title="Ground Stations" arrow>
+          <IconButton
+            onClick={() => navigate('/gs')}
+            style={{
+              color: currentPath === '/gs' ? '#00ff00' : '#888888',
+              transition: 'color 0.2s ease-in-out',
+            }}
+            onMouseEnter={(e) => (e.currentTarget.style.color = '#00ff00')}
+            onMouseLeave={(e) =>
+              (e.currentTarget.style.color =
+                currentPath === '/gs' ? '#00ff00' : '#888888')
+            }
+          >
+            <RadarIcon style={{ fontSize: '24px' }} />
+          </IconButton>
+        </Tooltip>
 
         {/* Theme Switcher */}
         <div

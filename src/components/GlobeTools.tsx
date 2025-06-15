@@ -215,7 +215,7 @@ const nextContactWindow: ContactWindow | null = useMemo(() => {
                 fontFamily: "Courier New, Courier, monospace",
                 borderRadius: "4px",
                 padding: "8px",
-                width: "200px",
+                width: "400px",
                 zIndex: 1001,
               }}
             >
@@ -309,7 +309,12 @@ const nextContactWindow: ContactWindow | null = useMemo(() => {
                           setSelectedSatId(sat._id);
                           setOpenPopover(null); // Close popover after selection
                         }}
-                        style={{ color: "#00ff00" }}
+                        style={{
+                          color: "#00ff00",
+                          transition: "background-color 0.2s ease-in-out",
+                        }}
+                        onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#1e1e1e")}
+                        onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "transparent")}
                       >
                         <ListItemText primary={sat.name} />
                       </ListItemButton>
@@ -357,7 +362,7 @@ const nextContactWindow: ContactWindow | null = useMemo(() => {
                 fontFamily: "Courier New, Courier, monospace", // Console-style font
                 borderRadius: "4px",
                 padding: "8px",
-                width: "200px",
+                width: "400px",
                 zIndex: 1001,
               }}
             >
@@ -436,7 +441,12 @@ const nextContactWindow: ContactWindow | null = useMemo(() => {
                           setSelectedGroundStationId(gs._id);
                           setOpenPopover(null);
                         }}
-                        style={{ color: "#00ff00" }}
+                        style={{
+                          color: "#00ff00",
+                          transition: "background-color 0.2s ease-in-out",
+                        }}
+                        onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#1e1e1e")}
+                        onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "transparent")}
                       >
                         <ListItemText primary={gs.name} />
                       </ListItemButton>
