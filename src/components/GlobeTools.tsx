@@ -298,19 +298,23 @@ const nextContactWindow: ContactWindow | null = useMemo(() => {
                 }}
               />
               <List>
-                {satellites.map((sat) => (
-                  <ListItem key={sat._id} disablePadding>
-                    <ListItemButton
-                      onClick={() => {
-                        setSelectedSatId(sat._id);
-                        setOpenPopover(null); // Close popover after selection
-                      }}
-                      style={{ color: "#00ff00" }}
-                    >
-                      <ListItemText primary={sat.name} />
-                    </ListItemButton>
-                  </ListItem>
-                ))}
+                {satellites
+                  .filter((sat) =>
+                    sat.name.toLowerCase().includes(satelliteFilter.toLowerCase())
+                  )
+                  .map((sat) => (
+                    <ListItem key={sat._id} disablePadding>
+                      <ListItemButton
+                        onClick={() => {
+                          setSelectedSatId(sat._id);
+                          setOpenPopover(null); // Close popover after selection
+                        }}
+                        style={{ color: "#00ff00" }}
+                      >
+                        <ListItemText primary={sat.name} />
+                      </ListItemButton>
+                    </ListItem>
+                  ))}
               </List>
             </div>
           )}
@@ -421,19 +425,23 @@ const nextContactWindow: ContactWindow | null = useMemo(() => {
                 }}
               />
               <List>
-                {groundStations.map((gs) => (
-                  <ListItem key={gs._id} disablePadding>
-                    <ListItemButton
-                      onClick={() => {
-                        setSelectedGroundStationId(gs._id);
-                        setOpenPopover(null); // Close popover after selection
-                      }}
-                      style={{ color: "#00ff00" }}
-                    >
-                      <ListItemText primary={gs.name} />
-                    </ListItemButton>
-                  </ListItem>
-                ))}
+                {groundStations
+                  .filter((gs) =>
+                    gs.name.toLowerCase().includes(groundStationFilter.toLowerCase())
+                  )
+                  .map((gs) => (
+                    <ListItem key={gs._id} disablePadding>
+                      <ListItemButton
+                        onClick={() => {
+                          setSelectedGroundStationId(gs._id);
+                          setOpenPopover(null);
+                        }}
+                        style={{ color: "#00ff00" }}
+                      >
+                        <ListItemText primary={gs.name} />
+                      </ListItemButton>
+                    </ListItem>
+                  ))}
               </List>
             </div>
           )}
