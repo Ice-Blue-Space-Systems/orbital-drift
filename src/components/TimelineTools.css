@@ -21,7 +21,7 @@
 .timeline-tools-arrow {
   position: absolute;
   top: -8px; /* Position above the Timeline Tools panel */
-  left: 92px; /* Adjust based on the Timeline button's position in the top nav */
+  left: 85px; /* Adjust based on the Timeline button's position in the top nav */
   width: 0;
   height: 0;
   border-left: 8px solid transparent;
