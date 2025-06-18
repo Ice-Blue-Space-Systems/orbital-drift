@@ -2,30 +2,24 @@ import React, { useEffect, useState, useMemo } from "react";
 import {
   IconButton,
   Tooltip,
-  TextField,
-  List,
-  ListItem,
-  ListItemButton,
-  ListItemText,
 } from "@mui/material";
-import HistoryIcon from "@mui/icons-material/History";
-import SatelliteIcon from "@mui/icons-material/SatelliteAlt";
-import VisibilityIcon from "@mui/icons-material/Visibility";
-import RadarIcon from "@mui/icons-material/Radar";
-import PublicIcon from "@mui/icons-material/Public";
-import EventIcon from "@mui/icons-material/Event"; // Import an icon for the Contact Windows button
 import CodeIcon from "@mui/icons-material/Code"; // Import Console icon
 import SettingsIcon from "@mui/icons-material/Settings"; // Import Settings icon
 import { useDispatch, useSelector } from "react-redux";
-import { fetchContactWindows, selectContactWindows } from "../store/contactWindowsSlice";
+import {
+  fetchContactWindows,
+  selectContactWindows,
+} from "../store/contactWindowsSlice";
 import { AppDispatch } from "../store";
 import SatelliteStatusTable from "./SatelliteStatusTable";
-import ContactWindows from "./ContactWindows"; // Import ContactWindows component
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faSatelliteDish } from "@fortawesome/free-solid-svg-icons"; // Import the satellite dish icon
 import DockableComponent from "./DockableComponent";
 import "./GlobeTools.css";
 import { ContactWindow } from "../store/mongoSlice";
+import SatellitePopover from "./SatellitePopover"; // Import the SatellitePopover component
+import GroundStationPopover from "./GroundStationPopover"; // Import the GroundStationPopover component
+import ContactWindowsPopover from "./ContactWindowsPopover"; // Import the ContactWindowsPopover component
+import ConsolePopover from "./ConsolePopover"; // Import the ConsolePopover component
+import CesiumOptionsPopover from "./CesiumOptionsPopover"; // Import the CesiumOptionsPopover component
 
 interface GlobeToolsProps {
   groundStations: any[];
@@ -89,7 +83,6 @@ const GlobeTools: React.FC<GlobeToolsProps> = ({
 
   // State to track which popover is open
   const [openPopover, setOpenPopover] = useState<
-    | "satellite"
     | "groundStation"
     | "toolbox"
     | "contactWindow"
@@ -97,8 +90,6 @@ const GlobeTools: React.FC<GlobeToolsProps> = ({
     | "cesiumOptions"
     | null
   >(null);
-  const [satelliteFilter, setSatelliteFilter] = useState("");
-  const [groundStationFilter, setGroundStationFilter] = useState("");
 
   // Fetch contact windows when satellite or ground station changes
   useEffect(() => {
@@ -112,28 +103,34 @@ const GlobeTools: React.FC<GlobeToolsProps> = ({
     }
   }, [selectedSatId, selectedGroundStationId, dispatch]);
 
-// Calculate the next contact window
-const nextContactWindow: ContactWindow | null = useMemo(() => {
-  if (!selectedSatId || !selectedGroundStationId || !debugInfo.currentTime) return null;
+  // Calculate the next contact window
+  const nextContactWindow: ContactWindow | null = useMemo(() => {
+    if (!selectedSatId || !selectedGroundStationId || !debugInfo.currentTime)
+      return null;
 
-  // Convert Cesium clock's currentTime (JulianDate) to a JavaScript Date
-  const cesiumCurrentTime = debugInfo.currentTime;
+    // Convert Cesium clock's currentTime (JulianDate) to a JavaScript Date
+    const cesiumCurrentTime = debugInfo.currentTime;
 
-  const futureWindows = contactWindows.filter(
-    (win: ContactWindow) =>
-      win.satelliteId === selectedSatId &&
-      win.groundStationId === selectedGroundStationId &&
-      new Date(win.scheduledLOS) > cesiumCurrentTime // Compare against Cesium clock time
-  );
+    const futureWindows = contactWindows.filter(
+      (win: ContactWindow) =>
+        win.satelliteId === selectedSatId &&
+        win.groundStationId === selectedGroundStationId &&
+        new Date(win.scheduledLOS) > cesiumCurrentTime // Compare against Cesium clock time
+    );
 
-  if (!futureWindows.length) return null;
+    if (!futureWindows.length) return null;
 
-  // Sort by AOS and return the first one
-  return futureWindows.sort(
-    (a: ContactWindow, b: ContactWindow) =>
-      new Date(a.scheduledAOS).getTime() - new Date(b.scheduledAOS).getTime()
-  )[0];
-}, [contactWindows, selectedSatId, selectedGroundStationId, debugInfo.currentTime]);
+    // Sort by AOS and return the first one
+    return futureWindows.sort(
+      (a: ContactWindow, b: ContactWindow) =>
+        new Date(a.scheduledAOS).getTime() - new Date(b.scheduledAOS).getTime()
+    )[0];
+  }, [
+    contactWindows,
+    selectedSatId,
+    selectedGroundStationId,
+    debugInfo.currentTime,
+  ]);
 
   // Determine the active page and calculate the arrow's position
   const currentPath = window.location.pathname;
@@ -182,469 +179,55 @@ const nextContactWindow: ContactWindow | null = useMemo(() => {
         }}
       >
         {/* Satellite Button */}
-        <div
-          style={{ position: "relative" }}
-          onMouseEnter={() => setOpenPopover("satellite")}
-          onMouseLeave={() => setOpenPopover(null)}
-        >
-          <IconButton
-            style={{
-              color: selectedSatId ? "#00ff00" : "#888888",
-              transition: "color 0.2s ease-in-out",
-            }}
-            onMouseEnter={(e) => (e.currentTarget.style.color = "#00ff00")}
-            onMouseLeave={(e) =>
-              (e.currentTarget.style.color = selectedSatId
-                ? "#00ff00"
-                : "#888888")
-            }
-          >
-            <SatelliteIcon />
-          </IconButton>
-
-          {/* Satellite Popover */}
-          {openPopover === "satellite" && (
-            <div
-              style={{
-                position: "absolute",
-                top: "48px",
-                left: "0",
-                backgroundColor: "rgba(13, 13, 13, 0.9)",
-                border: "1px solid #00ff00",
-                color: "#00ff00",
-                fontFamily: "Courier New, Courier, monospace",
-                borderRadius: "4px",
-                padding: "8px",
-                width: "400px",
-                zIndex: 1001,
-              }}
-            >
-              {/* Arrow */}
-              <div
-                style={{
-                  position: "absolute",
-                  top: "-8px",
-                  left: "16px",
-                  width: "0",
-                  height: "0",
-                  borderLeft: "8px solid transparent",
-                  borderRight: "8px solid transparent",
-                  borderBottom: "8px solid #00ff00", // Green arrow
-                }}
-              ></div>
-
-              {/* Show TLE, History, and Ground Track Toggles */}
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "16px",
-                  marginBottom: "8px",
-                }}
-              >
-                {/* Toggle TLE */}
-                <Tooltip title="Toggle TLE" arrow placement="bottom">
-                  <IconButton
-                    onClick={() => setShowTle(!showTle)}
-                    style={{
-                      color: showTle ? "#00ff00" : "#888888", // Bright green if active, grey if inactive
-                      transition: "color 0.2s ease-in-out",
-                    }}
-                  >
-                    <SatelliteIcon />
-                  </IconButton>
-                </Tooltip>
-
-                {/* Toggle History */}
-                <Tooltip title="Toggle History" arrow placement="bottom">
-                  <IconButton
-                    onClick={() => setShowHistory(!showHistory)}
-                    style={{
-                      color: showHistory ? "#00ff00" : "#888888", // Bright green if active, grey if inactive
-                      transition: "color 0.2s ease-in-out",
-                    }}
-                  >
-                    <HistoryIcon />
-                  </IconButton>
-                </Tooltip>
-
-                {/* Toggle Ground Track */}
-                <Tooltip title="Toggle Ground Track" arrow placement="bottom">
-                  <IconButton
-                    onClick={() => setShowGroundTrack(!showGroundTrack)}
-                    style={{
-                      color: showGroundTrack ? "#00ff00" : "#888888", // Bright green if active, grey if inactive
-                      transition: "color 0.2s ease-in-out",
-                    }}
-                  >
-                    <PublicIcon />
-                  </IconButton>
-                </Tooltip>
-              </div>
-
-              {/* Filter and List */}
-              <TextField
-                fullWidth
-                placeholder="Filter Satellites"
-                value={satelliteFilter}
-                onChange={(e) => setSatelliteFilter(e.target.value)}
-                style={{
-                  marginBottom: "8px",
-                  backgroundColor: "#1e1e1e", // Slightly lighter background for input
-                  color: "#00ff00",
-                }}
-                InputProps={{
-                  style: { color: "#00ff00" }, // Green text for input
-                }}
-              />
-              <List>
-                {satellites
-                  .filter((sat) =>
-                    sat.name.toLowerCase().includes(satelliteFilter.toLowerCase())
-                  )
-                  .map((sat) => (
-                    <ListItem key={sat._id} disablePadding>
-                      <ListItemButton
-                        onClick={() => {
-                          setSelectedSatId(sat._id);
-                          setOpenPopover(null); // Close popover after selection
-                        }}
-                        style={{
-                          color: "#00ff00",
-                          transition: "background-color 0.2s ease-in-out",
-                        }}
-                        onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#1e1e1e")}
-                        onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "transparent")}
-                      >
-                        <ListItemText primary={sat.name} />
-                      </ListItemButton>
-                    </ListItem>
-                  ))}
-              </List>
-            </div>
-          )}
-        </div>
+        <SatellitePopover
+          satellites={satellites}
+          selectedSatId={selectedSatId}
+          setSelectedSatId={setSelectedSatId}
+          showTle={showTle}
+          setShowTle={setShowTle}
+          showHistory={showHistory}
+          setShowHistory={setShowHistory}
+          showGroundTrack={showGroundTrack}
+          setShowGroundTrack={setShowGroundTrack}
+        />
 
         {/* Ground Station Button */}
-        <div
-          style={{ position: "relative" }}
-          onMouseEnter={() => setOpenPopover("groundStation")}
-          onMouseLeave={() => setOpenPopover(null)}
-        >
-          <IconButton
-            style={{
-              color: selectedGroundStationId ? "#00ff00" : "#888888",
-              transition: "color 0.2s ease-in-out",
-            }}
-            onMouseEnter={(e) => (e.currentTarget.style.color = "#00ff00")}
-            onMouseLeave={(e) =>
-              (e.currentTarget.style.color = selectedGroundStationId
-                ? "#00ff00"
-                : "#888888")
-            }
-          >
-            <FontAwesomeIcon
-              icon={faSatelliteDish}
-              style={{ fontSize: "24px" }} // Match Material-UI icon size
-            />
-          </IconButton>
-
-          {/* Ground Station Popover */}
-          {openPopover === "groundStation" && (
-            <div
-              style={{
-                position: "absolute",
-                top: "48px", // Position below the button
-                left: "0",
-                backgroundColor: "rgba(13, 13, 13, 0.9)", // Console-style dark background
-                border: "1px solid #00ff00", // Green border
-                color: "#00ff00", // Green text
-                fontFamily: "Courier New, Courier, monospace", // Console-style font
-                borderRadius: "4px",
-                padding: "8px",
-                width: "400px",
-                zIndex: 1001,
-              }}
-            >
-              {/* Arrow */}
-              <div
-                style={{
-                  position: "absolute",
-                  top: "-8px",
-                  left: "16px",
-                  width: "0",
-                  height: "0",
-                  borderLeft: "8px solid transparent",
-                  borderRight: "8px solid transparent",
-                  borderBottom: "8px solid #00ff00", // Green arrow
-                }}
-              ></div>
-
-              {/* Line of Sight and Visibility Cones Toggles */}
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "16px",
-                  marginBottom: "8px",
-                }}
-              >
-                <Tooltip title="Toggle Line of Sight" arrow placement="bottom">
-                  <IconButton
-                    onClick={() => setShowLineOfSight(!showLineOfSight)}
-                    style={{
-                      color: showLineOfSight ? "#00ff00" : "#888888", // Bright green if active, grey if inactive
-                      transition: "color 0.2s ease-in-out",
-                    }}
-                  >
-                    <VisibilityIcon />
-                  </IconButton>
-                </Tooltip>
-
-                <Tooltip title="Toggle Visibility Cones" arrow placement="bottom">
-                  <IconButton
-                    onClick={() => setShowVisibilityCones(!showVisibilityCones)}
-                    style={{
-                      color: showVisibilityCones ? "#00ff00" : "#888888", // Bright green if active, grey if inactive
-                      transition: "color 0.2s ease-in-out",
-                    }}
-                  >
-                    <RadarIcon />
-                  </IconButton>
-                </Tooltip>
-              </div>
-
-              {/* Filter and List */}
-              <TextField
-                fullWidth
-                placeholder="Filter Ground Stations"
-                value={groundStationFilter}
-                onChange={(e) => setGroundStationFilter(e.target.value)}
-                style={{
-                  marginBottom: "8px",
-                  backgroundColor: "#1e1e1e", // Slightly lighter background for input
-                  color: "#00ff00",
-                }}
-                InputProps={{
-                  style: { color: "#00ff00" }, // Green text for input
-                }}
-              />
-              <List>
-                {groundStations
-                  .filter((gs) =>
-                    gs.name.toLowerCase().includes(groundStationFilter.toLowerCase())
-                  )
-                  .map((gs) => (
-                    <ListItem key={gs._id} disablePadding>
-                      <ListItemButton
-                        onClick={() => {
-                          setSelectedGroundStationId(gs._id);
-                          setOpenPopover(null);
-                        }}
-                        style={{
-                          color: "#00ff00",
-                          transition: "background-color 0.2s ease-in-out",
-                        }}
-                        onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#1e1e1e")}
-                        onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "transparent")}
-                      >
-                        <ListItemText primary={gs.name} />
-                      </ListItemButton>
-                    </ListItem>
-                  ))}
-              </List>
-            </div>
-          )}
-        </div>
+        <GroundStationPopover
+          groundStations={groundStations}
+          selectedGroundStationId={selectedGroundStationId}
+          setSelectedGroundStationId={setSelectedSatId}
+          showLineOfSight={showLineOfSight}
+          setShowLineOfSight={setShowLineOfSight}
+          showVisibilityCones={showVisibilityCones}
+          setShowVisibilityCones={setShowVisibilityCones}
+        />
 
         {/* Contact Windows Button */}
         {selectedSatId && selectedGroundStationId && (
-          <div
-            style={{ position: "relative" }}
-            onMouseEnter={() => setOpenPopover("contactWindow")}
-            onMouseLeave={() => setOpenPopover(null)}
-          >
-            <IconButton
-              style={{
-                color: "#00ff00", // Bright green to make it visible
-                transition: "color 0.2s ease-in-out",
-              }}
-              onMouseEnter={(e) => (e.currentTarget.style.color = "#00ff00")}
-              onMouseLeave={(e) => (e.currentTarget.style.color = "#00ff00")}
-            >
-              <EventIcon />
-            </IconButton>
-
-            {/* Contact Windows Popover */}
-            {openPopover === "contactWindow" && (
-              <div
-                style={{
-                  position: "absolute",
-                  top: "48px",
-                  left: "0",
-                  backgroundColor: "rgba(13, 13, 13, 0.9)", // Match console-style dark transparent background
-                  border: "1px solid #00ff00", // Green border
-                  color: "#00ff00", // Green text
-                  fontFamily: "Courier New, Courier, monospace", // Console-style font
-                  borderRadius: "4px",
-                  padding: "16px",
-                  width: "400px",
-                  zIndex: 1001,
-                }}
-              >
-                {/* Arrow */}
-                <div
-                  style={{
-                    position: "absolute",
-                    top: "-8px",
-                    left: "16px",
-                    width: "0",
-                    height: "0",
-                    borderLeft: "8px solid transparent",
-                    borderRight: "8px solid transparent",
-                    borderBottom: "8px solid #00ff00", // Green arrow
-                  }}
-                ></div>
-                <ContactWindows
-                  satelliteId={selectedSatId}
-                  groundStationId={selectedGroundStationId}
-                />
-              </div>
-            )}
-          </div>
+          <ContactWindowsPopover
+            satelliteId={selectedSatId}
+            groundStationId={selectedGroundStationId}
+          />
         )}
 
         {/* Console Button */}
-        <div
-          style={{ position: "relative" }}
-          onMouseEnter={() => setOpenPopover("console")}
-          onMouseLeave={() => setOpenPopover(null)}
-        >
-          <IconButton
-            style={{
-              color:
-                selectedSatId || selectedGroundStationId
-                  ? "#00ff00"
-                  : "#555555",
-              transition: "color 0.2s ease-in-out",
-            }}
-            onMouseEnter={(e) => (e.currentTarget.style.color = "#00ff00")}
-            onMouseLeave={(e) =>
-              (e.currentTarget.style.color =
-                selectedSatId || selectedGroundStationId
-                  ? "#00ff00"
-                  : "#555555")
-            }
-          >
-            <CodeIcon />
-          </IconButton>
-
-          {/* Console Popover */}
-          {openPopover === "console" && (
-            <DockableComponent
-              popoverStyle={{
-                position: "absolute",
-                backgroundColor: "rgba(13, 13, 13, 0.9)",
-                border: "1px solid #00ff00",
-                color: "#00ff00",
-                fontFamily: "Courier New, Courier, monospace",
-                borderRadius: "4px",
-                padding: "8px",
-                width: "350px",
-                zIndex: 1001,
-              }}
-              content={
-                <SatelliteStatusTable
-                  debugInfo={debugInfo}
-                  groundStations={groundStations}
-                  satellites={satellites}
-                  selectedSatId={selectedSatId}
-                  selectedGroundStationId={selectedGroundStationId}
-                  satPositionProperty={satPositionProperty}
-                  tleHistoryRef={tleHistoryRef}
-                  groundTrackHistoryRef={groundTrackHistoryRef}
-                  nextContactWindow={nextContactWindow}
-                />
-              }
-            />
-          )}
-        </div>
+        <ConsolePopover
+          debugInfo={debugInfo}
+          groundStations={groundStations}
+          satellites={satellites}
+          selectedSatId={selectedSatId}
+          selectedGroundStationId={selectedGroundStationId}
+          satPositionProperty={satPositionProperty}
+          tleHistoryRef={tleHistoryRef}
+          groundTrackHistoryRef={groundTrackHistoryRef}
+          nextContactWindow={nextContactWindow}
+        />
 
         {/* Cesium Options Button */}
-        <div
-          style={{ position: "relative" }}
-          onMouseEnter={() => setOpenPopover("cesiumOptions")}
-          onMouseLeave={() => setOpenPopover(null)}
-        >
-          <IconButton
-            style={{
-              color: "#888888",
-              transition: "color 0.2s ease-in-out",
-            }}
-            onMouseEnter={(e) => (e.currentTarget.style.color = "#00ff00")}
-            onMouseLeave={(e) => (e.currentTarget.style.color = "#888888")}
-          >
-            <SettingsIcon />
-          </IconButton>
-
-          {/* Cesium Options Popover */}
-          {openPopover === "cesiumOptions" && (
-            <div
-              style={{
-                position: "absolute",
-                top: "48px",
-                left: "0",
-                backgroundColor: "rgba(13, 13, 13, 0.9)", // Console-style dark background
-                border: "1px solid #00ff00", // Green border
-                color: "#00ff00", // Green text
-                fontFamily: "Courier New, Courier, monospace", // Console-style font
-                borderRadius: "4px",
-                padding: "8px",
-                width: "200px",
-                zIndex: 1001,
-              }}
-            >
-              {/* Arrow */}
-              <div
-                style={{
-                  position: "absolute",
-                  top: "-8px",
-                  left: "16px",
-                  width: "0",
-                  height: "0",
-                  borderLeft: "8px solid transparent",
-                  borderRight: "8px solid transparent",
-                  borderBottom: "8px solid #00ff00", // Green arrow
-                }}
-              ></div>
-
-              {/* Toggle Cesium Options */}
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "8px",
-                  marginTop: "40px",
-                }}
-              >
-                <Tooltip title="Toggle Cesium Options" arrow>
-                  <IconButton
-                    onClick={() => setShowCesiumOptions(!showCesiumOptions)}
-                    style={{
-                      color: showCesiumOptions ? "#00ff00" : "#888888",
-                      transition: "color 0.2s ease-in-out",
-                    }}
-                  >
-                    <SettingsIcon />
-                  </IconButton>
-                </Tooltip>
-                <span style={{ fontSize: "14px" }}>
-                  {showCesiumOptions ? "Disable Options" : "Enable Options"}
-                </span>
-              </div>
-            </div>
-          )}
-        </div>
+        <CesiumOptionsPopover
+          showCesiumOptions={showCesiumOptions}
+          setShowCesiumOptions={setShowCesiumOptions}
+        />
       </div>
     </div>
   );
