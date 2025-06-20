@@ -139,6 +139,7 @@ const GroundStationPopover: React.FC<GroundStationPopoverProps> = ({
                 <ListItem key={gs._id} disablePadding>
                   <ListItemButton
                     onClick={() => {
+                      console.log("Ground Station ID:", gs);
                       setSelectedGroundStationId(gs._id);
                       setOpenPopover(false); // Close popover after selection
                     }}

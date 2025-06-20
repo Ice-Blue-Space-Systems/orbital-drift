@@ -1,21 +1,49 @@
-import React, { useEffect, useRef, useMemo } from "react";
-import { useSelector } from "react-redux";
+import React, { useEffect, useRef, useMemo, useState } from "react";
+import { useSelector, useDispatch } from "react-redux";
 import { DataSet } from "vis-data";
 import { Timeline } from "vis-timeline/standalone";
 import "vis-timeline/styles/vis-timeline-graph2d.min.css";
-import {
-  selectContactWindows,
-} from "./store/contactWindowsSlice";
+import { selectContactWindows } from "./store/contactWindowsSlice";
 import TimelineTools from "./components/TimelineTools";
+import { AppDispatch } from "./store"; // Import AppDispatch type
 import "./components/TimelineTools.css"; // Ensure the CSS file is imported
-import { ContactWindow } from "./store/mongoSlice";
+import { fetchMongoData } from "./store/mongoSlice";
 
 const TimelinePage: React.FC = () => {
+  const dispatch = useDispatch<AppDispatch>();
+
+  // State for satellites and ground stations
+  const { satellites, groundStations, status } = useSelector((state: any) => state.mongo);
+
+  // State for selected satellite and ground station
+  const [selectedSatId, setSelectedSatId] = useState<string>("");
+  const [selectedGroundStationId, setSelectedGroundStationId] = useState<string>("");
+
+  // State for additional props required by TimelineTools
+  const [showHistory, setShowHistory] = useState<boolean>(false);
+  const [showTle, setShowTle] = useState<boolean>(false);
+  const [showLineOfSight, setShowLineOfSight] = useState<boolean>(false);
+  const [showVisibilityCones, setShowVisibilityCones] = useState<boolean>(false);
+  const [showGroundTrack, setShowGroundTrack] = useState<boolean>(false);
+  const [showCesiumOptions, setShowCesiumOptions] = useState<boolean>(false);
+
+  // State for timeline controls
   const timelineRef = useRef<HTMLDivElement>(null);
   const timelineInstance = useRef<Timeline | null>(null);
 
-  // Get contact windows data, status, and error from Redux
+  // Refs for TLE and ground track history
+  const tleHistoryRef = useRef<any[]>([]);
+  const groundTrackHistoryRef = useRef<any[]>([]);
+
+  // Get contact windows data from Redux
   const contactWindows = useSelector(selectContactWindows);
+
+  // Fetch initial data once
+  useEffect(() => {
+    if (status === "idle") {
+      dispatch(fetchMongoData());
+    }
+  }, [status, dispatch]);
 
   // Calculate the next contact window
   const nextContactWindow = useMemo(() => {
@@ -29,8 +57,8 @@ const TimelinePage: React.FC = () => {
 
     // Sort by AOS and return the first one
     return futureWindows.sort(
-      (a: ContactWindow, b: ContactWindow) =>
-      new Date(a.scheduledAOS).getTime() - new Date(b.scheduledAOS).getTime()
+      (a: any, b: any) =>
+        new Date(a.scheduledAOS).getTime() - new Date(b.scheduledAOS).getTime()
     )[0];
   }, [contactWindows]);
 
@@ -143,6 +171,29 @@ const TimelinePage: React.FC = () => {
           onZoomIn={zoomIn}
           onZoomOut={zoomOut}
           onFitAll={fitAllWindows}
+          satellites={satellites}
+          groundStations={groundStations}
+          selectedSatId={selectedSatId}
+          setSelectedSatId={setSelectedSatId}
+          selectedGroundStationId={selectedGroundStationId}
+          setSelectedGroundStationId={setSelectedGroundStationId}
+          showTle={showTle}
+          setShowTle={setShowTle}
+          showHistory={showHistory}
+          setShowHistory={setShowHistory}
+          showGroundTrack={showGroundTrack}
+          setShowGroundTrack={setShowGroundTrack}
+          showLineOfSight={showLineOfSight}
+          setShowLineOfSight={setShowLineOfSight}
+          showVisibilityCones={showVisibilityCones}
+          setShowVisibilityCones={setShowVisibilityCones}
+          debugInfo={timelineInstance.current} // Pass timeline instance as debugInfo
+          satPositionProperty={null} // Placeholder for satellite position property
+          tleHistoryRef={tleHistoryRef}
+          groundTrackHistoryRef={groundTrackHistoryRef}
+          nextContactWindow={nextContactWindow}
+          showCesiumOptions={showCesiumOptions}
+          setShowCesiumOptions={setShowCesiumOptions}
         />
       </div>
 

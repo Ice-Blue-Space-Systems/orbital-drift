@@ -1,18 +1,10 @@
-import React, { useEffect, useState, useMemo } from "react";
-import {
-  IconButton,
-  Tooltip,
-} from "@mui/material";
-import CodeIcon from "@mui/icons-material/Code"; // Import Console icon
-import SettingsIcon from "@mui/icons-material/Settings"; // Import Settings icon
+import React, { useEffect, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import {
   fetchContactWindows,
   selectContactWindows,
 } from "../store/contactWindowsSlice";
 import { AppDispatch } from "../store";
-import SatelliteStatusTable from "./SatelliteStatusTable";
-import DockableComponent from "./DockableComponent";
 import "./GlobeTools.css";
 import { ContactWindow } from "../store/mongoSlice";
 import SatellitePopover from "./SatellitePopover"; // Import the SatellitePopover component
@@ -80,16 +72,6 @@ const GlobeTools: React.FC<GlobeToolsProps> = ({
 
   // Retrieve contact windows from Redux
   const contactWindows = useSelector(selectContactWindows);
-
-  // State to track which popover is open
-  const [openPopover, setOpenPopover] = useState<
-    | "groundStation"
-    | "toolbox"
-    | "contactWindow"
-    | "console"
-    | "cesiumOptions"
-    | null
-  >(null);
 
   // Fetch contact windows when satellite or ground station changes
   useEffect(() => {
@@ -195,7 +177,7 @@ const GlobeTools: React.FC<GlobeToolsProps> = ({
         <GroundStationPopover
           groundStations={groundStations}
           selectedGroundStationId={selectedGroundStationId}
-          setSelectedGroundStationId={setSelectedSatId}
+          setSelectedGroundStationId={setSelectedGroundStationId}
           showLineOfSight={showLineOfSight}
           setShowLineOfSight={setShowLineOfSight}
           showVisibilityCones={showVisibilityCones}
