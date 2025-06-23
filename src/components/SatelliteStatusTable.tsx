@@ -2,24 +2,15 @@ import React, { useEffect, useState } from "react";
 import { Cartesian3 } from "cesium";
 
 interface SatelliteStatusTableProps {
-  debugInfo: {
-    satellitePosition: Cartesian3 | null;
-    tlePosition: Cartesian3 | null;
-    groundTrackPosition: Cartesian3 | null;
-    currentTime: Date | null;
-    inSight: boolean;
-  };
+  debugInfo?: any;
   groundStations: any[];
   satellites: any[];
   selectedSatId: string;
   selectedGroundStationId: string;
-  satPositionProperty: any;
-  tleHistoryRef: React.MutableRefObject<Cartesian3[]>;
-  groundTrackHistoryRef: React.MutableRefObject<Cartesian3[]>;
-  nextContactWindow: {
-    scheduledAOS: string;
-    scheduledLOS: string;
-  } | null; // Add nextContactWindow as a prop
+  satPositionProperty?: any;
+  tleHistoryRef: React.MutableRefObject<any[]>;
+  groundTrackHistoryRef: React.MutableRefObject<any[]>;
+  nextContactWindow: any;
 }
 
 const SatelliteStatusTable: React.FC<SatelliteStatusTableProps> = ({
@@ -31,7 +22,7 @@ const SatelliteStatusTable: React.FC<SatelliteStatusTableProps> = ({
   satPositionProperty,
   tleHistoryRef,
   groundTrackHistoryRef,
-  nextContactWindow, // Destructure nextContactWindow
+  nextContactWindow,
 }) => {
   const [tlePosition, setTlePosition] = useState<Cartesian3 | null>(null);
   const [groundTrackPosition, setGroundTrackPosition] = useState<Cartesian3 | null>(null);
@@ -52,16 +43,24 @@ const SatelliteStatusTable: React.FC<SatelliteStatusTableProps> = ({
     return () => clearInterval(interval);
   }, [satPositionProperty, tleHistoryRef, groundTrackHistoryRef]);
 
+  // Validate debugInfo.currentTim
+  const currentTime = debugInfo?.currentTim
+    ? debugInfo.currentTim.toISOString()
+    : "N/A";
+
   return (
     <div
       style={{
         flex: 1, // Allow the table to expand and fill available space
         overflowY: "auto", // Add scrolling if content overflows
         padding: "10px", // Add padding for spacing
+        color: "#00ff00",
+        fontFamily: "Courier New, Courier, monospace",
       }}
     >
+      <h3>Satellite Status</h3>
       <p>
-        <strong>Current Time:</strong> {debugInfo.currentTime?.toISOString() || "N/A"}
+        <strong>Current Time:</strong> {currentTime}
       </p>
       <p>
         <strong>Satellite Position:</strong>{" "}

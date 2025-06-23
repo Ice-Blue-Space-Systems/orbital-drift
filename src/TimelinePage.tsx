@@ -5,9 +5,9 @@ import { Timeline } from "vis-timeline/standalone";
 import "vis-timeline/styles/vis-timeline-graph2d.min.css";
 import { selectContactWindows } from "./store/contactWindowsSlice";
 import TimelineTools from "./components/TimelineTools";
-import { AppDispatch } from "./store"; // Import AppDispatch type
-import "./components/TimelineTools.css"; // Ensure the CSS file is imported
-import { fetchMongoData } from "./store/mongoSlice";
+import { AppDispatch } from "./store";
+import "./components/TimelineTools.css";
+import { fetchMongoData, GroundStation, Satellite } from "./store/mongoSlice";
 
 const TimelinePage: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
@@ -152,6 +152,10 @@ const TimelinePage: React.FC = () => {
     timelineInstance.current.fit({ animation: true });
   };
 
+  // Get selected satellite and ground station names
+  const selectedSatellite = satellites.find((sat: Satellite) => sat._id === selectedSatId);
+  const selectedGroundStation = groundStations.find((gs: GroundStation) => gs._id === selectedGroundStationId);
+
   return (
     <div
       style={{
@@ -161,40 +165,61 @@ const TimelinePage: React.FC = () => {
         flexDirection: "column",
       }}
     >
-      {/* Timeline Tools */}
-      <div className="timeline-tools-container">
-        <div className="timeline-tools-arrow"></div> {/* Add the arrow */}
-        <TimelineTools
-          onJumpToNext={jumpToNextContactWindow}
-          onJumpToStart={jumpToStart}
-          onJumpToNow={jumpToNow}
-          onZoomIn={zoomIn}
-          onZoomOut={zoomOut}
-          onFitAll={fitAllWindows}
-          satellites={satellites}
-          groundStations={groundStations}
-          selectedSatId={selectedSatId}
-          setSelectedSatId={setSelectedSatId}
-          selectedGroundStationId={selectedGroundStationId}
-          setSelectedGroundStationId={setSelectedGroundStationId}
-          showTle={showTle}
-          setShowTle={setShowTle}
-          showHistory={showHistory}
-          setShowHistory={setShowHistory}
-          showGroundTrack={showGroundTrack}
-          setShowGroundTrack={setShowGroundTrack}
-          showLineOfSight={showLineOfSight}
-          setShowLineOfSight={setShowLineOfSight}
-          showVisibilityCones={showVisibilityCones}
-          setShowVisibilityCones={setShowVisibilityCones}
-          debugInfo={timelineInstance.current} // Pass timeline instance as debugInfo
-          satPositionProperty={null} // Placeholder for satellite position property
-          tleHistoryRef={tleHistoryRef}
-          groundTrackHistoryRef={groundTrackHistoryRef}
-          nextContactWindow={nextContactWindow}
-          showCesiumOptions={showCesiumOptions}
-          setShowCesiumOptions={setShowCesiumOptions}
-        />
+      {/* Container for TimelineTools and Label */}
+      <div style={{ position: "relative" }}>
+        {/* Timeline Tools */}
+        <div style={{ position: "absolute", top: 0, left: 0, right: 0 }}>
+          <TimelineTools
+            onJumpToNext={jumpToNextContactWindow}
+            onJumpToStart={jumpToStart}
+            onJumpToNow={jumpToNow}
+            onZoomIn={zoomIn}
+            onZoomOut={zoomOut}
+            onFitAll={fitAllWindows}
+            satellites={satellites}
+            groundStations={groundStations}
+            selectedSatId={selectedSatId}
+            setSelectedSatId={setSelectedSatId}
+            selectedGroundStationId={selectedGroundStationId}
+            setSelectedGroundStationId={setSelectedGroundStationId}
+            showTle={showTle}
+            setShowTle={setShowTle}
+            showHistory={showHistory}
+            setShowHistory={setShowHistory}
+            showGroundTrack={showGroundTrack}
+            setShowGroundTrack={setShowGroundTrack}
+            showLineOfSight={showLineOfSight}
+            setShowLineOfSight={setShowLineOfSight}
+            showVisibilityCones={showVisibilityCones}
+            setShowVisibilityCones={setShowVisibilityCones}
+            debugInfo={timelineInstance.current} // Pass timeline instance as debugInfo
+            satPositionProperty={null} // Placeholder for satellite position property
+            tleHistoryRef={tleHistoryRef}
+            groundTrackHistoryRef={groundTrackHistoryRef}
+            nextContactWindow={nextContactWindow}
+            showCesiumOptions={showCesiumOptions}
+            setShowCesiumOptions={setShowCesiumOptions}
+          />
+        </div>
+
+        {/* Selected Satellite and Ground Station Label */}
+        <div
+          style={{
+            marginTop: "60px", // Push the label below the toolbar
+            textAlign: "center",
+            color: "#00ff00",
+            fontFamily: "Courier New, Courier, monospace",
+          }}
+        >
+          <div>
+            <strong>Selected Satellite:</strong>{" "}
+            {selectedSatellite ? selectedSatellite.name : "None"}
+          </div>
+          <div>
+            <strong>Selected Ground Station:</strong>{" "}
+            {selectedGroundStation ? selectedGroundStation.name : "None"}
+          </div>
+        </div>
       </div>
 
       {/* Timeline container */}
@@ -202,7 +227,7 @@ const TimelinePage: React.FC = () => {
         ref={timelineRef}
         style={{
           flex: 1,
-          marginTop: "120px", // Push the timeline down to avoid overlap with tools
+          marginTop: "16px", // Push the timeline down to avoid overlap with tools
           height: "80vh", // Increase the height of the timeline
           backgroundColor: "rgba(0, 0, 0, 0.8)", // Transparent black background
         }}
