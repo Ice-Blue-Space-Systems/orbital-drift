@@ -28,7 +28,8 @@ function CesiumDashboard({
   const { satellites, groundStations, status } = useSelector((state: RootState) => state.mongo);
   const contactWindows = useSelector(selectContactWindows);
 
-  const [selectedSatId, setSelectedSatId] = useState('');
+  const selectedSatId = useSelector((state: RootState) => state.mongo.selectedSatId); // Retrieve selected satellite ID from Redux
+
   const [selectedGroundStationId, setSelectedGroundStationId] = useState('');
   const [showTle, setShowTle] = useState(false);
   const [showLineOfSight, setShowLineOfSight] = useState(false);
@@ -327,11 +328,8 @@ const nextContactWindow: ContactWindow | null = useMemo(() => {
       {/* Our collapsible toolbox on the right (GlobeTools) */}
       <GlobeTools
         groundStations={groundStations}
-        satellites={satellites}
         selectedGroundStationId={selectedGroundStationId}
-        selectedSatId={selectedSatId}
         setSelectedGroundStationId={setSelectedGroundStationId}
-        setSelectedSatId={setSelectedSatId}
         showHistory={showHistory}
         setShowHistory={setShowHistory}
         showTle={showTle}
@@ -354,7 +352,6 @@ const nextContactWindow: ContactWindow | null = useMemo(() => {
           lineOfSightPositions={lineOfSightPositions}
           satPositionProperty={satPositionProperty}
           satellites={satellites}
-          selectedSatId={selectedSatId}
           groundStationPos={groundStationPos}
           nextAosLosLabel={nextAosLosLabel}
           showTle={showTle}

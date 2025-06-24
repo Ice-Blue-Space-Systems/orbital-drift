@@ -4,7 +4,7 @@ import {
   fetchContactWindows,
   selectContactWindows,
 } from "../store/contactWindowsSlice";
-import { AppDispatch } from "../store";
+import { AppDispatch, RootState } from "../store";
 import "./GlobeTools.css";
 import { ContactWindow } from "../store/mongoSlice";
 import SatellitePopover from "./SatellitePopover"; // Import the SatellitePopover component
@@ -15,11 +15,8 @@ import CesiumOptionsPopover from "./CesiumOptionsPopover"; // Import the CesiumO
 
 interface GlobeToolsProps {
   groundStations: any[];
-  satellites: any[];
   selectedGroundStationId: string;
-  selectedSatId: string;
   setSelectedGroundStationId: (id: string) => void;
-  setSelectedSatId: (id: string) => void;
 
   showHistory: boolean;
   setShowHistory: (value: boolean) => void;
@@ -46,11 +43,8 @@ interface GlobeToolsProps {
 
 const GlobeTools: React.FC<GlobeToolsProps> = ({
   groundStations,
-  satellites,
   selectedGroundStationId,
-  selectedSatId,
   setSelectedGroundStationId,
-  setSelectedSatId,
   showHistory,
   setShowHistory,
   showTle,
@@ -69,50 +63,56 @@ const GlobeTools: React.FC<GlobeToolsProps> = ({
   setShowCesiumOptions,
 }) => {
   const dispatch = useDispatch<AppDispatch>();
+  const selectedSatelliteId = useSelector((state: RootState) => state.mongo.selectedSatId); // Retrieve selected satellite ID
 
   // Retrieve contact windows from Redux
   const contactWindows = useSelector(selectContactWindows);
 
+  // React to changes in selectedSatelliteId
+  useEffect(() => {
+    if (selectedSatelliteId) {
+      console.log(`Selected Satellite ID: ${selectedSatelliteId}`);
+      // Example: Fetch data or update UI based on the selected satellite
+      dispatch(fetchContactWindows({
+        satelliteId: selectedSatelliteId,
+        groundStationId: selectedGroundStationId || "",
+      }));
+    }
+  }, [selectedSatelliteId, dispatch]);
+
   // Fetch contact windows when satellite or ground station changes
   useEffect(() => {
-    if (selectedSatId && selectedGroundStationId) {
+    if (selectedSatelliteId && selectedGroundStationId) {
       dispatch(
         fetchContactWindows({
-          satelliteId: selectedSatId,
+          satelliteId: selectedSatelliteId,
           groundStationId: selectedGroundStationId,
         })
       );
     }
-  }, [selectedSatId, selectedGroundStationId, dispatch]);
+  }, [selectedSatelliteId, selectedGroundStationId, dispatch]);
 
   // Calculate the next contact window
   const nextContactWindow: ContactWindow | null = useMemo(() => {
-    if (!selectedSatId || !selectedGroundStationId || !debugInfo.currentTime)
+    if (!selectedSatelliteId || !selectedGroundStationId || !debugInfo.currentTime)
       return null;
 
-    // Convert Cesium clock's currentTime (JulianDate) to a JavaScript Date
     const cesiumCurrentTime = debugInfo.currentTime;
 
     const futureWindows = contactWindows.filter(
       (win: ContactWindow) =>
-        win.satelliteId === selectedSatId &&
+        win.satelliteId === selectedSatelliteId &&
         win.groundStationId === selectedGroundStationId &&
-        new Date(win.scheduledLOS) > cesiumCurrentTime // Compare against Cesium clock time
+        new Date(win.scheduledLOS) > cesiumCurrentTime
     );
 
     if (!futureWindows.length) return null;
 
-    // Sort by AOS and return the first one
     return futureWindows.sort(
       (a: ContactWindow, b: ContactWindow) =>
         new Date(a.scheduledAOS).getTime() - new Date(b.scheduledAOS).getTime()
     )[0];
-  }, [
-    contactWindows,
-    selectedSatId,
-    selectedGroundStationId,
-    debugInfo.currentTime,
-  ]);
+  }, [contactWindows, selectedSatelliteId, selectedGroundStationId, debugInfo.currentTime]);
 
   // Determine the active page and calculate the arrow's position
   const currentPath = window.location.pathname;
@@ -132,7 +132,6 @@ const GlobeTools: React.FC<GlobeToolsProps> = ({
         top: "64px", // Position just below the top navigation bar
         left: "0px", // Align to the left
         backgroundColor: "rgba(50, 50, 50, 0.3)", // Transparent space-grey background
-        // borderRadius: "8px", // Rounded corners
         padding: "12px", // Add padding around the buttons
         zIndex: 1000, // Ensure it appears above other elements
         boxShadow: "0px 4px 8px rgba(0, 0, 0, 0.2)", // Subtle shadow for depth
@@ -162,9 +161,6 @@ const GlobeTools: React.FC<GlobeToolsProps> = ({
       >
         {/* Satellite Button */}
         <SatellitePopover
-          satellites={satellites}
-          selectedSatId={selectedSatId}
-          setSelectedSatId={setSelectedSatId}
           showTle={showTle}
           setShowTle={setShowTle}
           showHistory={showHistory}
@@ -185,9 +181,9 @@ const GlobeTools: React.FC<GlobeToolsProps> = ({
         />
 
         {/* Contact Windows Button */}
-        {selectedSatId && selectedGroundStationId && (
+        {selectedSatelliteId && selectedGroundStationId && (
           <ContactWindowsPopover
-            satelliteId={selectedSatId}
+            satelliteId={selectedSatelliteId}
             groundStationId={selectedGroundStationId}
           />
         )}
@@ -196,8 +192,6 @@ const GlobeTools: React.FC<GlobeToolsProps> = ({
         <ConsolePopover
           debugInfo={debugInfo}
           groundStations={groundStations}
-          satellites={satellites}
-          selectedSatId={selectedSatId}
           selectedGroundStationId={selectedGroundStationId}
           satPositionProperty={satPositionProperty}
           tleHistoryRef={tleHistoryRef}

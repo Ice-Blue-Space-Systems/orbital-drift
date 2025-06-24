@@ -3,11 +3,11 @@ import { IconButton, Tooltip, TextField, List, ListItem, ListItemButton, ListIte
 import SatelliteIcon from "@mui/icons-material/SatelliteAlt";
 import HistoryIcon from "@mui/icons-material/History";
 import PublicIcon from "@mui/icons-material/Public";
+import { useSelector, useDispatch } from "react-redux";
+import { RootState } from "../store";
+import { setSelectedSatId } from "../store/mongoSlice";
 
 interface SatellitePopoverProps {
-  satellites: any[];
-  selectedSatId: string;
-  setSelectedSatId: (id: string) => void;
   showTle: boolean;
   setShowTle: (value: boolean) => void;
   showHistory: boolean;
@@ -17,9 +17,6 @@ interface SatellitePopoverProps {
 }
 
 const SatellitePopover: React.FC<SatellitePopoverProps> = ({
-  satellites,
-  selectedSatId,
-  setSelectedSatId,
   showTle,
   setShowTle,
   showHistory,
@@ -27,8 +24,10 @@ const SatellitePopover: React.FC<SatellitePopoverProps> = ({
   showGroundTrack,
   setShowGroundTrack,
 }) => {
+  const dispatch = useDispatch();
   const [openPopover, setOpenPopover] = useState<boolean>(false);
   const [satelliteFilter, setSatelliteFilter] = useState<string>("");
+  const { satellites, selectedSatId } = useSelector((state: RootState) => state.mongo);
 
   return (
     <div
@@ -154,7 +153,7 @@ const SatellitePopover: React.FC<SatellitePopoverProps> = ({
                 <ListItem key={sat._id} disablePadding>
                   <ListItemButton
                     onClick={() => {
-                      setSelectedSatId(sat._id);
+                      dispatch(setSelectedSatId(sat._id)); // Update Redux store
                       setOpenPopover(false); // Close popover after selection
                     }}
                     style={{

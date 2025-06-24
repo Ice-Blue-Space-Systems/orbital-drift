@@ -3,12 +3,12 @@ import { IconButton } from "@mui/material";
 import CodeIcon from "@mui/icons-material/Code";
 import DockableComponent from "./DockableComponent";
 import SatelliteStatusTable from "./SatelliteStatusTable";
+import { useSelector } from "react-redux";
+import { RootState } from "../store";
 
 interface ConsolePopoverProps {
   debugInfo: any;
   groundStations: any[];
-  satellites: any[];
-  selectedSatId: string;
   selectedGroundStationId: string;
   satPositionProperty: any;
   tleHistoryRef: React.MutableRefObject<any[]>;
@@ -19,8 +19,6 @@ interface ConsolePopoverProps {
 const ConsolePopover: React.FC<ConsolePopoverProps> = ({
   debugInfo,
   groundStations,
-  satellites,
-  selectedSatId,
   selectedGroundStationId,
   satPositionProperty,
   tleHistoryRef,
@@ -28,6 +26,8 @@ const ConsolePopover: React.FC<ConsolePopoverProps> = ({
   nextContactWindow,
 }) => {
   const [openPopover, setOpenPopover] = useState<boolean>(false);
+  const selectedSatId = useSelector((state: RootState) => state.mongo.selectedSatId); // Retrieve selected satellite ID
+
 
   return (
     <div
@@ -68,8 +68,6 @@ const ConsolePopover: React.FC<ConsolePopoverProps> = ({
             <SatelliteStatusTable
               debugInfo={debugInfo}
               groundStations={groundStations}
-              satellites={satellites}
-              selectedSatId={selectedSatId}
               selectedGroundStationId={selectedGroundStationId}
               satPositionProperty={satPositionProperty}
               tleHistoryRef={tleHistoryRef}

@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from "react";
 import { Cartesian3 } from "cesium";
+import { useSelector } from "react-redux";
+import { RootState } from "../store";
 
 interface SatelliteStatusTableProps {
   debugInfo?: any;
   groundStations: any[];
-  satellites: any[];
-  selectedSatId: string;
   selectedGroundStationId: string;
   satPositionProperty?: any;
   tleHistoryRef: React.MutableRefObject<any[]>;
@@ -16,8 +16,6 @@ interface SatelliteStatusTableProps {
 const SatelliteStatusTable: React.FC<SatelliteStatusTableProps> = ({
   debugInfo,
   groundStations,
-  satellites,
-  selectedSatId,
   selectedGroundStationId,
   satPositionProperty,
   tleHistoryRef,
@@ -26,6 +24,8 @@ const SatelliteStatusTable: React.FC<SatelliteStatusTableProps> = ({
 }) => {
   const [tlePosition, setTlePosition] = useState<Cartesian3 | null>(null);
   const [groundTrackPosition, setGroundTrackPosition] = useState<Cartesian3 | null>(null);
+  const selectedSatId = useSelector((state: RootState) => state.mongo.selectedSatId); // Retrieve selected satellite ID
+  const satellites = useSelector((state: RootState) => state.mongo.satellites);
 
   useEffect(() => {
     if (!satPositionProperty) return;

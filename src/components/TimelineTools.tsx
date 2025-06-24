@@ -168,9 +168,6 @@ const TimelineTools: React.FC<TimelineToolsProps> = ({
 
         {/* Satellite Popover */}
         <SatellitePopover
-          satellites={satellites}
-          selectedSatId={selectedSatId}
-          setSelectedSatId={setSelectedSatId}
           showTle={showTle}
           setShowTle={setShowTle}
           showHistory={showHistory}
@@ -202,8 +199,6 @@ const TimelineTools: React.FC<TimelineToolsProps> = ({
         <ConsolePopover
           debugInfo={debugInfo}
           groundStations={groundStations}
-          satellites={satellites}
-          selectedSatId={selectedSatId}
           selectedGroundStationId={selectedGroundStationId}
           satPositionProperty={satPositionProperty}
           tleHistoryRef={tleHistoryRef}

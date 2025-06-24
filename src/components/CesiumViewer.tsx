@@ -1,4 +1,4 @@
-import React from "react";
+import React, { JSX, useEffect } from "react";
 import { Viewer, Entity, Clock } from "resium";
 import {
   Cartesian3,
@@ -6,7 +6,8 @@ import {
   CallbackProperty,
   Cartesian2,
 } from "cesium";
-import { JSX } from "react/jsx-runtime";
+import { useSelector } from "react-redux";
+import { RootState } from "../store";
 import TleEntities from "./TleEntities";
 import GroundTrackEntities from "./GroundTrackEntities";
 
@@ -15,7 +16,6 @@ interface CesiumViewerProps {
   visibilityConeEntities: JSX.Element[];
   satPositionProperty: any;
   satellites: any[];
-  selectedSatId: string;
   groundStationPos: Cartesian3 | null;
   nextAosLosLabel: string;
   showLineOfSight: boolean;
@@ -30,13 +30,11 @@ interface CesiumViewerProps {
   showCesiumOptions: boolean; // New prop
 }
 
-const 
-CesiumViewer: React.FC<CesiumViewerProps> = ({
+const CesiumViewer: React.FC<CesiumViewerProps> = ({
   viewerRef,
   visibilityConeEntities,
   satPositionProperty,
   satellites,
-  selectedSatId,
   groundStationPos,
   nextAosLosLabel,
   showLineOfSight,
@@ -50,12 +48,15 @@ CesiumViewer: React.FC<CesiumViewerProps> = ({
   groundTrackFuture,
   showCesiumOptions,
 }) => {
+  const selectedSatelliteId = useSelector(
+    (state: RootState) => state.mongo.selectedSatId
+  );
   return (
     <div style={{ position: "relative", height: "100%" }}>
       {/* Cesium Viewer */}
       <Viewer
         ref={viewerRef}
-        style={{ position: 'absolute', inset: 0 }}
+        style={{ position: "absolute", inset: 0 }}
         homeButton={showCesiumOptions}
         sceneModePicker={showCesiumOptions}
         baseLayerPicker={showCesiumOptions}
@@ -69,14 +70,14 @@ CesiumViewer: React.FC<CesiumViewerProps> = ({
         <Clock shouldAnimate={true} />
 
         {/* Satellite with name label */}
-        {satPositionProperty && (
+        {satPositionProperty && selectedSatelliteId && (
           <Entity
             name="Satellite"
             position={satPositionProperty}
             point={{ pixelSize: 12, color: Color.YELLOW }}
             label={{
               text:
-                satellites.find((sat) => sat._id === selectedSatId)?.name ||
+                satellites.find((sat) => sat._id === selectedSatelliteId)?.name ||
                 "Satellite",
               font: "14px sans-serif",
               fillColor: Color.WHITE,
