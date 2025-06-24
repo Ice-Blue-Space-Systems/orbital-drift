@@ -28,6 +28,16 @@ function GlobalAppBar({
 
   const [themePopoverOpen, setThemePopoverOpen] = React.useState(false);
   const [accountPopoverOpen, setAccountPopoverOpen] = React.useState(false);
+  const [utcTime, setUtcTime] = React.useState<string>(new Date().toUTCString());
+
+  // Update UTC time every second
+  React.useEffect(() => {
+    const interval = setInterval(() => {
+      setUtcTime(new Date().toUTCString());
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, []);
 
   const handleThemePopoverOpen = () => {
     setThemePopoverOpen(true);
@@ -132,6 +142,18 @@ function GlobalAppBar({
             <RadarIcon style={{ fontSize: '24px' }} />
           </IconButton>
         </Tooltip>
+
+        {/* UTC Clock */}
+        <div
+          style={{
+            color: '#00ff00', // Green text
+            fontFamily: 'Courier New, Courier, monospace', // Console-style font
+            fontSize: '16px', // Slightly larger text
+            marginLeft: '16px', // Add spacing after the icons
+          }}
+        >
+          {utcTime}
+        </div>
 
         {/* Theme Switcher */}
         <div
