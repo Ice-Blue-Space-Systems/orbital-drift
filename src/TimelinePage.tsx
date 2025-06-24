@@ -205,7 +205,7 @@ const TimelinePage: React.FC = () => {
         {/* Selected Satellite and Ground Station Label */}
         <div
           style={{
-            marginTop: "60px", // Push the label below the toolbar
+            marginTop: "85px", // Push the label below the toolbar
             textAlign: "center",
             color: "#00ff00",
             fontFamily: "Courier New, Courier, monospace",
