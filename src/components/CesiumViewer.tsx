@@ -1,4 +1,4 @@
-import React, { JSX, useEffect } from "react";
+import React, { JSX } from "react";
 import { Viewer, Entity, Clock } from "resium";
 import {
   Cartesian3,
@@ -15,7 +15,6 @@ interface CesiumViewerProps {
   viewerRef: React.RefObject<any>;
   visibilityConeEntities: JSX.Element[];
   satPositionProperty: any;
-  satellites: any[];
   groundStationPos: Cartesian3 | null;
   nextAosLosLabel: string;
   showLineOfSight: boolean;
@@ -34,7 +33,6 @@ const CesiumViewer: React.FC<CesiumViewerProps> = ({
   viewerRef,
   visibilityConeEntities,
   satPositionProperty,
-  satellites,
   groundStationPos,
   nextAosLosLabel,
   showLineOfSight,
@@ -51,6 +49,8 @@ const CesiumViewer: React.FC<CesiumViewerProps> = ({
   const selectedSatelliteId = useSelector(
     (state: RootState) => state.mongo.selectedSatId
   );
+  const { satellites } = useSelector((state: RootState) => state.mongo);
+  
   return (
     <div style={{ position: "relative", height: "100%" }}>
       {/* Cesium Viewer */}

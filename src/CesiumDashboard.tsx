@@ -28,9 +28,9 @@ function CesiumDashboard({
   const { satellites, groundStations, status } = useSelector((state: RootState) => state.mongo);
   const contactWindows = useSelector(selectContactWindows);
 
-  const selectedSatId = useSelector((state: RootState) => state.mongo.selectedSatId); // Retrieve selected satellite ID from Redux
+  const selectedSatId = useSelector((state: RootState) => state.mongo.selectedSatId); 
+  const selectedGroundStationId = useSelector((state: RootState) => state.mongo.selectedGroundStationId);
 
-  const [selectedGroundStationId, setSelectedGroundStationId] = useState('');
   const [showTle, setShowTle] = useState(false);
   const [showLineOfSight, setShowLineOfSight] = useState(false);
   const [showGroundTrack, setShowGroundTrack] = useState(false);
@@ -328,8 +328,6 @@ const nextContactWindow: ContactWindow | null = useMemo(() => {
       {/* Our collapsible toolbox on the right (GlobeTools) */}
       <GlobeTools
         groundStations={groundStations}
-        selectedGroundStationId={selectedGroundStationId}
-        setSelectedGroundStationId={setSelectedGroundStationId}
         showHistory={showHistory}
         setShowHistory={setShowHistory}
         showTle={showTle}
@@ -351,7 +349,6 @@ const nextContactWindow: ContactWindow | null = useMemo(() => {
           viewerRef={viewerRef}
           lineOfSightPositions={lineOfSightPositions}
           satPositionProperty={satPositionProperty}
-          satellites={satellites}
           groundStationPos={groundStationPos}
           nextAosLosLabel={nextAosLosLabel}
           showTle={showTle}

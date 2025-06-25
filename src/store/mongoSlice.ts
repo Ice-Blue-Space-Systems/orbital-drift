@@ -41,7 +41,8 @@ interface MongoState {
   satellites: Satellite[];
   groundStations: GroundStation[];
   contactWindows: ContactWindow[];
-  selectedSatId: string | null; // Add this
+  selectedSatId: string | null;
+  selectedGroundStationId?: string | null;
   status: "idle" | "loading" | "succeeded" | "failed";
 }
 
@@ -60,6 +61,9 @@ const mongoSlice = createSlice({
     setSelectedSatId(state, action) {
       state.selectedSatId = action.payload;
     },
+    setSelectedGroundStationId(state, action) {
+      state.selectedGroundStationId = action.payload;
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -77,5 +81,5 @@ const mongoSlice = createSlice({
   },
 });
 
-export const { setSelectedSatId } = mongoSlice.actions;
+export const { setSelectedSatId, setSelectedGroundStationId } = mongoSlice.actions;
 export default mongoSlice.reducer;

@@ -176,8 +176,6 @@ const TimelinePage: React.FC = () => {
             onZoomIn={zoomIn}
             onZoomOut={zoomOut}
             onFitAll={fitAllWindows}
-            satellites={satellites}
-            groundStations={groundStations}
             selectedSatId={selectedSatId}
             setSelectedSatId={setSelectedSatId}
             selectedGroundStationId={selectedGroundStationId}

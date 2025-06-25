@@ -19,8 +19,6 @@ export interface TimelineToolsProps {
   onZoomIn: () => void;
   onZoomOut: () => void;
   onFitAll: () => void;
-  satellites: any;
-  groundStations: any;
   selectedSatId: string;
   setSelectedSatId: React.Dispatch<React.SetStateAction<string>>;
   selectedGroundStationId: string;
@@ -51,10 +49,7 @@ const TimelineTools: React.FC<TimelineToolsProps> = ({
   onZoomIn,
   onZoomOut,
   onFitAll,
-  satellites,
-  groundStations,
   selectedSatId,
-  setSelectedSatId,
   selectedGroundStationId,
   setSelectedGroundStationId,
   showTle,
@@ -178,9 +173,6 @@ const TimelineTools: React.FC<TimelineToolsProps> = ({
 
         {/* Ground Station Popover */}
         <GroundStationPopover
-          groundStations={groundStations}
-          selectedGroundStationId={selectedGroundStationId}
-          setSelectedGroundStationId={setSelectedGroundStationId}
           showLineOfSight={showLineOfSight}
           setShowLineOfSight={setShowLineOfSight}
           showVisibilityCones={showVisibilityCones}
@@ -198,8 +190,6 @@ const TimelineTools: React.FC<TimelineToolsProps> = ({
         {/* Console Popover */}
         <ConsolePopover
           debugInfo={debugInfo}
-          groundStations={groundStations}
-          selectedGroundStationId={selectedGroundStationId}
           satPositionProperty={satPositionProperty}
           tleHistoryRef={tleHistoryRef}
           groundTrackHistoryRef={groundTrackHistoryRef}

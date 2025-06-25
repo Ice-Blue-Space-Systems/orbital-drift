@@ -4,11 +4,12 @@ import VisibilityIcon from "@mui/icons-material/Visibility";
 import RadarIcon from "@mui/icons-material/Radar";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faSatelliteDish } from "@fortawesome/free-solid-svg-icons";
+import { useSelector, useDispatch } from "react-redux";
+import { RootState } from "../store";
+import { setSelectedGroundStationId } from "../store/mongoSlice";
+
 
 interface GroundStationPopoverProps {
-  groundStations: any[];
-  selectedGroundStationId: string;
-  setSelectedGroundStationId: (id: string) => void;
   showLineOfSight: boolean;
   setShowLineOfSight: (value: boolean) => void;
   showVisibilityCones: boolean;
@@ -16,16 +17,15 @@ interface GroundStationPopoverProps {
 }
 
 const GroundStationPopover: React.FC<GroundStationPopoverProps> = ({
-  groundStations,
-  selectedGroundStationId,
-  setSelectedGroundStationId,
   showLineOfSight,
   setShowLineOfSight,
   showVisibilityCones,
   setShowVisibilityCones,
 }) => {
+  const dispatch = useDispatch();
   const [openPopover, setOpenPopover] = useState<boolean>(false);
   const [groundStationFilter, setGroundStationFilter] = useState<string>("");
+  const {groundStations, selectedGroundStationId } = useSelector((state: RootState) => state.mongo);
 
   return (
     <div
@@ -140,7 +140,7 @@ const GroundStationPopover: React.FC<GroundStationPopoverProps> = ({
                   <ListItemButton
                     onClick={() => {
                       console.log("Ground Station ID:", gs);
-                      setSelectedGroundStationId(gs._id);
+                      dispatch(setSelectedGroundStationId(gs._id));
                       setOpenPopover(false); // Close popover after selection
                     }}
                     style={{

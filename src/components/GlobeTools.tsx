@@ -15,8 +15,6 @@ import CesiumOptionsPopover from "./CesiumOptionsPopover"; // Import the CesiumO
 
 interface GlobeToolsProps {
   groundStations: any[];
-  selectedGroundStationId: string;
-  setSelectedGroundStationId: (id: string) => void;
 
   showHistory: boolean;
   setShowHistory: (value: boolean) => void;
@@ -42,9 +40,6 @@ interface GlobeToolsProps {
 }
 
 const GlobeTools: React.FC<GlobeToolsProps> = ({
-  groundStations,
-  selectedGroundStationId,
-  setSelectedGroundStationId,
   showHistory,
   setShowHistory,
   showTle,
@@ -64,6 +59,7 @@ const GlobeTools: React.FC<GlobeToolsProps> = ({
 }) => {
   const dispatch = useDispatch<AppDispatch>();
   const selectedSatelliteId = useSelector((state: RootState) => state.mongo.selectedSatId); // Retrieve selected satellite ID
+const selectedGroundStationId = useSelector((state: RootState) => state.mongo.selectedGroundStationId); // Retrieve selected ground station ID  
 
   // Retrieve contact windows from Redux
   const contactWindows = useSelector(selectContactWindows);
@@ -78,7 +74,7 @@ const GlobeTools: React.FC<GlobeToolsProps> = ({
         groundStationId: selectedGroundStationId || "",
       }));
     }
-  }, [selectedSatelliteId, dispatch]);
+  }, [selectedSatelliteId, selectedGroundStationId, dispatch]);
 
   // Fetch contact windows when satellite or ground station changes
   useEffect(() => {
@@ -171,9 +167,6 @@ const GlobeTools: React.FC<GlobeToolsProps> = ({
 
         {/* Ground Station Button */}
         <GroundStationPopover
-          groundStations={groundStations}
-          selectedGroundStationId={selectedGroundStationId}
-          setSelectedGroundStationId={setSelectedGroundStationId}
           showLineOfSight={showLineOfSight}
           setShowLineOfSight={setShowLineOfSight}
           showVisibilityCones={showVisibilityCones}
@@ -191,8 +184,6 @@ const GlobeTools: React.FC<GlobeToolsProps> = ({
         {/* Console Button */}
         <ConsolePopover
           debugInfo={debugInfo}
-          groundStations={groundStations}
-          selectedGroundStationId={selectedGroundStationId}
           satPositionProperty={satPositionProperty}
           tleHistoryRef={tleHistoryRef}
           groundTrackHistoryRef={groundTrackHistoryRef}

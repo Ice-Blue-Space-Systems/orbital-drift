@@ -5,8 +5,6 @@ import { RootState } from "../store";
 
 interface SatelliteStatusTableProps {
   debugInfo?: any;
-  groundStations: any[];
-  selectedGroundStationId: string;
   satPositionProperty?: any;
   tleHistoryRef: React.MutableRefObject<any[]>;
   groundTrackHistoryRef: React.MutableRefObject<any[]>;
@@ -15,8 +13,6 @@ interface SatelliteStatusTableProps {
 
 const SatelliteStatusTable: React.FC<SatelliteStatusTableProps> = ({
   debugInfo,
-  groundStations,
-  selectedGroundStationId,
   satPositionProperty,
   tleHistoryRef,
   groundTrackHistoryRef,
@@ -25,7 +21,10 @@ const SatelliteStatusTable: React.FC<SatelliteStatusTableProps> = ({
   const [tlePosition, setTlePosition] = useState<Cartesian3 | null>(null);
   const [groundTrackPosition, setGroundTrackPosition] = useState<Cartesian3 | null>(null);
   const selectedSatId = useSelector((state: RootState) => state.mongo.selectedSatId); // Retrieve selected satellite ID
-  const satellites = useSelector((state: RootState) => state.mongo.satellites);
+  const selectedGroundStationId = useSelector(
+    (state: RootState) => state.mongo.selectedGroundStationId
+  ); // Retrieve selected ground station ID
+  const { satellites, groundStations } = useSelector((state: RootState) => state.mongo);
 
   useEffect(() => {
     if (!satPositionProperty) return;
