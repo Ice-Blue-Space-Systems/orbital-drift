@@ -14,10 +14,14 @@ const TimelinePage: React.FC = () => {
 
   // State for satellites and ground stations
   const { satellites, groundStations, status } = useSelector((state: any) => state.mongo);
+  const selectedSatelliteId = useSelector((state: any) => state.mongo.selectedSatId);
+  const selectedGroundStationId = useSelector((state: any) => state.mongo.selectedGroundStationId);
 
-  // State for selected satellite and ground station
-  const [selectedSatId, setSelectedSatId] = useState<string>("");
-  const [selectedGroundStationId, setSelectedGroundStationId] = useState<string>("");
+  // Find the selected satellite and ground station
+  const selectedSatellite = satellites.find((sat: Satellite) => sat._id === selectedSatelliteId);
+  const selectedGroundStation = groundStations.find(
+    (gs: GroundStation) => gs._id === selectedGroundStationId
+  );
 
   // State for additional props required by TimelineTools
   const [showHistory, setShowHistory] = useState<boolean>(false);
@@ -152,10 +156,6 @@ const TimelinePage: React.FC = () => {
     timelineInstance.current.fit({ animation: true });
   };
 
-  // Get selected satellite and ground station names
-  const selectedSatellite = satellites.find((sat: Satellite) => sat._id === selectedSatId);
-  const selectedGroundStation = groundStations.find((gs: GroundStation) => gs._id === selectedGroundStationId);
-
   return (
     <div
       style={{
@@ -176,10 +176,6 @@ const TimelinePage: React.FC = () => {
             onZoomIn={zoomIn}
             onZoomOut={zoomOut}
             onFitAll={fitAllWindows}
-            selectedSatId={selectedSatId}
-            setSelectedSatId={setSelectedSatId}
-            selectedGroundStationId={selectedGroundStationId}
-            setSelectedGroundStationId={setSelectedGroundStationId}
             showTle={showTle}
             setShowTle={setShowTle}
             showHistory={showHistory}

@@ -11,6 +11,8 @@ import GroundStationPopover from "./GroundStationPopover"; // Import GroundStati
 import ContactWindowsPopover from "./ContactWindowsPopover"; // Import ContactWindowsPopover
 import ConsolePopover from "./ConsolePopover"; // Import ConsolePopover
 import "./TimelineTools.css"; // Import the CSS file
+import { useSelector } from "react-redux";
+import { RootState } from "../store";
 
 export interface TimelineToolsProps {
   onJumpToNext: () => void;
@@ -19,10 +21,6 @@ export interface TimelineToolsProps {
   onZoomIn: () => void;
   onZoomOut: () => void;
   onFitAll: () => void;
-  selectedSatId: string;
-  setSelectedSatId: React.Dispatch<React.SetStateAction<string>>;
-  selectedGroundStationId: string;
-  setSelectedGroundStationId: React.Dispatch<React.SetStateAction<string>>;
   showTle: boolean;
   setShowTle: React.Dispatch<React.SetStateAction<boolean>>;
   showHistory: boolean;
@@ -49,9 +47,6 @@ const TimelineTools: React.FC<TimelineToolsProps> = ({
   onZoomIn,
   onZoomOut,
   onFitAll,
-  selectedSatId,
-  selectedGroundStationId,
-  setSelectedGroundStationId,
   showTle,
   setShowTle,
   showHistory,
@@ -69,6 +64,13 @@ const TimelineTools: React.FC<TimelineToolsProps> = ({
   nextContactWindow,
 }) => {
   const currentPath = window.location.pathname;
+
+  const selectedSatId = useSelector(
+    (state: RootState) => state.mongo.selectedSatId
+  );
+  const selectedGroundStationId = useSelector(
+    (state: RootState) => state.mongo.selectedGroundStationId
+  );
 
     const arrowPosition =
     {
