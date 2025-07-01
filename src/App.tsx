@@ -10,7 +10,7 @@ import Brightness4Icon from '@mui/icons-material/Brightness4';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faUserAstronaut } from '@fortawesome/free-solid-svg-icons';
 
-import CesiumDashboard from './CesiumDashboard';
+import GlobePage from './GlobePage';
 import TimelinePage from './TimelinePage';
 import SatsPage from './SatsPage';
 import GSPage from './GSPage';
@@ -331,7 +331,7 @@ const App: React.FC = () => {
           <Route
             path="/globe"
             element={
-              <CesiumDashboard
+              <GlobePage
                 showCesiumOptions={showCesiumOptions}
                 setShowCesiumOptions={setShowCesiumOptions}
               />

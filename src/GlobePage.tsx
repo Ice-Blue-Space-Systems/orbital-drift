@@ -15,15 +15,15 @@ import CesiumViewer from './components/CesiumViewer';
 import { getFuturePositionsWithTime } from './utils/tleUtils';
 import GlobeTools from './components/GlobeTools';
 
-interface CesiumDashboardProps {
+interface GlobePageProps {
   showCesiumOptions: boolean;
   setShowCesiumOptions: (value: boolean) => void;
 }
 
-function CesiumDashboard({
+function GlobePage({
   showCesiumOptions,
   setShowCesiumOptions,
-}: CesiumDashboardProps) {
+}: GlobePageProps) {
   const dispatch: AppDispatch = useDispatch();
   const { satellites, groundStations, status } = useSelector((state: RootState) => state.mongo);
   const contactWindows = useSelector(selectContactWindows);
@@ -370,4 +370,4 @@ const nextContactWindow: ContactWindow | null = useMemo(() => {
   );
 }
 
-export default CesiumDashboard;
+export default GlobePage;
