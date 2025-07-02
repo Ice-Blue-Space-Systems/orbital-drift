@@ -49,6 +49,7 @@ interface MongoState {
   showLineOfSight: boolean;
   showVisibilityCones: boolean;
   showHistory: boolean; // Add showHistory to the state
+  showCesiumOptions: boolean; // Add showCesiumOptions to the state
 }
 
 const initialState: MongoState = {
@@ -61,7 +62,8 @@ const initialState: MongoState = {
   showGroundTrack: false,
   showLineOfSight: false,
   showVisibilityCones: false,
-  showHistory: false, // Add showHistory to the initial state
+  showHistory: false,
+  showCesiumOptions: false, // Add showCesiumOptions to the initial state
 };
 
 const mongoSlice = createSlice({
@@ -87,7 +89,11 @@ const mongoSlice = createSlice({
       state.showVisibilityCones = action.payload;
     },
     setShowHistory(state, action) {
-      state.showHistory = action.payload; // Add reducer for showHistory
+      state.showHistory = action.payload;
+    },
+    setShowCesiumOptions(state, action) {
+      console.log("Setting showCesiumOptions to:", action.payload);
+      state.showCesiumOptions = action.payload; // Reducer for showCesiumOptions
     },
   },
   extraReducers: (builder) => {
@@ -113,6 +119,7 @@ export const {
   setShowGroundTrack,
   setShowLineOfSight,
   setShowVisibilityCones,
-  setShowHistory, // Export the new action
+  setShowHistory,
+  setShowCesiumOptions, // Export the action
 } = mongoSlice.actions;
 export default mongoSlice.reducer;

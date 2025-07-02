@@ -15,31 +15,17 @@ import CesiumOptionsPopover from "./CesiumOptionsPopover"; // Import the CesiumO
 
 interface GlobeToolsProps {
   groundStations: any[];
-  showLineOfSight: boolean;
-  setShowLineOfSight: (value: boolean) => void;
-
-  showVisibilityCones: boolean;
-  setShowVisibilityCones: (value: boolean) => void;
-
   debugInfo: any; // Pass debugInfo for SatelliteStatusTable
   satPositionProperty: any;
   tleHistoryRef: React.MutableRefObject<any[]>;
   groundTrackHistoryRef: React.MutableRefObject<any[]>;
-  showCesiumOptions: boolean; // Add this prop
-  setShowCesiumOptions: (value: boolean) => void; // Add this prop
 }
 
 const GlobeTools: React.FC<GlobeToolsProps> = ({
-  showLineOfSight,
-  setShowLineOfSight,
-  showVisibilityCones,
-  setShowVisibilityCones,
   debugInfo,
   satPositionProperty,
   tleHistoryRef,
   groundTrackHistoryRef,
-  showCesiumOptions,
-  setShowCesiumOptions,
 }) => {
   const dispatch = useDispatch<AppDispatch>();
   const selectedSatelliteId = useSelector(
@@ -158,12 +144,7 @@ const GlobeTools: React.FC<GlobeToolsProps> = ({
         <SatellitePopover />
 
         {/* Ground Station Button */}
-        <GroundStationPopover
-          showLineOfSight={showLineOfSight}
-          setShowLineOfSight={setShowLineOfSight}
-          showVisibilityCones={showVisibilityCones}
-          setShowVisibilityCones={setShowVisibilityCones}
-        />
+        <GroundStationPopover />
 
         {/* Contact Windows Button */}
         {selectedSatelliteId && selectedGroundStationId && (
@@ -183,10 +164,7 @@ const GlobeTools: React.FC<GlobeToolsProps> = ({
         />
 
         {/* Cesium Options Button */}
-        <CesiumOptionsPopover
-          showCesiumOptions={showCesiumOptions}
-          setShowCesiumOptions={setShowCesiumOptions}
-        />
+        <CesiumOptionsPopover />
       </div>
     </div>
   );

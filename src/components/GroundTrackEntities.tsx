@@ -1,22 +1,23 @@
 import React from "react";
 import { Entity } from "resium";
 import { CallbackProperty, Color } from "cesium";
+import { useSelector } from "react-redux";
+import { RootState } from "../store";
 
 interface GroundTrackEntitiesProps {
-  showGroundTrack: boolean;
-  showHistory: boolean;
   groundTrackHistory: CallbackProperty | null;
   groundTrackFuture: CallbackProperty | null;
   satPositionProperty: any;
 }
 
 const GroundTrackEntities: React.FC<GroundTrackEntitiesProps> = ({
-  showGroundTrack,
-  showHistory,
   groundTrackHistory,
   groundTrackFuture,
   satPositionProperty,
 }) => {
+
+  const {showGroundTrack, showHistory} = useSelector((state: RootState) => state.mongo);
+
   // If showGroundTrack is off or no position property, don’t render anything
   if (!showGroundTrack || !satPositionProperty) return null;
 

@@ -17,16 +17,11 @@ interface CesiumViewerProps {
   satPositionProperty: any;
   groundStationPos: Cartesian3 | null;
   nextAosLosLabel: string;
-  showLineOfSight: boolean;
   lineOfSightPositions: Cartesian3[];
-  showTle: boolean;
-  showHistory: boolean;
   tleHistory: any[];
   tleFuture: any[];
-  showGroundTrack: boolean;
   groundTrackHistory: any[];
   groundTrackFuture: any[];
-  showCesiumOptions: boolean; // New prop
 }
 
 const CesiumViewer: React.FC<CesiumViewerProps> = ({
@@ -35,22 +30,23 @@ const CesiumViewer: React.FC<CesiumViewerProps> = ({
   satPositionProperty,
   groundStationPos,
   nextAosLosLabel,
-  showLineOfSight,
   lineOfSightPositions,
-  showTle,
-  showHistory,
   tleHistory,
   tleFuture,
-  showGroundTrack,
   groundTrackHistory,
-  groundTrackFuture,
-  showCesiumOptions,
+  groundTrackFuture
 }) => {
   const selectedSatelliteId = useSelector(
     (state: RootState) => state.mongo.selectedSatId
   );
   const { satellites } = useSelector((state: RootState) => state.mongo);
-  
+  const showLineOfSight = useSelector(
+    (state: RootState) => state.mongo.showLineOfSight
+  );
+  const showCesiumOptions = useSelector(
+    (state: RootState) => state.mongo.showCesiumOptions
+  );
+
   return (
     <div style={{ position: "relative", height: "100%" }}>
       {/* Cesium Viewer */}
@@ -109,8 +105,6 @@ const CesiumViewer: React.FC<CesiumViewerProps> = ({
 
         {/* TLE Paths */}
         <TleEntities
-          showTle={showTle}
-          showHistory={showHistory}
           tleHistory={new CallbackProperty(() => tleHistory, false)}
           tleFuture={new CallbackProperty(() => tleFuture, false)}
           satPositionProperty={satPositionProperty}
@@ -130,8 +124,6 @@ const CesiumViewer: React.FC<CesiumViewerProps> = ({
 
         {/* Ground Track */}
         <GroundTrackEntities
-          showGroundTrack={showGroundTrack}
-          showHistory={showHistory}
           groundTrackHistory={
             new CallbackProperty(() => groundTrackHistory, false)
           }

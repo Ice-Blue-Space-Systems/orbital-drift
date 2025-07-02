@@ -6,26 +6,16 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faSatelliteDish } from "@fortawesome/free-solid-svg-icons";
 import { useSelector, useDispatch } from "react-redux";
 import { RootState } from "../store";
-import { setSelectedGroundStationId } from "../store/mongoSlice";
+import { setSelectedGroundStationId, setShowLineOfSight, setShowVisibilityCones } from "../store/mongoSlice";
 
+const GroundStationPopover: React.FC = () => {
 
-interface GroundStationPopoverProps {
-  showLineOfSight: boolean;
-  setShowLineOfSight: (value: boolean) => void;
-  showVisibilityCones: boolean;
-  setShowVisibilityCones: (value: boolean) => void;
-}
-
-const GroundStationPopover: React.FC<GroundStationPopoverProps> = ({
-  showLineOfSight,
-  setShowLineOfSight,
-  showVisibilityCones,
-  setShowVisibilityCones,
-}) => {
   const dispatch = useDispatch();
   const [openPopover, setOpenPopover] = useState<boolean>(false);
   const [groundStationFilter, setGroundStationFilter] = useState<string>("");
   const {groundStations, selectedGroundStationId } = useSelector((state: RootState) => state.mongo);
+  const showLineOfSight = useSelector((state: RootState) => state.mongo.showLineOfSight);
+  const showVisibilityCones = useSelector((state: RootState) => state.mongo.showVisibilityCones);
 
   return (
     <div
@@ -92,7 +82,7 @@ const GroundStationPopover: React.FC<GroundStationPopoverProps> = ({
           >
             <Tooltip title="Toggle Line of Sight" arrow placement="bottom">
               <IconButton
-                onClick={() => setShowLineOfSight(!showLineOfSight)}
+                onClick={() => dispatch(setShowLineOfSight(!showLineOfSight))} // Dispatch Redux action
                 style={{
                   color: showLineOfSight ? "#00ff00" : "#888888", // Bright green if active, grey if inactive
                   transition: "color 0.2s ease-in-out",
@@ -104,7 +94,7 @@ const GroundStationPopover: React.FC<GroundStationPopoverProps> = ({
 
             <Tooltip title="Toggle Visibility Cones" arrow placement="bottom">
               <IconButton
-                onClick={() => setShowVisibilityCones(!showVisibilityCones)}
+                onClick={() => dispatch(setShowVisibilityCones(!showVisibilityCones))} // Dispatch Redux action
                 style={{
                   color: showVisibilityCones ? "#00ff00" : "#888888", // Bright green if active, grey if inactive
                   transition: "color 0.2s ease-in-out",

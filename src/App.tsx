@@ -319,7 +319,6 @@ function GlobalAppBar({
 
 const App: React.FC = () => {
   const [currentTheme, setCurrentTheme] = useState<string>('console');
-  const [showCesiumOptions, setShowCesiumOptions] = React.useState(false); // Default to false
 
   return (
     <div>
@@ -331,10 +330,7 @@ const App: React.FC = () => {
           <Route
             path="/globe"
             element={
-              <GlobePage
-                showCesiumOptions={showCesiumOptions}
-                setShowCesiumOptions={setShowCesiumOptions}
-              />
+              <GlobePage />
             }
           />
           {/* Other routes */}

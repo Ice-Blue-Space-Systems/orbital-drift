@@ -1,48 +1,55 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import {
   Cartesian3,
   JulianDate,
   SampledPositionProperty,
   CallbackProperty,
   Ellipsoid,
-} from 'cesium';
-import { useSelector, useDispatch } from 'react-redux';
-import { RootState, AppDispatch } from './store';
-import { ContactWindow, fetchMongoData } from './store/mongoSlice';
-import { fetchTleBySatelliteId } from './store/tleSlice';
-import { selectContactWindows } from './store/contactWindowsSlice';
-import CesiumViewer from './components/CesiumViewer';
-import { getFuturePositionsWithTime, getVelocityAtTime, calculateDopplerShift } from './utils/tleUtils';
-import GlobeTools from './components/GlobeTools';
+} from "cesium";
+import { useSelector, useDispatch } from "react-redux";
+import { RootState, AppDispatch } from "./store";
+import { ContactWindow, fetchMongoData } from "./store/mongoSlice";
+import { fetchTleBySatelliteId } from "./store/tleSlice";
+import { selectContactWindows } from "./store/contactWindowsSlice";
+import CesiumViewer from "./components/CesiumViewer";
+import {
+  getFuturePositionsWithTime,
+  getVelocityAtTime,
+  calculateDopplerShift,
+} from "./utils/tleUtils";
+import GlobeTools from "./components/GlobeTools";
 
-interface GlobePageProps {
-  showCesiumOptions: boolean;
-  setShowCesiumOptions: (value: boolean) => void;
-}
-
-function GlobePage({
-  showCesiumOptions,
-  setShowCesiumOptions,
-}: GlobePageProps) {
+function GlobePage() {
   const dispatch: AppDispatch = useDispatch();
-  const { satellites, groundStations, status } = useSelector((state: RootState) => state.mongo);
+  const { satellites, groundStations, status } = useSelector(
+    (state: RootState) => state.mongo
+  );
   const contactWindows = useSelector(selectContactWindows);
 
-  const selectedSatId = useSelector((state: RootState) => state.mongo.selectedSatId); 
-  const selectedGroundStationId = useSelector((state: RootState) => state.mongo.selectedGroundStationId);
+  const selectedSatId = useSelector(
+    (state: RootState) => state.mongo.selectedSatId
+  );
+  const selectedGroundStationId = useSelector(
+    (state: RootState) => state.mongo.selectedGroundStationId
+  );
 
-  const [showLineOfSight, setShowLineOfSight] = useState(false);
-  const [satPositionProperty, setSatPositionProperty] = useState<SampledPositionProperty | null>(
+  const [satPositionProperty, setSatPositionProperty] =
+    useState<SampledPositionProperty | null>(null);
+  const [groundStationPos, setGroundStationPos] = useState<Cartesian3 | null>(
     null
   );
-  const [groundStationPos, setGroundStationPos] = useState<Cartesian3 | null>(null);
-  const [lineOfSightPositions, setLineOfSightPositions] = useState<Cartesian3[]>([]);
-  const [showVisibilityCones, setShowVisibilityCones] = useState(false);
+  const [lineOfSightPositions, setLineOfSightPositions] = useState<
+    Cartesian3[]
+  >([]);
 
-  const showHistory = useSelector((state: RootState) => state.mongo.showHistory);
+  const showHistory = useSelector(
+    (state: RootState) => state.mongo.showHistory
+  );
   const showTle = useSelector((state: RootState) => state.mongo.showTle);
-  const showGroundTrack = useSelector((state: RootState) => state.mongo.showGroundTrack);
-  
+  const showGroundTrack = useSelector(
+    (state: RootState) => state.mongo.showGroundTrack
+  );
+
   type DebugInfo = {
     satellitePosition: Cartesian3 | null;
     tlePosition: Cartesian3 | null;
@@ -70,7 +77,7 @@ function GlobePage({
 
   // Fetch initial data once
   useEffect(() => {
-    if (status === 'idle') {
+    if (status === "idle") {
       dispatch(fetchMongoData());
     }
   }, [status, dispatch]);
@@ -85,21 +92,23 @@ function GlobePage({
 
     const loadTleAndPosition = async () => {
       try {
-        let line1 = '';
-        let line2 = '';
+        let line1 = "";
+        let line2 = "";
 
-        if (satellite.type === 'simulated' && satellite.currentTleId) {
+        if (satellite.type === "simulated" && satellite.currentTleId) {
           const tle = await dispatch(
             fetchTleBySatelliteId(satellite.currentTleId)
           ).unwrap();
           line1 = tle.line1;
           line2 = tle.line2;
-        } else if (satellite.type === 'live' && satellite.noradId) {
+        } else if (satellite.type === "live" && satellite.noradId) {
           const res = await fetch(
-            'https://celestrak.com/NORAD/elements/stations.txt'
+            "https://celestrak.com/NORAD/elements/stations.txt"
           );
-          const lines = (await res.text()).split('\n');
-          const idx = lines.findIndex((l) => l.includes(String(satellite.noradId)));
+          const lines = (await res.text()).split("\n");
+          const idx = lines.findIndex((l) =>
+            l.includes(String(satellite.noradId))
+          );
           if (idx !== -1) {
             line1 = lines[idx];
             line2 = lines[idx + 1];
@@ -118,7 +127,7 @@ function GlobePage({
           setSatPositionProperty(null);
         }
       } catch (err) {
-        console.error('Failed to fetch TLE or compute position', err);
+        console.error("Failed to fetch TLE or compute position", err);
         setSatPositionProperty(null);
       }
     };
@@ -130,7 +139,9 @@ function GlobePage({
 
   // Convert ground station location
   useEffect(() => {
-    const station = groundStations.find((gs) => gs._id === selectedGroundStationId);
+    const station = groundStations.find(
+      (gs) => gs._id === selectedGroundStationId
+    );
     if (station) {
       const { lat, lon, alt } = station.location;
       setGroundStationPos(Cartesian3.fromDegrees(lon, lat, alt * 1000));
@@ -160,7 +171,12 @@ function GlobePage({
 
   // Ground Track (past)
   useEffect(() => {
-    if (!showGroundTrack || !showHistory || !satPositionProperty || !viewerRef.current) {
+    if (
+      !showGroundTrack ||
+      !showHistory ||
+      !satPositionProperty ||
+      !viewerRef.current
+    ) {
       return;
     }
     const viewer = viewerRef.current.cesiumElement;
@@ -221,7 +237,11 @@ function GlobePage({
       if (!currentTime) return positions;
 
       for (let i = 0; i <= 3600; i += 30) {
-        const offsetTime = JulianDate.addSeconds(currentTime, i, new JulianDate());
+        const offsetTime = JulianDate.addSeconds(
+          currentTime,
+          i,
+          new JulianDate()
+        );
         const pos = satPositionProperty.getValue(offsetTime);
         if (pos) positions.push(pos);
       }
@@ -254,7 +274,8 @@ function GlobePage({
 
   // Calculate the next contact window
   const nextContactWindow: ContactWindow | null = useMemo(() => {
-    if (!selectedSatId || !selectedGroundStationId || !debugInfo.currentTime) return null;
+    if (!selectedSatId || !selectedGroundStationId || !debugInfo.currentTime)
+      return null;
 
     // Use debugInfo.currentTime directly as it is already a Date object
     const cesiumCurrentTime = debugInfo.currentTime;
@@ -273,21 +294,32 @@ function GlobePage({
       (a: ContactWindow, b: ContactWindow) =>
         new Date(a.scheduledAOS).getTime() - new Date(b.scheduledAOS).getTime()
     )[0];
-  }, [contactWindows, selectedSatId, selectedGroundStationId, debugInfo.currentTime]);
+  }, [
+    contactWindows,
+    selectedSatId,
+    selectedGroundStationId,
+    debugInfo.currentTime,
+  ]);
 
   const nextAosLosLabel = useMemo(() => {
-    if (!nextContactWindow) return 'No upcoming contact';
+    if (!nextContactWindow) return "No upcoming contact";
     return (
-      'Next AOS: ' +
+      "Next AOS: " +
       new Date(nextContactWindow.scheduledAOS).toISOString() +
-      '\nLOS: ' +
+      "\nLOS: " +
       new Date(nextContactWindow.scheduledLOS).toISOString()
     );
   }, [nextContactWindow]);
 
   // Example of continuously updating debugInfo each frame for SatelliteStatusTable
   useEffect(() => {
-    if (!viewerRef.current?.cesiumElement || !contactWindows || !selectedSatId || !selectedGroundStationId) return;
+    if (
+      !viewerRef.current?.cesiumElement ||
+      !contactWindows ||
+      !selectedSatId ||
+      !selectedGroundStationId
+    )
+      return;
 
     const viewer = viewerRef.current.cesiumElement;
 
@@ -296,7 +328,12 @@ function GlobePage({
 
       // Check if the satellite is in sight based on contact windows
       const currentContactWindow = contactWindows.find(
-        (win: { satelliteId: string; groundStationId: string; scheduledAOS: string | number | Date; scheduledLOS: string | number | Date; }) =>
+        (win: {
+          satelliteId: string;
+          groundStationId: string;
+          scheduledAOS: string | number | Date;
+          scheduledLOS: string | number | Date;
+        }) =>
           win.satelliteId === selectedSatId &&
           win.groundStationId === selectedGroundStationId &&
           new Date(win.scheduledAOS) <= curTime &&
@@ -307,7 +344,8 @@ function GlobePage({
 
       setDebugInfo((prev) => ({
         ...prev,
-        satellitePosition: satPositionProperty?.getValue(viewer.clock.currentTime) || null,
+        satellitePosition:
+          satPositionProperty?.getValue(viewer.clock.currentTime) || null,
         currentTime: curTime,
         inSight, // Update inSight based on contact windows
       }));
@@ -315,7 +353,12 @@ function GlobePage({
 
     viewer.clock.onTick.addEventListener(updateDebugInfo);
     return () => viewer.clock.onTick.removeEventListener(updateDebugInfo);
-  }, [contactWindows, selectedSatId, selectedGroundStationId, satPositionProperty]);
+  }, [
+    contactWindows,
+    selectedSatId,
+    selectedGroundStationId,
+    satPositionProperty,
+  ]);
 
   // Cleanup on unmount: Destroy Cesium viewer
   useEffect(() => {
@@ -346,13 +389,19 @@ function GlobePage({
         let line2 = "";
 
         if (satellite.type === "simulated" && satellite.currentTleId) {
-          const tle = await dispatch(fetchTleBySatelliteId(satellite.currentTleId)).unwrap();
+          const tle = await dispatch(
+            fetchTleBySatelliteId(satellite.currentTleId)
+          ).unwrap();
           line1 = tle.line1;
           line2 = tle.line2;
         } else if (satellite.type === "live" && satellite.noradId) {
-          const res = await fetch("https://celestrak.com/NORAD/elements/stations.txt");
+          const res = await fetch(
+            "https://celestrak.com/NORAD/elements/stations.txt"
+          );
           const lines = (await res.text()).split("\n");
-          const idx = lines.findIndex((l) => l.includes(String(satellite.noradId)));
+          const idx = lines.findIndex((l) =>
+            l.includes(String(satellite.noradId))
+          );
           if (idx !== -1) {
             line1 = lines[idx];
             line2 = lines[idx + 1];
@@ -360,7 +409,11 @@ function GlobePage({
         }
 
         if (line1 && line2) {
-          const velocity = getVelocityAtTime(line1, line2, viewerRef.current?.cesiumElement?.clock.currentTime);
+          const velocity = getVelocityAtTime(
+            line1,
+            line2,
+            viewerRef.current?.cesiumElement?.clock.currentTime
+          );
           setDebugInfo((prev) => ({
             ...prev,
             satelliteVelocity: velocity,
@@ -383,7 +436,9 @@ function GlobePage({
   // Calculate Doppler shift
   useEffect(() => {
     const satellite = satellites.find((sat) => sat._id === selectedSatId);
-    const groundStation = groundStations.find((gs) => gs._id === selectedGroundStationId);
+    const groundStation = groundStations.find(
+      (gs) => gs._id === selectedGroundStationId
+    );
 
     if (!satellite || !groundStation) {
       setDebugInfo((prev) => ({
@@ -400,13 +455,19 @@ function GlobePage({
         let line2 = "";
 
         if (satellite.type === "simulated" && satellite.currentTleId) {
-          const tle = await dispatch(fetchTleBySatelliteId(satellite.currentTleId)).unwrap();
+          const tle = await dispatch(
+            fetchTleBySatelliteId(satellite.currentTleId)
+          ).unwrap();
           line1 = tle.line1;
           line2 = tle.line2;
         } else if (satellite.type === "live" && satellite.noradId) {
-          const res = await fetch("https://celestrak.com/NORAD/elements/stations.txt");
+          const res = await fetch(
+            "https://celestrak.com/NORAD/elements/stations.txt"
+          );
           const lines = (await res.text()).split("\n");
-          const idx = lines.findIndex((l) => l.includes(String(satellite.noradId)));
+          const idx = lines.findIndex((l) =>
+            l.includes(String(satellite.noradId))
+          );
           if (idx !== -1) {
             line1 = lines[idx];
             line2 = lines[idx + 1];
@@ -445,45 +506,53 @@ function GlobePage({
     };
 
     loadDopplerShift();
-  }, [selectedSatId, selectedGroundStationId, satellites, groundStations, dispatch]);
+  }, [
+    selectedSatId,
+    selectedGroundStationId,
+    satellites,
+    groundStations,
+    dispatch,
+  ]);
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 64px)' }}>
-
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        height: "calc(100vh - 64px)",
+      }}
+    >
       {/* Our collapsible toolbox on the right (GlobeTools) */}
       <GlobeTools
         groundStations={groundStations}
-        showLineOfSight={showLineOfSight}
-        setShowLineOfSight={setShowLineOfSight}
-        showVisibilityCones={showVisibilityCones}
-        setShowVisibilityCones={setShowVisibilityCones}
         debugInfo={debugInfo}
         satPositionProperty={satPositionProperty}
         tleHistoryRef={tleHistoryRef}
-        groundTrackHistoryRef={groundTrackHistoryRef} showCesiumOptions={showCesiumOptions} setShowCesiumOptions={setShowCesiumOptions}      />
+        groundTrackHistoryRef={groundTrackHistoryRef}
+      />
 
       {/* Main Cesium globe, stretched to fill the remaining space */}
-      <div style={{ flex: 1, position: 'relative' }}>
+      <div style={{ flex: 1, position: "relative" }}>
         <CesiumViewer
           viewerRef={viewerRef}
           lineOfSightPositions={lineOfSightPositions}
           satPositionProperty={satPositionProperty}
           groundStationPos={groundStationPos}
           nextAosLosLabel={nextAosLosLabel}
-          showTle={showTle}
-          showHistory={showHistory}
           tleHistory={tleHistoryRef.current}
-          tleFuture={tleFuture instanceof CallbackProperty
-            ? tleFuture.getValue(JulianDate.now())
-            : tleFuture || []}
-          showGroundTrack={showGroundTrack}
+          tleFuture={
+            tleFuture instanceof CallbackProperty
+              ? tleFuture.getValue(JulianDate.now())
+              : tleFuture || []
+          }
           groundTrackHistory={groundTrackHistory.getValue(JulianDate.now())}
-          groundTrackFuture={groundTrackFuture instanceof CallbackProperty
-            ? groundTrackFuture.getValue(JulianDate.now())
-            : []}
-          showLineOfSight={showLineOfSight}
+          groundTrackFuture={
+            groundTrackFuture instanceof CallbackProperty
+              ? groundTrackFuture.getValue(JulianDate.now())
+              : []
+          }
           visibilityConeEntities={[]}
-          showCesiumOptions={showCesiumOptions}        />
+        />
       </div>
     </div>
   );

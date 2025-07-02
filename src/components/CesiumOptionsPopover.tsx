@@ -1,18 +1,16 @@
 import React, { useState } from "react";
 import { IconButton, Tooltip } from "@mui/material";
 import SettingsIcon from "@mui/icons-material/Settings";
+import { useDispatch, useSelector } from "react-redux";
+import { setShowCesiumOptions } from "../store/mongoSlice";
+import { RootState } from "../store";
 
-interface CesiumOptionsPopoverProps {
-  showCesiumOptions: boolean;
-  setShowCesiumOptions: (value: boolean) => void;
-}
-
-const CesiumOptionsPopover: React.FC<CesiumOptionsPopoverProps> = ({
-  showCesiumOptions,
-  setShowCesiumOptions,
-}) => {
+const CesiumOptionsPopover: React.FC = () => {
   const [openPopover, setOpenPopover] = useState<boolean>(false);
-
+  const dispatch = useDispatch();
+  const showCesiumOptions = useSelector(
+    (state: RootState) => state.mongo.showCesiumOptions
+  );
   return (
     <div
       style={{ position: "relative" }}
@@ -73,7 +71,7 @@ const CesiumOptionsPopover: React.FC<CesiumOptionsPopoverProps> = ({
           >
             <Tooltip title="Toggle Cesium Options" arrow>
               <IconButton
-                onClick={() => setShowCesiumOptions(!showCesiumOptions)}
+                onClick={() => dispatch(setShowCesiumOptions(!showCesiumOptions))}
                 style={{
                   color: showCesiumOptions ? "#00ff00" : "#888888",
                   transition: "color 0.2s ease-in-out",

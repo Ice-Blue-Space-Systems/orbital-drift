@@ -1,22 +1,23 @@
 import React from "react";
 import { Entity } from "resium";
 import { CallbackProperty, Color } from "cesium";
+import { useSelector } from "react-redux";
+import { RootState } from "../store";
 
 interface TleEntitiesProps {
-  showTle: boolean;
-  showHistory: boolean;
   tleHistory: CallbackProperty | null;
   tleFuture: CallbackProperty | null;
   satPositionProperty: any;
 }
 
 const TleEntities: React.FC<TleEntitiesProps> = ({
-  showTle,
-  showHistory,
   tleHistory,
   tleFuture,
   satPositionProperty,
 }) => {
+
+  const {showTle, showHistory} = useSelector((state: RootState) => state.mongo);
+
   if (!showTle || !satPositionProperty) return null;
 
   return (

@@ -21,12 +21,6 @@ export interface TimelineToolsProps {
   onZoomIn: () => void;
   onZoomOut: () => void;
   onFitAll: () => void;
-  showLineOfSight: boolean;
-  setShowLineOfSight: React.Dispatch<React.SetStateAction<boolean>>;
-  showVisibilityCones: boolean;
-  setShowVisibilityCones: React.Dispatch<React.SetStateAction<boolean>>;
-  showCesiumOptions: boolean; // Added this property
-  setShowCesiumOptions: React.Dispatch<React.SetStateAction<boolean>>; // Added this property
   debugInfo?: any;
   satPositionProperty?: any;
   tleHistoryRef: React.MutableRefObject<any[]>;
@@ -41,10 +35,6 @@ const TimelineTools: React.FC<TimelineToolsProps> = ({
   onZoomIn,
   onZoomOut,
   onFitAll,
-  showLineOfSight,
-  setShowLineOfSight,
-  showVisibilityCones,
-  setShowVisibilityCones,
   debugInfo,
   satPositionProperty,
   tleHistoryRef,
@@ -155,12 +145,7 @@ const TimelineTools: React.FC<TimelineToolsProps> = ({
         <SatellitePopover />
 
         {/* Ground Station Popover */}
-        <GroundStationPopover
-          showLineOfSight={showLineOfSight}
-          setShowLineOfSight={setShowLineOfSight}
-          showVisibilityCones={showVisibilityCones}
-          setShowVisibilityCones={setShowVisibilityCones}
-        />
+        <GroundStationPopover />
 
         {/* Contact Windows Popover */}
         {selectedSatId && selectedGroundStationId && (

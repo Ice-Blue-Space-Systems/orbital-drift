@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useMemo, useState } from "react";
+import React, { useEffect, useRef, useMemo } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { DataSet } from "vis-data";
 import { Timeline } from "vis-timeline/standalone";
@@ -22,11 +22,6 @@ const TimelinePage: React.FC = () => {
   const selectedGroundStation = groundStations.find(
     (gs: GroundStation) => gs._id === selectedGroundStationId
   );
-
-  // State for additional props required by TimelineTools
-  const [showLineOfSight, setShowLineOfSight] = useState<boolean>(false);
-  const [showVisibilityCones, setShowVisibilityCones] = useState<boolean>(false);
-  const [showCesiumOptions, setShowCesiumOptions] = useState<boolean>(false);
 
   // State for timeline controls
   const timelineRef = useRef<HTMLDivElement>(null);
@@ -173,17 +168,11 @@ const TimelinePage: React.FC = () => {
             onZoomIn={zoomIn}
             onZoomOut={zoomOut}
             onFitAll={fitAllWindows}
-            showLineOfSight={showLineOfSight}
-            setShowLineOfSight={setShowLineOfSight}
-            showVisibilityCones={showVisibilityCones}
-            setShowVisibilityCones={setShowVisibilityCones}
             debugInfo={timelineInstance.current} // Pass timeline instance as debugInfo
             satPositionProperty={null} // Placeholder for satellite position property
             tleHistoryRef={tleHistoryRef}
             groundTrackHistoryRef={groundTrackHistoryRef}
             nextContactWindow={nextContactWindow}
-            showCesiumOptions={showCesiumOptions}
-            setShowCesiumOptions={setShowCesiumOptions}
           />
         </div>
 
