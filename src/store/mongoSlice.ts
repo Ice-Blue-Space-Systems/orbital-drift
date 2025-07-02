@@ -50,6 +50,7 @@ interface MongoState {
   showVisibilityCones: boolean;
   showHistory: boolean; // Add showHistory to the state
   showCesiumOptions: boolean; // Add showCesiumOptions to the state
+  liveMode: boolean; // Add liveMode to the state
 }
 
 const initialState: MongoState = {
@@ -63,7 +64,8 @@ const initialState: MongoState = {
   showLineOfSight: false,
   showVisibilityCones: false,
   showHistory: false,
-  showCesiumOptions: false, // Add showCesiumOptions to the initial state
+  showCesiumOptions: false,
+  liveMode: false, // Add liveMode to the initial state
 };
 
 const mongoSlice = createSlice({
@@ -95,6 +97,9 @@ const mongoSlice = createSlice({
       console.log("Setting showCesiumOptions to:", action.payload);
       state.showCesiumOptions = action.payload; // Reducer for showCesiumOptions
     },
+    setLiveMode(state, action) {
+      state.liveMode = action.payload; // Reducer for liveMode toggle
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -121,5 +126,6 @@ export const {
   setShowVisibilityCones,
   setShowHistory,
   setShowCesiumOptions, // Export the action
+  setLiveMode, // Export the action
 } = mongoSlice.actions;
 export default mongoSlice.reducer;

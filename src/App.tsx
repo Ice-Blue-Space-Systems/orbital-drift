@@ -9,11 +9,16 @@ import RadarIcon from '@mui/icons-material/Radar';
 import Brightness4Icon from '@mui/icons-material/Brightness4';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faUserAstronaut } from '@fortawesome/free-solid-svg-icons';
+import { faBolt } from '@fortawesome/free-solid-svg-icons'; // Import the slanted lightning bolt icon
+import { useSelector, useDispatch } from 'react-redux';
 
 import GlobePage from './GlobePage';
 import TimelinePage from './TimelinePage';
 import SatsPage from './SatsPage';
 import GSPage from './GSPage';
+import { RootState } from './store';
+import { setLiveMode } from './store/mongoSlice';
+import "./App.css";
 
 /** A simple top nav with the four route icons. */
 function GlobalAppBar({
@@ -23,6 +28,8 @@ function GlobalAppBar({
   currentTheme: string;
   setTheme: (theme: string) => void;
 }) {
+  const dispatch = useDispatch();
+  const liveMode = useSelector((state: RootState) => state.mongo.liveMode); // Get liveMode from Redux
   const navigate = useNavigate();
   const currentPath = window.location.pathname;
 
@@ -140,6 +147,24 @@ function GlobalAppBar({
             }
           >
             <RadarIcon style={{ fontSize: '24px' }} />
+          </IconButton>
+        </Tooltip>
+
+        {/* Live Mode Toggle */}
+        <Tooltip title="Live Mode" arrow>
+          <IconButton
+            onClick={() => dispatch(setLiveMode(!liveMode))} // Toggle liveMode
+            className="live-mode-button" // Add a class for styling
+          >
+            <FontAwesomeIcon
+              icon={faBolt}
+              className="fa-bolt" // Add class for shimmer effect
+              style={{
+                fontSize: "24px", // Adjust size
+                color: liveMode ? "#800080" : "#888888", // Purple if active, grey if inactive
+                transition: "color 0.2s ease-in-out",
+              }}
+            />
           </IconButton>
         </Tooltip>
 

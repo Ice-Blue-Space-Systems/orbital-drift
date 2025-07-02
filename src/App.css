@@ -1,0 +1,30 @@
+.live-mode-button {
+  position: relative;
+  color: #800080; /* Bright purple */
+  transition: color 0.2s ease-in-out;
+  border-radius: 50%; /* Circular border */
+  overflow: hidden;
+}
+
+.live-mode-button:hover {
+  color: #d020f0; /* Brighter purple on hover */
+}
+
+.live-mode-button .fa-bolt {
+  animation: shimmer 3s infinite; /* Apply shimmer animation directly to the lightning bolt */
+}
+
+@keyframes shimmer {
+  0% {
+    opacity: 0.8;
+    filter: brightness(1.2);
+  }
+  50% {
+    opacity: 0.6;
+    filter: brightness(1.8);
+  }
+  100% {
+    opacity: 0.8;
+    filter: brightness(1.2);
+  }
+}
