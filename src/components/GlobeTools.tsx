@@ -15,17 +15,11 @@ import CesiumOptionsPopover from "./CesiumOptionsPopover"; // Import the CesiumO
 
 interface GlobeToolsProps {
   groundStations: any[];
-  debugInfo: any; // Pass debugInfo for SatelliteStatusTable
-  satPositionProperty: any;
-  tleHistoryRef: React.MutableRefObject<any[]>;
-  groundTrackHistoryRef: React.MutableRefObject<any[]>;
+  debugInfo: any;
 }
 
 const GlobeTools: React.FC<GlobeToolsProps> = ({
   debugInfo,
-  satPositionProperty,
-  tleHistoryRef,
-  groundTrackHistoryRef,
 }) => {
   const dispatch = useDispatch<AppDispatch>();
   const selectedSatelliteId = useSelector(
@@ -157,9 +151,6 @@ const GlobeTools: React.FC<GlobeToolsProps> = ({
         {/* Console Button */}
         <ConsolePopover
           debugInfo={debugInfo}
-          satPositionProperty={satPositionProperty}
-          tleHistoryRef={tleHistoryRef}
-          groundTrackHistoryRef={groundTrackHistoryRef}
           nextContactWindow={nextContactWindow}
         />
 

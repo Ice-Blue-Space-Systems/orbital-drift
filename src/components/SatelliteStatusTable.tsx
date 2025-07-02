@@ -5,43 +5,19 @@ import { RootState } from "../store";
 
 interface SatelliteStatusTableProps {
   debugInfo?: any;
-  satPositionProperty?: any;
-  tleHistoryRef: React.MutableRefObject<any[]>;
-  groundTrackHistoryRef: React.MutableRefObject<any[]>;
   nextContactWindow: any;
 }
 
 const SatelliteStatusTable: React.FC<SatelliteStatusTableProps> = ({
   debugInfo,
-  satPositionProperty,
-  tleHistoryRef,
-  groundTrackHistoryRef,
   nextContactWindow,
 }) => {
-  const [tlePosition, setTlePosition] = useState<Cartesian3 | null>(null);
-  const [groundTrackPosition, setGroundTrackPosition] = useState<Cartesian3 | null>(null);
   const [dopplerShift, setDopplerShift] = useState<number | null>(null);
   const selectedSatId = useSelector((state: RootState) => state.mongo.selectedSatId); // Retrieve selected satellite ID
   const selectedGroundStationId = useSelector(
     (state: RootState) => state.mongo.selectedGroundStationId
-  ); // Retrieve selected ground station ID
+  );
   const { satellites, groundStations } = useSelector((state: RootState) => state.mongo);
-
-  useEffect(() => {
-    if (!satPositionProperty) return;
-
-    const updatePositions = () => {
-      const tlePos = tleHistoryRef.current.length > 0 ? tleHistoryRef.current[0] : null;
-      setTlePosition(tlePos);
-
-      const groundTrackPos =
-        groundTrackHistoryRef.current.length > 0 ? groundTrackHistoryRef.current[0] : null;
-      setGroundTrackPosition(groundTrackPos);
-    };
-
-    const interval = setInterval(updatePositions, 1000);
-    return () => clearInterval(interval);
-  }, [satPositionProperty, tleHistoryRef, groundTrackHistoryRef]);
 
   useEffect(() => {
     if (!debugInfo) return;
@@ -102,15 +78,9 @@ const SatelliteStatusTable: React.FC<SatelliteStatusTableProps> = ({
           : "N/A"}
       </p>
       <p>
-        <strong>TLE Position:</strong>{" "}
-        {tlePosition
-          ? `X: ${tlePosition.x.toFixed(2)}, Y: ${tlePosition.y.toFixed(2)}, Z: ${tlePosition.z.toFixed(2)}`
-          : "N/A"}
-      </p>
-      <p>
         <strong>Ground Track Position:</strong>{" "}
-        {groundTrackPosition
-          ? `X: ${groundTrackPosition.x.toFixed(2)}, Y: ${groundTrackPosition.y.toFixed(2)}, Z: ${groundTrackPosition.z.toFixed(2)}`
+        {debugInfo.groundTrackPosition
+          ? `X: ${debugInfo.groundTrackPosition.x.toFixed(2)}, Y: ${debugInfo.groundTrackPosition.y.toFixed(2)}, Z: ${debugInfo.groundTrackPosition.z.toFixed(2)}`
           : "N/A"}
       </p>
       <p>

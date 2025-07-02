@@ -8,24 +8,18 @@ import { RootState } from "../store";
 
 interface ConsolePopoverProps {
   debugInfo: any;
-  satPositionProperty: any;
-  tleHistoryRef: React.MutableRefObject<any[]>;
-  groundTrackHistoryRef: React.MutableRefObject<any[]>;
   nextContactWindow: any;
 }
 
 const ConsolePopover: React.FC<ConsolePopoverProps> = ({
   debugInfo,
-  satPositionProperty,
-  tleHistoryRef,
-  groundTrackHistoryRef,
   nextContactWindow,
 }) => {
   const [openPopover, setOpenPopover] = useState<boolean>(false);
   const selectedSatId = useSelector((state: RootState) => state.mongo.selectedSatId); // Retrieve selected satellite ID
   const selectedGroundStationId = useSelector(
     (state: RootState) => state.mongo.selectedGroundStationId
-  ); // Retrieve selected ground station ID
+  );
 
   return (
     <div
@@ -65,9 +59,6 @@ const ConsolePopover: React.FC<ConsolePopoverProps> = ({
           content={
             <SatelliteStatusTable
               debugInfo={debugInfo}
-              satPositionProperty={satPositionProperty}
-              tleHistoryRef={tleHistoryRef}
-              groundTrackHistoryRef={groundTrackHistoryRef}
               nextContactWindow={nextContactWindow}
             />
           }

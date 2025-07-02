@@ -158,9 +158,6 @@ const TimelineTools: React.FC<TimelineToolsProps> = ({
         {/* Console Popover */}
         <ConsolePopover
           debugInfo={debugInfo}
-          satPositionProperty={satPositionProperty}
-          tleHistoryRef={tleHistoryRef}
-          groundTrackHistoryRef={groundTrackHistoryRef}
           nextContactWindow={nextContactWindow}
         />
       </div>

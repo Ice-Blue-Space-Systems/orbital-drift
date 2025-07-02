@@ -35,6 +35,9 @@ function GlobePage() {
 
   const [satPositionProperty, setSatPositionProperty] =
     useState<SampledPositionProperty | null>(null);
+  
+    const[groundTrackPositionProperty, setGroundTrackPositionProperty] =
+    useState<SampledPositionProperty | null>(null);
   const [groundStationPos, setGroundStationPos] = useState<Cartesian3 | null>(
     null
   );
@@ -96,19 +99,13 @@ function GlobePage() {
         let line2 = "";
 
         if (satellite.type === "simulated" && satellite.currentTleId) {
-          const tle = await dispatch(
-            fetchTleBySatelliteId(satellite.currentTleId)
-          ).unwrap();
+          const tle = await dispatch(fetchTleBySatelliteId(satellite.currentTleId)).unwrap();
           line1 = tle.line1;
           line2 = tle.line2;
         } else if (satellite.type === "live" && satellite.noradId) {
-          const res = await fetch(
-            "https://celestrak.com/NORAD/elements/stations.txt"
-          );
+          const res = await fetch("https://celestrak.com/NORAD/elements/stations.txt");
           const lines = (await res.text()).split("\n");
-          const idx = lines.findIndex((l) =>
-            l.includes(String(satellite.noradId))
-          );
+          const idx = lines.findIndex((l) => l.includes(String(satellite.noradId)));
           if (idx !== -1) {
             line1 = lines[idx];
             line2 = lines[idx + 1];
@@ -122,13 +119,24 @@ function GlobePage() {
             1060,
             viewerRef.current?.cesiumElement?.clock
           );
+
+          const groundTrackProperty = getFuturePositionsWithTime(
+            line1,
+            line2,
+            1060,
+            viewerRef.current?.cesiumElement?.clock
+          );
+
           setSatPositionProperty(positionProperty);
+          setGroundTrackPositionProperty(groundTrackProperty); // Set groundTrackPositionProperty
         } else {
           setSatPositionProperty(null);
+          setGroundTrackPositionProperty(null); // Reset groundTrackPositionProperty
         }
       } catch (err) {
         console.error("Failed to fetch TLE or compute position", err);
         setSatPositionProperty(null);
+        setGroundTrackPositionProperty(null); // Reset groundTrackPositionProperty on error
       }
     };
 
@@ -174,7 +182,7 @@ function GlobePage() {
     if (
       !showGroundTrack ||
       !showHistory ||
-      !satPositionProperty ||
+      !groundTrackPositionProperty ||
       !viewerRef.current
     ) {
       return;
@@ -184,7 +192,7 @@ function GlobePage() {
     const recordGroundTrack = () => {
       const now = viewer.clock.currentTime;
       if (!now) return;
-      const pos = satPositionProperty.getValue(now);
+      const pos = groundTrackPositionProperty.getValue(now);
       if (pos) {
         const carto = Ellipsoid.WGS84.cartesianToCartographic(pos);
         carto.height = 0;
@@ -196,14 +204,14 @@ function GlobePage() {
 
     viewer.clock.onTick.addEventListener(recordGroundTrack);
     return () => viewer.clock.onTick.removeEventListener(recordGroundTrack);
-  }, [showGroundTrack, showHistory, satPositionProperty]);
+  }, [showGroundTrack, showHistory, groundTrackPositionProperty, satPositionProperty]);
 
   // Future ground track
   const groundTrackHistory = useMemo(() => {
     return new CallbackProperty(() => groundTrackHistoryRef.current, false);
   }, []);
   const groundTrackFuture = useMemo(() => {
-    if (!showGroundTrack || !satPositionProperty) return null;
+    if (!showGroundTrack || !groundTrackPositionProperty) return null;
     return new CallbackProperty(() => {
       const future: Cartesian3[] = [];
       const viewer = viewerRef.current?.cesiumElement;
@@ -214,7 +222,7 @@ function GlobePage() {
 
       for (let i = 0; i <= 3600; i += 30) {
         const offsetTime = JulianDate.addSeconds(now, i, new JulianDate());
-        const pos = satPositionProperty.getValue(offsetTime);
+        const pos = groundTrackPositionProperty.getValue(offsetTime);
         if (pos) {
           const carto = Ellipsoid.WGS84.cartesianToCartographic(pos);
           carto.height = 0;
@@ -223,7 +231,7 @@ function GlobePage() {
       }
       return future;
     }, false);
-  }, [showGroundTrack, satPositionProperty]);
+  }, [showGroundTrack, groundTrackPositionProperty]);
 
   // TLE track (future)
   const tleFuture = useMemo(() => {
@@ -346,8 +354,10 @@ function GlobePage() {
         ...prev,
         satellitePosition:
           satPositionProperty?.getValue(viewer.clock.currentTime) || null,
+        groundTrackPosition: 
+          groundTrackPositionProperty?.getValue(viewer.clock.currentTime) || null,
         currentTime: curTime,
-        inSight, // Update inSight based on contact windows
+        inSight,
       }));
     };
 
@@ -358,6 +368,7 @@ function GlobePage() {
     selectedSatId,
     selectedGroundStationId,
     satPositionProperty,
+    groundTrackPositionProperty
   ]);
 
   // Cleanup on unmount: Destroy Cesium viewer
@@ -526,9 +537,6 @@ function GlobePage() {
       <GlobeTools
         groundStations={groundStations}
         debugInfo={debugInfo}
-        satPositionProperty={satPositionProperty}
-        tleHistoryRef={tleHistoryRef}
-        groundTrackHistoryRef={groundTrackHistoryRef}
       />
 
       {/* Main Cesium globe, stretched to fill the remaining space */}
