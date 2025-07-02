@@ -24,11 +24,8 @@ const TimelinePage: React.FC = () => {
   );
 
   // State for additional props required by TimelineTools
-  const [showHistory, setShowHistory] = useState<boolean>(false);
-  const [showTle, setShowTle] = useState<boolean>(false);
   const [showLineOfSight, setShowLineOfSight] = useState<boolean>(false);
   const [showVisibilityCones, setShowVisibilityCones] = useState<boolean>(false);
-  const [showGroundTrack, setShowGroundTrack] = useState<boolean>(false);
   const [showCesiumOptions, setShowCesiumOptions] = useState<boolean>(false);
 
   // State for timeline controls
@@ -176,12 +173,6 @@ const TimelinePage: React.FC = () => {
             onZoomIn={zoomIn}
             onZoomOut={zoomOut}
             onFitAll={fitAllWindows}
-            showTle={showTle}
-            setShowTle={setShowTle}
-            showHistory={showHistory}
-            setShowHistory={setShowHistory}
-            showGroundTrack={showGroundTrack}
-            setShowGroundTrack={setShowGroundTrack}
             showLineOfSight={showLineOfSight}
             setShowLineOfSight={setShowLineOfSight}
             showVisibilityCones={showVisibilityCones}

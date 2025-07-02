@@ -20,6 +20,7 @@ const SatelliteStatusTable: React.FC<SatelliteStatusTableProps> = ({
 }) => {
   const [tlePosition, setTlePosition] = useState<Cartesian3 | null>(null);
   const [groundTrackPosition, setGroundTrackPosition] = useState<Cartesian3 | null>(null);
+  const [dopplerShift, setDopplerShift] = useState<number | null>(null);
   const selectedSatId = useSelector((state: RootState) => state.mongo.selectedSatId); // Retrieve selected satellite ID
   const selectedGroundStationId = useSelector(
     (state: RootState) => state.mongo.selectedGroundStationId
@@ -42,9 +43,42 @@ const SatelliteStatusTable: React.FC<SatelliteStatusTableProps> = ({
     return () => clearInterval(interval);
   }, [satPositionProperty, tleHistoryRef, groundTrackHistoryRef]);
 
-  // Validate debugInfo.currentTim
-  const currentTime = debugInfo?.currentTim
-    ? debugInfo.currentTim.toISOString()
+  useEffect(() => {
+    if (!debugInfo) return;
+
+    // Assume debugInfo has satelliteVelocity (Cartesian3) and groundStationPosition (Cartesian3).
+    // Compute line-of-sight vector (station -> satellite).
+    const satVel = debugInfo.satelliteVelocity; // velocity in m/s
+    const satPos = debugInfo.satellitePosition;
+    const gsPos = debugInfo.groundStationPosition;
+
+    if (!satVel || !satPos || !gsPos) return;
+
+    // lineOfSight = normalize(satPos - gsPos)
+    const lineOfSight = Cartesian3.subtract(satPos, gsPos, new Cartesian3());
+    Cartesian3.normalize(lineOfSight, lineOfSight);
+
+    // radialVelocity = dot(satVel, lineOfSight)
+    const radialVelocity = Cartesian3.dot(satVel, lineOfSight);
+
+    // base frequency (Hz)
+    const f0 = 145800000;
+    const shift = calculateDopplerShift(f0, radialVelocity);
+    setDopplerShift(shift);
+  }, [debugInfo]);
+
+  // Doppler calculation helper
+  const calculateDopplerShift = (
+    baseFrequencyHz: number,
+    radialVelocity: number
+  ) => {
+    const c = 299792458; // Speed of light (m/s)
+    return baseFrequencyHz * (radialVelocity / c);
+  };
+
+  // Validate debugInfo.currentTime
+  const currentTime = debugInfo?.currentTime
+    ? debugInfo.currentTime.toISOString()
     : "N/A";
 
   return (
@@ -101,6 +135,24 @@ const SatelliteStatusTable: React.FC<SatelliteStatusTableProps> = ({
         ) : (
           "No upcoming contact"
         )}
+      </p>
+      <p>
+        <strong>Doppler Shift:</strong>{" "}
+        {dopplerShift
+          ? `${(dopplerShift / 1000).toFixed(2)} kHz`
+          : "N/A"}
+      </p>
+      <p>
+        <strong>Adjusted Frequency:</strong>{" "}
+        {dopplerShift
+          ? `${((145800000 + dopplerShift) / 1e6).toFixed(4)} MHz`
+          : "N/A"}
+      </p>
+      <p>
+        <strong>Satellite Velocity:</strong>{" "}
+        {debugInfo.satelliteVelocity
+          ? `Ẋ: ${debugInfo.satelliteVelocity.x.toFixed(2)}, Ẏ: ${debugInfo.satelliteVelocity.y.toFixed(2)}, Ż: ${debugInfo.satelliteVelocity.z.toFixed(2)} (m/s)`
+          : "N/A"}
       </p>
     </div>
   );

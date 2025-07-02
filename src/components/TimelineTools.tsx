@@ -21,12 +21,6 @@ export interface TimelineToolsProps {
   onZoomIn: () => void;
   onZoomOut: () => void;
   onFitAll: () => void;
-  showTle: boolean;
-  setShowTle: React.Dispatch<React.SetStateAction<boolean>>;
-  showHistory: boolean;
-  setShowHistory: React.Dispatch<React.SetStateAction<boolean>>;
-  showGroundTrack: boolean;
-  setShowGroundTrack: React.Dispatch<React.SetStateAction<boolean>>;
   showLineOfSight: boolean;
   setShowLineOfSight: React.Dispatch<React.SetStateAction<boolean>>;
   showVisibilityCones: boolean;
@@ -47,12 +41,6 @@ const TimelineTools: React.FC<TimelineToolsProps> = ({
   onZoomIn,
   onZoomOut,
   onFitAll,
-  showTle,
-  setShowTle,
-  showHistory,
-  setShowHistory,
-  showGroundTrack,
-  setShowGroundTrack,
   showLineOfSight,
   setShowLineOfSight,
   showVisibilityCones,
@@ -75,7 +63,7 @@ const TimelineTools: React.FC<TimelineToolsProps> = ({
     const arrowPosition =
     {
       "/globe": "28px", // Position under the PublicIcon button
-      "/timeline": "92px", // Adjust based on the Timeline button's position
+      "/timeline": "88px", // Adjust based on the Timeline button's position
       "/sats": "156px", // Adjust based on the Satellite button's position
       "/gs": "220px", // Adjust based on the Ground Station button's position
     }[currentPath] || "16px"; // Default to Globe if no match
@@ -164,14 +152,7 @@ const TimelineTools: React.FC<TimelineToolsProps> = ({
         />
 
         {/* Satellite Popover */}
-        <SatellitePopover
-          showTle={showTle}
-          setShowTle={setShowTle}
-          showHistory={showHistory}
-          setShowHistory={setShowHistory}
-          showGroundTrack={showGroundTrack}
-          setShowGroundTrack={setShowGroundTrack}
-        />
+        <SatellitePopover />
 
         {/* Ground Station Popover */}
         <GroundStationPopover

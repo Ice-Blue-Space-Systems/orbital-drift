@@ -15,21 +15,11 @@ import CesiumOptionsPopover from "./CesiumOptionsPopover"; // Import the CesiumO
 
 interface GlobeToolsProps {
   groundStations: any[];
-
-  showHistory: boolean;
-  setShowHistory: (value: boolean) => void;
-
-  showTle: boolean;
-  setShowTle: (value: boolean) => void;
-
   showLineOfSight: boolean;
   setShowLineOfSight: (value: boolean) => void;
 
   showVisibilityCones: boolean;
   setShowVisibilityCones: (value: boolean) => void;
-
-  showGroundTrack: boolean;
-  setShowGroundTrack: (value: boolean) => void;
 
   debugInfo: any; // Pass debugInfo for SatelliteStatusTable
   satPositionProperty: any;
@@ -40,16 +30,10 @@ interface GlobeToolsProps {
 }
 
 const GlobeTools: React.FC<GlobeToolsProps> = ({
-  showHistory,
-  setShowHistory,
-  showTle,
-  setShowTle,
   showLineOfSight,
   setShowLineOfSight,
   showVisibilityCones,
   setShowVisibilityCones,
-  showGroundTrack,
-  setShowGroundTrack,
   debugInfo,
   satPositionProperty,
   tleHistoryRef,
@@ -58,8 +42,12 @@ const GlobeTools: React.FC<GlobeToolsProps> = ({
   setShowCesiumOptions,
 }) => {
   const dispatch = useDispatch<AppDispatch>();
-  const selectedSatelliteId = useSelector((state: RootState) => state.mongo.selectedSatId); // Retrieve selected satellite ID
-const selectedGroundStationId = useSelector((state: RootState) => state.mongo.selectedGroundStationId); // Retrieve selected ground station ID  
+  const selectedSatelliteId = useSelector(
+    (state: RootState) => state.mongo.selectedSatId
+  ); // Retrieve selected satellite ID
+  const selectedGroundStationId = useSelector(
+    (state: RootState) => state.mongo.selectedGroundStationId
+  ); // Retrieve selected ground station ID
 
   // Retrieve contact windows from Redux
   const contactWindows = useSelector(selectContactWindows);
@@ -69,10 +57,12 @@ const selectedGroundStationId = useSelector((state: RootState) => state.mongo.se
     if (selectedSatelliteId) {
       console.log(`Selected Satellite ID: ${selectedSatelliteId}`);
       // Example: Fetch data or update UI based on the selected satellite
-      dispatch(fetchContactWindows({
-        satelliteId: selectedSatelliteId,
-        groundStationId: selectedGroundStationId || "",
-      }));
+      dispatch(
+        fetchContactWindows({
+          satelliteId: selectedSatelliteId,
+          groundStationId: selectedGroundStationId || "",
+        })
+      );
     }
   }, [selectedSatelliteId, selectedGroundStationId, dispatch]);
 
@@ -90,7 +80,11 @@ const selectedGroundStationId = useSelector((state: RootState) => state.mongo.se
 
   // Calculate the next contact window
   const nextContactWindow: ContactWindow | null = useMemo(() => {
-    if (!selectedSatelliteId || !selectedGroundStationId || !debugInfo.currentTime)
+    if (
+      !selectedSatelliteId ||
+      !selectedGroundStationId ||
+      !debugInfo.currentTime
+    )
       return null;
 
     const cesiumCurrentTime = debugInfo.currentTime;
@@ -108,7 +102,12 @@ const selectedGroundStationId = useSelector((state: RootState) => state.mongo.se
       (a: ContactWindow, b: ContactWindow) =>
         new Date(a.scheduledAOS).getTime() - new Date(b.scheduledAOS).getTime()
     )[0];
-  }, [contactWindows, selectedSatelliteId, selectedGroundStationId, debugInfo.currentTime]);
+  }, [
+    contactWindows,
+    selectedSatelliteId,
+    selectedGroundStationId,
+    debugInfo.currentTime,
+  ]);
 
   // Determine the active page and calculate the arrow's position
   const currentPath = window.location.pathname;
@@ -156,14 +155,7 @@ const selectedGroundStationId = useSelector((state: RootState) => state.mongo.se
         }}
       >
         {/* Satellite Button */}
-        <SatellitePopover
-          showTle={showTle}
-          setShowTle={setShowTle}
-          showHistory={showHistory}
-          setShowHistory={setShowHistory}
-          showGroundTrack={showGroundTrack}
-          setShowGroundTrack={setShowGroundTrack}
-        />
+        <SatellitePopover />
 
         {/* Ground Station Button */}
         <GroundStationPopover

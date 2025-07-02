@@ -44,14 +44,24 @@ interface MongoState {
   selectedSatId: string | null;
   selectedGroundStationId?: string | null;
   status: "idle" | "loading" | "succeeded" | "failed";
+  showTle: boolean;
+  showGroundTrack: boolean;
+  showLineOfSight: boolean;
+  showVisibilityCones: boolean;
+  showHistory: boolean; // Add showHistory to the state
 }
 
 const initialState: MongoState = {
   satellites: [],
   groundStations: [],
   contactWindows: [],
-  selectedSatId: null, // Initialize it
+  selectedSatId: null,
   status: "idle",
+  showTle: false,
+  showGroundTrack: false,
+  showLineOfSight: false,
+  showVisibilityCones: false,
+  showHistory: false, // Add showHistory to the initial state
 };
 
 const mongoSlice = createSlice({
@@ -63,6 +73,21 @@ const mongoSlice = createSlice({
     },
     setSelectedGroundStationId(state, action) {
       state.selectedGroundStationId = action.payload;
+    },
+    setShowTle(state, action) {
+      state.showTle = action.payload;
+    },
+    setShowGroundTrack(state, action) {
+      state.showGroundTrack = action.payload;
+    },
+    setShowLineOfSight(state, action) {
+      state.showLineOfSight = action.payload;
+    },
+    setShowVisibilityCones(state, action) {
+      state.showVisibilityCones = action.payload;
+    },
+    setShowHistory(state, action) {
+      state.showHistory = action.payload; // Add reducer for showHistory
     },
   },
   extraReducers: (builder) => {
@@ -81,5 +106,13 @@ const mongoSlice = createSlice({
   },
 });
 
-export const { setSelectedSatId, setSelectedGroundStationId } = mongoSlice.actions;
+export const {
+  setSelectedSatId,
+  setSelectedGroundStationId,
+  setShowTle,
+  setShowGroundTrack,
+  setShowLineOfSight,
+  setShowVisibilityCones,
+  setShowHistory, // Export the new action
+} = mongoSlice.actions;
 export default mongoSlice.reducer;

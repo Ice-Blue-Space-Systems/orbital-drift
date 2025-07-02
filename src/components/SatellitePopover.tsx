@@ -5,29 +5,16 @@ import HistoryIcon from "@mui/icons-material/History";
 import PublicIcon from "@mui/icons-material/Public";
 import { useSelector, useDispatch } from "react-redux";
 import { RootState } from "../store";
-import { setSelectedSatId } from "../store/mongoSlice";
+import { setSelectedSatId, setShowHistory, setShowTle, setShowGroundTrack } from "../store/mongoSlice";
 
-interface SatellitePopoverProps {
-  showTle: boolean;
-  setShowTle: (value: boolean) => void;
-  showHistory: boolean;
-  setShowHistory: (value: boolean) => void;
-  showGroundTrack: boolean;
-  setShowGroundTrack: (value: boolean) => void;
-}
-
-const SatellitePopover: React.FC<SatellitePopoverProps> = ({
-  showTle,
-  setShowTle,
-  showHistory,
-  setShowHistory,
-  showGroundTrack,
-  setShowGroundTrack,
-}) => {
+const SatellitePopover: React.FC = () => {
   const dispatch = useDispatch();
   const [openPopover, setOpenPopover] = useState<boolean>(false);
   const [satelliteFilter, setSatelliteFilter] = useState<string>("");
   const { satellites, selectedSatId } = useSelector((state: RootState) => state.mongo);
+  const showHistoryState = useSelector((state: RootState) => state.mongo.showHistory);
+  const showTleState = useSelector((state: RootState) => state.mongo.showTle);
+  const showGroundTrackState = useSelector((state: RootState) => state.mongo.showGroundTrack);
 
   return (
     <div
@@ -92,9 +79,9 @@ const SatellitePopover: React.FC<SatellitePopoverProps> = ({
             {/* Toggle TLE */}
             <Tooltip title="Toggle TLE" arrow placement="bottom">
               <IconButton
-                onClick={() => setShowTle(!showTle)}
+                onClick={() => dispatch(setShowTle(!showTleState))} // Dispatch Redux action
                 style={{
-                  color: showTle ? "#00ff00" : "#888888", // Bright green if active, grey if inactive
+                  color: showTleState ? "#00ff00" : "#888888", // Bright green if active, grey if inactive
                   transition: "color 0.2s ease-in-out",
                 }}
               >
@@ -105,9 +92,9 @@ const SatellitePopover: React.FC<SatellitePopoverProps> = ({
             {/* Toggle History */}
             <Tooltip title="Toggle History" arrow placement="bottom">
               <IconButton
-                onClick={() => setShowHistory(!showHistory)}
+                onClick={() => dispatch(setShowHistory(!showHistoryState))} // Dispatch Redux action
                 style={{
-                  color: showHistory ? "#00ff00" : "#888888", // Bright green if active, grey if inactive
+                  color: showHistoryState ? "#00ff00" : "#888888", // Bright green if active, grey if inactive
                   transition: "color 0.2s ease-in-out",
                 }}
               >
@@ -118,9 +105,9 @@ const SatellitePopover: React.FC<SatellitePopoverProps> = ({
             {/* Toggle Ground Track */}
             <Tooltip title="Toggle Ground Track" arrow placement="bottom">
               <IconButton
-                onClick={() => setShowGroundTrack(!showGroundTrack)}
+                onClick={() => dispatch(setShowGroundTrack(!showGroundTrackState))} // Dispatch Redux action
                 style={{
-                  color: showGroundTrack ? "#00ff00" : "#888888", // Bright green if active, grey if inactive
+                  color: showGroundTrackState ? "#00ff00" : "#888888", // Bright green if active, grey if inactive
                   transition: "color 0.2s ease-in-out",
                 }}
               >
