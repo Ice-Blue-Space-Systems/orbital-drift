@@ -1,22 +1,18 @@
-import React, { useState, useEffect, useRef, useMemo } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import {
   Cartesian3,
   JulianDate,
-  SampledPositionProperty,
   CallbackProperty,
   Ellipsoid,
 } from "cesium";
 import { useSelector, useDispatch } from "react-redux";
 import { RootState, AppDispatch } from "./store";
 import { ContactWindow, fetchMongoData } from "./store/mongoSlice";
-import { fetchTleBySatelliteId } from "./store/tleSlice";
 import { selectContactWindows } from "./store/contactWindowsSlice";
 import CesiumViewer from "./components/CesiumViewer";
-import {
-  getFuturePositionsWithTime,
-} from "./utils/tleUtils";
 import GlobeTools from "./components/GlobeTools";
 import { useLineOfSight } from "./hooks/useLineOfSight";
+import { useSatellitePosition } from "./hooks/useSatellitePosition";
 
 function GlobePage() {
   const dispatch: AppDispatch = useDispatch();
@@ -32,11 +28,15 @@ function GlobePage() {
     (state: RootState) => state.mongo.selectedGroundStationId
   );
 
-  const [satPositionProperty, setSatPositionProperty] =
-    useState<SampledPositionProperty | null>(null);
-  
-    const[groundTrackPositionProperty, setGroundTrackPositionProperty] =
-    useState<SampledPositionProperty | null>(null);
+  const viewerRef = useRef<any>(null);
+
+  // Use the custom hook for satellite position and ground track
+  const { satPositionProperty, groundTrackPositionProperty } = useSatellitePosition(
+    selectedSatId,
+    satellites,
+    viewerRef
+  );
+
   const [groundStationPos, setGroundStationPos] = useState<Cartesian3 | null>(
     null
   );
@@ -72,10 +72,9 @@ function GlobePage() {
     groundStationPosition: null,
   });
 
-  const viewerRef = useRef<any>(null);
   const tleHistoryRef = useRef<Cartesian3[]>([]);
   const groundTrackHistoryRef = useRef<Cartesian3[]>([]);
-  const lineOfSightPositionsRef = useRef<Cartesian3[]>([]); // Use a ref for line-of-sight positions
+  const lineOfSightPositionsRef = useRef<Cartesian3[]>([]);
 
   // Fetch initial data once
   useEffect(() => {
@@ -83,66 +82,6 @@ function GlobePage() {
       dispatch(fetchMongoData());
     }
   }, [status, dispatch]);
-
-  // Load TLE for satellite
-  useEffect(() => {
-    const satellite = satellites.find((sat) => sat._id === selectedSatId);
-    if (!satellite) {
-      setSatPositionProperty(null);
-      return;
-    }
-
-    const loadTleAndPosition = async () => {
-      try {
-        let line1 = "";
-        let line2 = "";
-
-        if (satellite.type === "simulated" && satellite.currentTleId) {
-          const tle = await dispatch(fetchTleBySatelliteId(satellite.currentTleId)).unwrap();
-          line1 = tle.line1;
-          line2 = tle.line2;
-        } else if (satellite.type === "live" && satellite.noradId) {
-          const res = await fetch("https://celestrak.com/NORAD/elements/stations.txt");
-          const lines = (await res.text()).split("\n");
-          const idx = lines.findIndex((l) => l.includes(String(satellite.noradId)));
-          if (idx !== -1) {
-            line1 = lines[idx];
-            line2 = lines[idx + 1];
-          }
-        }
-
-        if (line1 && line2) {
-          const positionProperty = getFuturePositionsWithTime(
-            line1,
-            line2,
-            1060,
-            viewerRef.current?.cesiumElement?.clock
-          );
-
-          const groundTrackProperty = getFuturePositionsWithTime(
-            line1,
-            line2,
-            1060,
-            viewerRef.current?.cesiumElement?.clock
-          );
-
-          setSatPositionProperty(positionProperty);
-          setGroundTrackPositionProperty(groundTrackProperty); // Set groundTrackPositionProperty
-        } else {
-          setSatPositionProperty(null);
-          setGroundTrackPositionProperty(null); // Reset groundTrackPositionProperty
-        }
-      } catch (err) {
-        console.error("Failed to fetch TLE or compute position", err);
-        setSatPositionProperty(null);
-        setGroundTrackPositionProperty(null); // Reset groundTrackPositionProperty on error
-      }
-    };
-
-    if (selectedSatId) {
-      loadTleAndPosition();
-    }
-  }, [selectedSatId, satellites, dispatch]);
 
   // Convert ground station location
   useEffect(() => {

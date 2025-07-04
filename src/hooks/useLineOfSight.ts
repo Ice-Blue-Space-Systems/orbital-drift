@@ -1,6 +1,6 @@
 // hooks/useLineOfSight.ts
 import { useEffect } from "react";
-import { Cartesian3, JulianDate } from "cesium";
+import { Cartesian3 } from "cesium";
 
 export function useLineOfSight(
   viewerRef: any,
@@ -24,5 +24,5 @@ export function useLineOfSight(
       clock.onTick.addEventListener(onTick);
       return () => clock.onTick.removeEventListener(onTick);
     }
-  }, [satPositionProperty, groundStationPos, viewerRef]);
+  }, [satPositionProperty, groundStationPos, viewerRef, lineOfSightPositionsRef]);
 }
