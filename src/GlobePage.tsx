@@ -1,8 +1,8 @@
-import { useState, useEffect, useRef, useMemo } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Cartesian3, JulianDate, CallbackProperty } from "cesium";
 import { useSelector, useDispatch } from "react-redux";
 import { RootState, AppDispatch } from "./store";
-import { ContactWindow, fetchMongoData } from "./store/mongoSlice";
+import { fetchMongoData } from "./store/mongoSlice";
 import { selectContactWindows } from "./store/contactWindowsSlice";
 import CesiumViewer from "./components/CesiumViewer";
 import GlobeTools from "./components/GlobeTools";
@@ -13,6 +13,8 @@ import { useGroundTrackHistory } from "./hooks/useGroundTrackHistory";
 import { useTleTrackFuture } from "./hooks/useTleTrackFuture";
 import { useFutureGroundTrack } from "./hooks/useFutureGroundTrack";
 import { useGroundStationPosition } from "./hooks/useGroundStationPosition";
+import { useDebugInfoUpdater } from "./hooks/useDebugInfoUpdater";
+import { useNextContactWindow } from "./hooks/useNextContactWindow";
 
 function GlobePage() {
   const dispatch: AppDispatch = useDispatch();
@@ -48,25 +50,31 @@ function GlobePage() {
 
   type DebugInfo = {
     satellitePosition: Cartesian3 | null;
-    tlePosition: Cartesian3 | null;
     groundTrackPosition: Cartesian3 | null;
     currentTime: Date | null;
     inSight: boolean;
-    satelliteVelocity: Cartesian3 | null;
-    dopplerShift: number | null;
-    adjustedFrequency: number | null;
     groundStationPosition: Cartesian3 | null;
+    satelliteVelocity: Cartesian3 | null;
   };
   const [debugInfo, setDebugInfo] = useState<DebugInfo>({
     satellitePosition: null,
-    tlePosition: null,
     groundTrackPosition: null,
     currentTime: null,
     inSight: false,
-    satelliteVelocity: null,
-    dopplerShift: null,
-    adjustedFrequency: null,
     groundStationPosition: null,
+    satelliteVelocity: null,
+  });
+
+   // Use the custom hook for updating debug info
+  useDebugInfoUpdater({
+    viewerRef,
+    contactWindows,
+    selectedSatId,
+    selectedGroundStationId,
+    satPositionProperty,
+    groundTrackPositionProperty,
+    groundStationPos,
+    setDebugInfo,
   });
 
   const tleHistoryRef = useTleTrackHistory(
@@ -98,123 +106,12 @@ function GlobePage() {
     }
   }, [status, dispatch]);
 
-  // Calculate the next contact window
-  const nextContactWindow: ContactWindow | null = useMemo(() => {
-    if (!selectedSatId || !selectedGroundStationId || !debugInfo.currentTime)
-      return null;
-
-    // Use debugInfo.currentTime directly as it is already a Date object
-    const cesiumCurrentTime = debugInfo.currentTime;
-
-    const futureWindows = contactWindows.filter(
-      (win: ContactWindow) =>
-        win.satelliteId === selectedSatId &&
-        win.groundStationId === selectedGroundStationId &&
-        new Date(win.scheduledLOS) > cesiumCurrentTime // Compare against Cesium clock time
-    );
-
-    if (!futureWindows.length) return null;
-
-    // Sort by AOS and return the first one
-    return futureWindows.sort(
-      (a: ContactWindow, b: ContactWindow) =>
-        new Date(a.scheduledAOS).getTime() - new Date(b.scheduledAOS).getTime()
-    )[0];
-  }, [
+  const { nextAosLosLabel } = useNextContactWindow({
     contactWindows,
     selectedSatId,
     selectedGroundStationId,
-    debugInfo.currentTime,
-  ]);
-
-  const nextAosLosLabel = useMemo(() => {
-    if (!nextContactWindow) return "No upcoming contact";
-    return (
-      "Next AOS: " +
-      new Date(nextContactWindow.scheduledAOS).toISOString() +
-      "\nLOS: " +
-      new Date(nextContactWindow.scheduledLOS).toISOString()
-    );
-  }, [nextContactWindow]);
-
-  // Example of continuously updating debugInfo each frame for SatelliteStatusTable
-  useEffect(() => {
-    if (
-      !viewerRef.current?.cesiumElement ||
-      !contactWindows ||
-      !selectedSatId ||
-      !selectedGroundStationId
-    )
-      return;
-
-    const viewer = viewerRef.current.cesiumElement;
-
-    const updateDebugInfo = () => {
-      const curTime = viewer.clock.currentTime;
-
-      // Get current satellite position
-      const currentPosition = satPositionProperty?.getValue(curTime);
-
-      // Get previous satellite position (1 second earlier)
-      const previousTime = JulianDate.addSeconds(curTime, -1, new JulianDate());
-      const previousPosition = satPositionProperty?.getValue(previousTime);
-
-      let satVelocity: Cartesian3 | null = null;
-
-      if (currentPosition && previousPosition) {
-        // Calculate velocity as the difference in position divided by time interval
-        const deltaPosition = Cartesian3.subtract(
-          currentPosition,
-          previousPosition,
-          new Cartesian3()
-        );
-        const deltaTime = JulianDate.secondsDifference(curTime, previousTime);
-
-        satVelocity = Cartesian3.multiplyByScalar(
-          deltaPosition,
-          1 / deltaTime,
-          new Cartesian3()
-        ); // Velocity in meters per second
-      }
-
-      // Check if the satellite is in sight based on contact windows
-      const currentContactWindow = contactWindows.find(
-        (win: {
-          satelliteId: string;
-          groundStationId: string;
-          scheduledAOS: string | number | Date;
-          scheduledLOS: string | number | Date;
-        }) =>
-          win.satelliteId === selectedSatId &&
-          win.groundStationId === selectedGroundStationId &&
-          new Date(win.scheduledAOS) <= JulianDate.toDate(curTime) &&
-          new Date(win.scheduledLOS) >= JulianDate.toDate(curTime)
-      );
-
-      const inSight = !!currentContactWindow; // True if a valid contact window exists
-
-      setDebugInfo((prev) => ({
-        ...prev,
-        satellitePosition: currentPosition || null,
-        groundTrackPosition:
-          groundTrackPositionProperty?.getValue(curTime) || null,
-        currentTime: JulianDate.toDate(curTime),
-        inSight,
-        groundStationPosition: groundStationPos || null,
-        satelliteVelocity: satVelocity || null, // Add calculated velocity to debugInfo
-      }));
-    };
-
-    viewer.clock.onTick.addEventListener(updateDebugInfo);
-    return () => viewer.clock.onTick.removeEventListener(updateDebugInfo);
-  }, [
-    contactWindows,
-    selectedSatId,
-    selectedGroundStationId,
-    satPositionProperty,
-    groundTrackPositionProperty,
-    groundStationPos,
-  ]);
+    currentTime: debugInfo.currentTime,
+  });
 
   // Cleanup on unmount: Destroy Cesium viewer
   useEffect(() => {
