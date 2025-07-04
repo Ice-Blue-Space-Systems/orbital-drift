@@ -1,10 +1,5 @@
 import { useState, useEffect, useRef, useMemo } from "react";
-import {
-  Cartesian3,
-  JulianDate,
-  CallbackProperty,
-  Ellipsoid,
-} from "cesium";
+import { Cartesian3, JulianDate, CallbackProperty } from "cesium";
 import { useSelector, useDispatch } from "react-redux";
 import { RootState, AppDispatch } from "./store";
 import { ContactWindow, fetchMongoData } from "./store/mongoSlice";
@@ -13,6 +8,11 @@ import CesiumViewer from "./components/CesiumViewer";
 import GlobeTools from "./components/GlobeTools";
 import { useLineOfSight } from "./hooks/useLineOfSight";
 import { useSatellitePosition } from "./hooks/useSatellitePosition";
+import { useTleTrackHistory } from "./hooks/useTleTrackHistory";
+import { useGroundTrackHistory } from "./hooks/useGroundTrackHistory";
+import { useTleTrackFuture } from "./hooks/useTleTrackFuture";
+import { useFutureGroundTrack } from "./hooks/useFutureGroundTrack";
+import { useGroundStationPosition } from "./hooks/useGroundStationPosition";
 
 function GlobePage() {
   const dispatch: AppDispatch = useDispatch();
@@ -30,15 +30,12 @@ function GlobePage() {
 
   const viewerRef = useRef<any>(null);
 
-  // Use the custom hook for satellite position and ground track
-  const { satPositionProperty, groundTrackPositionProperty } = useSatellitePosition(
-    selectedSatId,
-    satellites,
-    viewerRef
-  );
+  const { satPositionProperty, groundTrackPositionProperty } =
+    useSatellitePosition(selectedSatId, satellites, viewerRef);
 
-  const [groundStationPos, setGroundStationPos] = useState<Cartesian3 | null>(
-    null
+  const groundStationPos = useGroundStationPosition(
+    selectedGroundStationId ?? null,
+    groundStations
   );
 
   const showHistory = useSelector(
@@ -72,9 +69,27 @@ function GlobePage() {
     groundStationPosition: null,
   });
 
-  const tleHistoryRef = useRef<Cartesian3[]>([]);
-  const groundTrackHistoryRef = useRef<Cartesian3[]>([]);
+  const tleHistoryRef = useTleTrackHistory(
+    satPositionProperty,
+    viewerRef,
+    showTle,
+    showHistory
+  );
+  const groundTrackHistoryRef = useGroundTrackHistory(
+    groundTrackPositionProperty,
+    viewerRef,
+    showGroundTrack,
+    showHistory
+  );
   const lineOfSightPositionsRef = useRef<Cartesian3[]>([]);
+
+  const tleFuture = useTleTrackFuture(satPositionProperty, viewerRef, showTle);
+
+  const groundTrackFuture = useFutureGroundTrack(
+    groundTrackPositionProperty,
+    viewerRef,
+    showGroundTrack
+  );
 
   // Fetch initial data once
   useEffect(() => {
@@ -82,122 +97,6 @@ function GlobePage() {
       dispatch(fetchMongoData());
     }
   }, [status, dispatch]);
-
-  // Convert ground station location
-  useEffect(() => {
-    const station = groundStations.find(
-      (gs) => gs._id === selectedGroundStationId
-    );
-    if (station) {
-      const { lat, lon, alt } = station.location;
-      setGroundStationPos(Cartesian3.fromDegrees(lon, lat, alt * 1000));
-    } else {
-      setGroundStationPos(null);
-    }
-  }, [selectedGroundStationId, groundStations]);
-
-  // Ground Track (past)
-  useEffect(() => {
-    if (
-      !showGroundTrack ||
-      !showHistory ||
-      !groundTrackPositionProperty ||
-      !viewerRef.current
-    ) {
-      return;
-    }
-    const viewer = viewerRef.current.cesiumElement;
-
-    const recordGroundTrack = () => {
-      const now = viewer.clock.currentTime;
-      if (!now) return;
-      const pos = groundTrackPositionProperty.getValue(now);
-      if (pos) {
-        const carto = Ellipsoid.WGS84.cartesianToCartographic(pos);
-        carto.height = 0;
-        groundTrackHistoryRef.current.push(
-          Ellipsoid.WGS84.cartographicToCartesian(carto)
-        );
-      }
-    };
-
-    viewer.clock.onTick.addEventListener(recordGroundTrack);
-    return () => viewer.clock.onTick.removeEventListener(recordGroundTrack);
-  }, [showGroundTrack, showHistory, groundTrackPositionProperty, satPositionProperty]);
-
-  // Future ground track
-  const groundTrackHistory = useMemo(() => {
-    return new CallbackProperty(() => groundTrackHistoryRef.current, false);
-  }, []);
-  const groundTrackFuture = useMemo(() => {
-    if (!showGroundTrack || !groundTrackPositionProperty) return null;
-    return new CallbackProperty(() => {
-      const future: Cartesian3[] = [];
-      const viewer = viewerRef.current?.cesiumElement;
-      if (!viewer) return future;
-
-      const now = viewer.clock.currentTime;
-      if (!now) return future;
-
-      for (let i = 0; i <= 3600; i += 30) {
-        const offsetTime = JulianDate.addSeconds(now, i, new JulianDate());
-        const pos = groundTrackPositionProperty.getValue(offsetTime);
-        if (pos) {
-          const carto = Ellipsoid.WGS84.cartesianToCartographic(pos);
-          carto.height = 0;
-          future.push(Ellipsoid.WGS84.cartographicToCartesian(carto));
-        }
-      }
-      return future;
-    }, false);
-  }, [showGroundTrack, groundTrackPositionProperty]);
-
-  // TLE track (future)
-  const tleFuture = useMemo(() => {
-    if (!showTle || !satPositionProperty) return null;
-    return new CallbackProperty(() => {
-      const positions: Cartesian3[] = [];
-      const viewer = viewerRef.current?.cesiumElement;
-      if (!viewer) return positions;
-
-      const currentTime = viewer.clock.currentTime;
-      if (!currentTime) return positions;
-
-      for (let i = 0; i <= 3600; i += 30) {
-        const offsetTime = JulianDate.addSeconds(
-          currentTime,
-          i,
-          new JulianDate()
-        );
-        const pos = satPositionProperty.getValue(offsetTime);
-        if (pos) positions.push(pos);
-      }
-      return positions;
-    }, false);
-  }, [showTle, satPositionProperty]);
-
-  // TLE track (past)
-  useEffect(() => {
-    if (!showTle || !satPositionProperty || !viewerRef.current) return;
-    const viewer = viewerRef.current.cesiumElement;
-
-    const recordTleTrack = () => {
-      const now = viewer.clock.currentTime;
-      if (!now) return;
-      const pos = satPositionProperty.getValue(now);
-      if (pos) {
-        if (showHistory) {
-          tleHistoryRef.current.push(pos);
-        } else {
-          tleHistoryRef.current.length = 0;
-          tleHistoryRef.current.push(pos);
-        }
-      }
-    };
-
-    viewer.clock.onTick.addEventListener(recordTleTrack);
-    return () => viewer.clock.onTick.removeEventListener(recordTleTrack);
-  }, [showTle, showHistory, satPositionProperty]);
 
   // Calculate the next contact window
   const nextContactWindow: ContactWindow | null = useMemo(() => {
@@ -314,7 +213,7 @@ function GlobePage() {
     selectedGroundStationId,
     satPositionProperty,
     groundTrackPositionProperty,
-    groundStationPos
+    groundStationPos,
   ]);
 
   // Cleanup on unmount: Destroy Cesium viewer
@@ -346,10 +245,7 @@ function GlobePage() {
       }}
     >
       {/* Our collapsible toolbox on the right (GlobeTools) */}
-      <GlobeTools
-        groundStations={groundStations}
-        debugInfo={debugInfo}
-      />
+      <GlobeTools groundStations={groundStations} debugInfo={debugInfo} />
 
       {/* Main Cesium globe, stretched to fill the remaining space */}
       <div style={{ flex: 1, position: "relative" }}>
@@ -365,7 +261,7 @@ function GlobePage() {
               ? tleFuture.getValue(JulianDate.now())
               : tleFuture || []
           }
-          groundTrackHistory={groundTrackHistory.getValue(JulianDate.now())}
+          groundTrackHistory={groundTrackHistoryRef.current}
           groundTrackFuture={
             groundTrackFuture instanceof CallbackProperty
               ? groundTrackFuture.getValue(JulianDate.now())
