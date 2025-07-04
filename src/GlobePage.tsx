@@ -15,6 +15,7 @@ import { useFutureGroundTrack } from "./hooks/useFutureGroundTrack";
 import { useGroundStationPosition } from "./hooks/useGroundStationPosition";
 import { useDebugInfoUpdater } from "./hooks/useDebugInfoUpdater";
 import { useNextContactWindow } from "./hooks/useNextContactWindow";
+import { DebugInfo } from "./types/DebugInfo";
 
 function GlobePage() {
   const dispatch: AppDispatch = useDispatch();
@@ -48,14 +49,6 @@ function GlobePage() {
     (state: RootState) => state.mongo.showGroundTrack
   );
 
-  type DebugInfo = {
-    satellitePosition: Cartesian3 | null;
-    groundTrackPosition: Cartesian3 | null;
-    currentTime: Date | null;
-    inSight: boolean;
-    groundStationPosition: Cartesian3 | null;
-    satelliteVelocity: Cartesian3 | null;
-  };
   const [debugInfo, setDebugInfo] = useState<DebugInfo>({
     satellitePosition: null,
     groundTrackPosition: null,
