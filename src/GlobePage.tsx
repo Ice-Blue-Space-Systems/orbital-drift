@@ -16,6 +16,7 @@ import {
   getFuturePositionsWithTime,
 } from "./utils/tleUtils";
 import GlobeTools from "./components/GlobeTools";
+import { useLineOfSight } from "./hooks/useLineOfSight";
 
 function GlobePage() {
   const dispatch: AppDispatch = useDispatch();
@@ -155,27 +156,6 @@ function GlobePage() {
       setGroundStationPos(null);
     }
   }, [selectedGroundStationId, groundStations]);
-
-  // Update line-of-sight (positions) each frame
-  useEffect(() => {
-    if (satPositionProperty && groundStationPos) {
-      const viewer = viewerRef.current?.cesiumElement;
-      if (!viewer) return;
-
-      const { clock } = viewer;
-      const onTick = () => {
-        const time = clock.currentTime;
-        const satPos = satPositionProperty.getValue(time);
-        if (satPos) {
-          const positions = [groundStationPos, satPos];
-          lineOfSightPositionsRef.current = positions;
-        }
-      };
-
-      clock.onTick.addEventListener(onTick);
-      return () => clock.onTick.removeEventListener(onTick);
-    }
-  }, [satPositionProperty, groundStationPos]);
 
   // Ground Track (past)
   useEffect(() => {
@@ -409,6 +389,14 @@ function GlobePage() {
       }
     };
   }, []);
+
+  // Call the useLineOfSight hook
+  useLineOfSight(
+    viewerRef,
+    satPositionProperty,
+    groundStationPos,
+    lineOfSightPositionsRef
+  );
 
   return (
     <div
