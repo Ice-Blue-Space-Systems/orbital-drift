@@ -14,8 +14,6 @@ import { selectContactWindows } from "./store/contactWindowsSlice";
 import CesiumViewer from "./components/CesiumViewer";
 import {
   getFuturePositionsWithTime,
-  getVelocityAtTime,
-  calculateDopplerShift,
 } from "./utils/tleUtils";
 import GlobeTools from "./components/GlobeTools";
 
@@ -59,9 +57,10 @@ function GlobePage() {
     groundTrackPosition: Cartesian3 | null;
     currentTime: Date | null;
     inSight: boolean;
-    satelliteVelocity: Cartesian3 | null; // Add satelliteVelocity to debug info
-    dopplerShift: number | null; // Doppler shift value
-    adjustedFrequency: number | null; // Adjusted frequency after Doppler shift
+    satelliteVelocity: Cartesian3 | null;
+    dopplerShift: number | null;
+    adjustedFrequency: number | null;
+    groundStationPosition: Cartesian3 | null;
   };
   const [debugInfo, setDebugInfo] = useState<DebugInfo>({
     satellitePosition: null,
@@ -69,14 +68,16 @@ function GlobePage() {
     groundTrackPosition: null,
     currentTime: null,
     inSight: false,
-    satelliteVelocity: null, // Initialize satelliteVelocity
-    dopplerShift: null, // Initialize Doppler shift
-    adjustedFrequency: null, // Initialize adjusted frequency
+    satelliteVelocity: null,
+    dopplerShift: null,
+    adjustedFrequency: null,
+    groundStationPosition: null,
   });
 
   const viewerRef = useRef<any>(null);
   const tleHistoryRef = useRef<Cartesian3[]>([]);
   const groundTrackHistoryRef = useRef<Cartesian3[]>([]);
+  const lineOfSightPositionsRef = useRef<Cartesian3[]>([]); // Use a ref for line-of-sight positions
 
   // Fetch initial data once
   useEffect(() => {
@@ -169,13 +170,18 @@ function GlobePage() {
         const time = clock.currentTime;
         const satPos = satPositionProperty.getValue(time);
         if (satPos) {
-          setLineOfSightPositions([groundStationPos, satPos]);
+          lineOfSightPositionsRef.current = [groundStationPos, satPos]; // Update the ref
         }
       };
       clock.onTick.addEventListener(onTick);
       return () => clock.onTick.removeEventListener(onTick);
     }
   }, [satPositionProperty, groundStationPos]);
+
+  // Sync the ref with state when necessary
+  useEffect(() => {
+    setLineOfSightPositions(lineOfSightPositionsRef.current);
+  }, [lineOfSightPositionsRef.current]);
 
   // Ground Track (past)
   useEffect(() => {
@@ -332,7 +338,32 @@ function GlobePage() {
     const viewer = viewerRef.current.cesiumElement;
 
     const updateDebugInfo = () => {
-      const curTime = JulianDate.toDate(viewer.clock.currentTime);
+      const curTime = viewer.clock.currentTime;
+
+      // Get current satellite position
+      const currentPosition = satPositionProperty?.getValue(curTime);
+
+      // Get previous satellite position (1 second earlier)
+      const previousTime = JulianDate.addSeconds(curTime, -1, new JulianDate());
+      const previousPosition = satPositionProperty?.getValue(previousTime);
+
+      let satVelocity: Cartesian3 | null = null;
+
+      if (currentPosition && previousPosition) {
+        // Calculate velocity as the difference in position divided by time interval
+        const deltaPosition = Cartesian3.subtract(
+          currentPosition,
+          previousPosition,
+          new Cartesian3()
+        );
+        const deltaTime = JulianDate.secondsDifference(curTime, previousTime);
+
+        satVelocity = Cartesian3.multiplyByScalar(
+          deltaPosition,
+          1 / deltaTime,
+          new Cartesian3()
+        ); // Velocity in meters per second
+      }
 
       // Check if the satellite is in sight based on contact windows
       const currentContactWindow = contactWindows.find(
@@ -344,20 +375,21 @@ function GlobePage() {
         }) =>
           win.satelliteId === selectedSatId &&
           win.groundStationId === selectedGroundStationId &&
-          new Date(win.scheduledAOS) <= curTime &&
-          new Date(win.scheduledLOS) >= curTime
+          new Date(win.scheduledAOS) <= JulianDate.toDate(curTime) &&
+          new Date(win.scheduledLOS) >= JulianDate.toDate(curTime)
       );
 
       const inSight = !!currentContactWindow; // True if a valid contact window exists
 
       setDebugInfo((prev) => ({
         ...prev,
-        satellitePosition:
-          satPositionProperty?.getValue(viewer.clock.currentTime) || null,
-        groundTrackPosition: 
-          groundTrackPositionProperty?.getValue(viewer.clock.currentTime) || null,
-        currentTime: curTime,
+        satellitePosition: currentPosition || null,
+        groundTrackPosition:
+          groundTrackPositionProperty?.getValue(curTime) || null,
+        currentTime: JulianDate.toDate(curTime),
         inSight,
+        groundStationPosition: groundStationPos || null,
+        satelliteVelocity: satVelocity || null, // Add calculated velocity to debugInfo
       }));
     };
 
@@ -368,7 +400,8 @@ function GlobePage() {
     selectedSatId,
     selectedGroundStationId,
     satPositionProperty,
-    groundTrackPositionProperty
+    groundTrackPositionProperty,
+    groundStationPos
   ]);
 
   // Cleanup on unmount: Destroy Cesium viewer
@@ -382,148 +415,6 @@ function GlobePage() {
       }
     };
   }, []);
-
-  // Calculate satellite velocity
-  useEffect(() => {
-    const satellite = satellites.find((sat) => sat._id === selectedSatId);
-    if (!satellite) {
-      setDebugInfo((prev) => ({
-        ...prev,
-        satelliteVelocity: null,
-      }));
-      return;
-    }
-
-    const loadVelocity = async () => {
-      try {
-        let line1 = "";
-        let line2 = "";
-
-        if (satellite.type === "simulated" && satellite.currentTleId) {
-          const tle = await dispatch(
-            fetchTleBySatelliteId(satellite.currentTleId)
-          ).unwrap();
-          line1 = tle.line1;
-          line2 = tle.line2;
-        } else if (satellite.type === "live" && satellite.noradId) {
-          const res = await fetch(
-            "https://celestrak.com/NORAD/elements/stations.txt"
-          );
-          const lines = (await res.text()).split("\n");
-          const idx = lines.findIndex((l) =>
-            l.includes(String(satellite.noradId))
-          );
-          if (idx !== -1) {
-            line1 = lines[idx];
-            line2 = lines[idx + 1];
-          }
-        }
-
-        if (line1 && line2) {
-          const velocity = getVelocityAtTime(
-            line1,
-            line2,
-            viewerRef.current?.cesiumElement?.clock.currentTime
-          );
-          setDebugInfo((prev) => ({
-            ...prev,
-            satelliteVelocity: velocity,
-          }));
-        }
-      } catch (err) {
-        console.error("Failed to fetch TLE or compute velocity", err);
-        setDebugInfo((prev) => ({
-          ...prev,
-          satelliteVelocity: null,
-        }));
-      }
-    };
-
-    if (selectedSatId) {
-      loadVelocity();
-    }
-  }, [selectedSatId, satellites, dispatch]);
-
-  // Calculate Doppler shift
-  useEffect(() => {
-    const satellite = satellites.find((sat) => sat._id === selectedSatId);
-    const groundStation = groundStations.find(
-      (gs) => gs._id === selectedGroundStationId
-    );
-
-    if (!satellite || !groundStation) {
-      setDebugInfo((prev) => ({
-        ...prev,
-        dopplerShift: null,
-        adjustedFrequency: null,
-      }));
-      return;
-    }
-
-    const loadDopplerShift = async () => {
-      try {
-        let line1 = "";
-        let line2 = "";
-
-        if (satellite.type === "simulated" && satellite.currentTleId) {
-          const tle = await dispatch(
-            fetchTleBySatelliteId(satellite.currentTleId)
-          ).unwrap();
-          line1 = tle.line1;
-          line2 = tle.line2;
-        } else if (satellite.type === "live" && satellite.noradId) {
-          const res = await fetch(
-            "https://celestrak.com/NORAD/elements/stations.txt"
-          );
-          const lines = (await res.text()).split("\n");
-          const idx = lines.findIndex((l) =>
-            l.includes(String(satellite.noradId))
-          );
-          if (idx !== -1) {
-            line1 = lines[idx];
-            line2 = lines[idx + 1];
-          }
-        }
-
-        if (line1 && line2) {
-          const result = calculateDopplerShift(
-            line1,
-            line2,
-            viewerRef.current?.cesiumElement?.clock.currentTime,
-            Cartesian3.fromDegrees(
-              groundStation.location.lon,
-              groundStation.location.lat,
-              groundStation.location.alt * 1000
-            ),
-            145800000 // Example frequency: 145.800 MHz
-          );
-
-          if (result) {
-            setDebugInfo((prev) => ({
-              ...prev,
-              dopplerShift: result.dopplerShift,
-              adjustedFrequency: result.adjustedFrequency,
-            }));
-          }
-        }
-      } catch (err) {
-        console.error("Failed to calculate Doppler shift", err);
-        setDebugInfo((prev) => ({
-          ...prev,
-          dopplerShift: null,
-          adjustedFrequency: null,
-        }));
-      }
-    };
-
-    loadDopplerShift();
-  }, [
-    selectedSatId,
-    selectedGroundStationId,
-    satellites,
-    groundStations,
-    dispatch,
-  ]);
 
   return (
     <div

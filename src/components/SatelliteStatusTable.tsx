@@ -22,7 +22,6 @@ const SatelliteStatusTable: React.FC<SatelliteStatusTableProps> = ({
   useEffect(() => {
     if (!debugInfo) return;
 
-    // Assume debugInfo has satelliteVelocity (Cartesian3) and groundStationPosition (Cartesian3).
     // Compute line-of-sight vector (station -> satellite).
     const satVel = debugInfo.satelliteVelocity; // velocity in m/s
     const satPos = debugInfo.satellitePosition;
