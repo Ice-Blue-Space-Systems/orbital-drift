@@ -1,5 +1,6 @@
 // filepath: /Users/chrischeshire/Documents/IceBlue/hello-world-react-app/src/store/mongoSlice.ts
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
+import { ContactWindow, GroundStation, Satellite } from "../types";
 
 export const fetchMongoData = createAsyncThunk("mongo/fetchData", async () => {
   const satRes = await fetch("http://localhost:5000/api/satellites");
@@ -9,33 +10,6 @@ export const fetchMongoData = createAsyncThunk("mongo/fetchData", async () => {
     groundStations: await gsRes.json(),
   };
 });
-
-export interface Satellite {
-  _id: string;
-  name: string;
-  type: "live" | "simulated";
-  noradId?: number; // Only for live satellites
-  description?: string; // Optional description
-  currentTleId?: string; // Only for simulated satellites
-}
-
-export interface GroundStation {
-  _id: string;
-  name: string;
-  location: {
-    lat: number;
-    lon: number;
-    alt: number;
-  };
-}
-
-export interface ContactWindow {
-  _id: string;
-  satelliteId: string;
-  groundStationId: string;
-  scheduledAOS: string; // ISO date string
-  scheduledLOS: string; // ISO date string
-}
 
 interface MongoState {
   satellites: Satellite[];

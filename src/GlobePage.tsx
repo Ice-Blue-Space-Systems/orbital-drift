@@ -15,7 +15,7 @@ import { useFutureGroundTrack } from "./hooks/useFutureGroundTrack";
 import { useGroundStationPosition } from "./hooks/useGroundStationPosition";
 import { useDebugInfoUpdater } from "./hooks/useDebugInfoUpdater";
 import { useNextContactWindow } from "./hooks/useNextContactWindow";
-import { DebugInfo } from "./types/DebugInfo";
+import { DebugInfo } from "./types";
 
 function GlobePage() {
   const dispatch: AppDispatch = useDispatch();

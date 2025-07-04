@@ -7,7 +7,8 @@ import { selectContactWindows } from "./store/contactWindowsSlice";
 import TimelineTools from "./components/TimelineTools";
 import { AppDispatch } from "./store";
 import "./components/TimelineTools.css";
-import { fetchMongoData, GroundStation, Satellite } from "./store/mongoSlice";
+import { fetchMongoData } from "./store/mongoSlice";
+import { GroundStation, Satellite } from "./types";
 
 const TimelinePage: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();

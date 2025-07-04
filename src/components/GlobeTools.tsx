@@ -6,12 +6,12 @@ import {
 } from "../store/contactWindowsSlice";
 import { AppDispatch, RootState } from "../store";
 import "./GlobeTools.css";
-import { ContactWindow } from "../store/mongoSlice";
 import SatellitePopover from "./SatellitePopover"; // Import the SatellitePopover component
 import GroundStationPopover from "./GroundStationPopover"; // Import the GroundStationPopover component
 import ContactWindowsPopover from "./ContactWindowsPopover"; // Import the ContactWindowsPopover component
 import ConsolePopover from "./ConsolePopover"; // Import the ConsolePopover component
 import CesiumOptionsPopover from "./CesiumOptionsPopover"; // Import the CesiumOptionsPopover component
+import { ContactWindow } from "../types";
 
 interface GlobeToolsProps {
   groundStations: any[];

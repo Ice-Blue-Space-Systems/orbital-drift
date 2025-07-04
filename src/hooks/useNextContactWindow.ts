@@ -1,11 +1,5 @@
 import { useMemo } from "react";
-
-type ContactWindow = {
-  satelliteId: string;
-  groundStationId: string;
-  scheduledAOS: string | number | Date;
-  scheduledLOS: string | number | Date;
-};
+import { ContactWindow } from "../types";
 
 type UseNextContactWindowProps = {
   contactWindows: ContactWindow[];
