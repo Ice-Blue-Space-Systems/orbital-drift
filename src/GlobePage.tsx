@@ -39,9 +39,6 @@ function GlobePage() {
   const [groundStationPos, setGroundStationPos] = useState<Cartesian3 | null>(
     null
   );
-  const [lineOfSightPositions, setLineOfSightPositions] = useState<
-    Cartesian3[]
-  >([]);
 
   const showHistory = useSelector(
     (state: RootState) => state.mongo.showHistory
@@ -170,18 +167,15 @@ function GlobePage() {
         const time = clock.currentTime;
         const satPos = satPositionProperty.getValue(time);
         if (satPos) {
-          lineOfSightPositionsRef.current = [groundStationPos, satPos]; // Update the ref
+          const positions = [groundStationPos, satPos];
+          lineOfSightPositionsRef.current = positions;
         }
       };
+
       clock.onTick.addEventListener(onTick);
       return () => clock.onTick.removeEventListener(onTick);
     }
   }, [satPositionProperty, groundStationPos]);
-
-  // Sync the ref with state when necessary
-  useEffect(() => {
-    setLineOfSightPositions(lineOfSightPositionsRef.current);
-  }, [lineOfSightPositionsRef.current]);
 
   // Ground Track (past)
   useEffect(() => {
@@ -434,7 +428,7 @@ function GlobePage() {
       <div style={{ flex: 1, position: "relative" }}>
         <CesiumViewer
           viewerRef={viewerRef}
-          lineOfSightPositions={lineOfSightPositions}
+          lineOfSightPositions={lineOfSightPositionsRef.current}
           satPositionProperty={satPositionProperty}
           groundStationPos={groundStationPos}
           nextAosLosLabel={nextAosLosLabel}
