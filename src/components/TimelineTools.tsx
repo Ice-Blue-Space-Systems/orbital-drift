@@ -22,9 +22,6 @@ export interface TimelineToolsProps {
   onZoomOut: () => void;
   onFitAll: () => void;
   debugInfo?: any;
-  satPositionProperty?: any;
-  tleHistoryRef: React.MutableRefObject<any[]>;
-  groundTrackHistoryRef: React.MutableRefObject<any[]>;
   nextContactWindow: any;
 }
 
@@ -36,9 +33,6 @@ const TimelineTools: React.FC<TimelineToolsProps> = ({
   onZoomOut,
   onFitAll,
   debugInfo,
-  satPositionProperty,
-  tleHistoryRef,
-  groundTrackHistoryRef,
   nextContactWindow,
 }) => {
   const currentPath = window.location.pathname;

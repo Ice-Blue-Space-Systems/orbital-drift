@@ -9,6 +9,7 @@ import { AppDispatch } from "./store";
 import "./components/TimelineTools.css";
 import { fetchMongoData } from "./store/mongoSlice";
 import { GroundStation, Satellite } from "./types";
+import { transformContactWindowsToTimelineItems } from "./utils/timelineUtils";
 
 const TimelinePage: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
@@ -67,15 +68,47 @@ const TimelinePage: React.FC = () => {
     const items = new DataSet([]);
     const options = {
       start: new Date(),
-      end: new Date(Date.now() + 3600 * 1000), // 1 hour from now
-      showCurrentTime: true, // Show the current time indicator
-      zoomMin: 1000 * 60, // Minimum zoom level (1 minute)
-      zoomMax: 1000 * 60 * 60 * 24, // Maximum zoom level (1 day)
+      end: new Date(Date.now() + 3600 * 1000),
+      showCurrentTime: true,
+      zoomMin: 1000 * 60,
+      zoomMax: 1000 * 60 * 60 * 24,
     };
 
     timelineInstance.current = new Timeline(container, items, options);
 
+    // Enable dragging for the current time bar
+    const handleDrag = (event: MouseEvent) => {
+      if (!timelineInstance.current) return;
+
+      const timelineBounds = container.getBoundingClientRect();
+      const timelineWidth = timelineBounds.width;
+
+      // Calculate the new time based on the mouse position
+      const mouseX = event.clientX - timelineBounds.left;
+      const percentage = mouseX / timelineWidth;
+      const newTime = new Date(
+        timelineInstance.current.getWindow().start.getTime() +
+          percentage *
+            (timelineInstance.current.getWindow().end.getTime() -
+              timelineInstance.current.getWindow().start.getTime())
+      );
+
+      timelineInstance.current.setCurrentTime(newTime);
+    };
+
+    const handleMouseDown = (event: MouseEvent) => {
+      if (event.target && (event.target as HTMLElement).classList.contains("vis-current-time")) {
+        document.addEventListener("mousemove", handleDrag);
+        document.addEventListener("mouseup", () => {
+          document.removeEventListener("mousemove", handleDrag);
+        });
+      }
+    };
+
+    container.addEventListener("mousedown", handleMouseDown);
+
     return () => {
+      container.removeEventListener("mousedown", handleMouseDown);
       if (timelineInstance.current) {
         timelineInstance.current.destroy();
       }
@@ -86,17 +119,8 @@ const TimelinePage: React.FC = () => {
   useEffect(() => {
     if (!timelineInstance.current) return;
 
-    // Map contact windows to timeline items
-    const items = contactWindows.map(
-      (win: { scheduledAOS: string | number | Date; scheduledLOS: string | number | Date }, index: number) => ({
-        id: index,
-        content: `<div style="background-color: rgba(50, 50, 50, 0.9); color: #00ff00; padding: 4px; border-radius: 4px;">
-                    Contact Window ${index + 1}
-                  </div>`,
-        start: new Date(win.scheduledAOS),
-        end: new Date(win.scheduledLOS),
-      })
-    );
+    // Transform contact windows into timeline items using the utility function
+    const items = transformContactWindowsToTimelineItems(contactWindows);
 
     const dataSet = new DataSet(items);
     timelineInstance.current.setItems(dataSet as any);
@@ -170,9 +194,6 @@ const TimelinePage: React.FC = () => {
             onZoomOut={zoomOut}
             onFitAll={fitAllWindows}
             debugInfo={timelineInstance.current} // Pass timeline instance as debugInfo
-            satPositionProperty={null} // Placeholder for satellite position property
-            tleHistoryRef={tleHistoryRef}
-            groundTrackHistoryRef={groundTrackHistoryRef}
             nextContactWindow={nextContactWindow}
           />
         </div>
@@ -202,9 +223,9 @@ const TimelinePage: React.FC = () => {
         ref={timelineRef}
         style={{
           flex: 1,
-          marginTop: "16px", // Push the timeline down to avoid overlap with tools
-          height: "80vh", // Increase the height of the timeline
-          backgroundColor: "rgba(0, 0, 0, 0.8)", // Transparent black background
+          marginTop: "16px",
+          height: "80vh",
+          backgroundColor: "rgba(0, 0, 0, 0.8)",
         }}
       />
     </div>

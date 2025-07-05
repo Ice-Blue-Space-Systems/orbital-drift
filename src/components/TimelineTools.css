@@ -29,3 +29,25 @@
   border-bottom: 8px solid #00ff00; /* Bright green arrow */
   z-index: 1001;
 }
+
+/* Style the current time bar */
+.vis-current-time {
+  background-color: #00ff00; /* Bright green color */
+  width: 4px; /* Make it thicker */
+  border-radius: 2px; /* Add rounded edges */
+}
+
+/* Add a handle to the current time bar */
+.vis-current-time::after {
+  content: "";
+  display: block;
+  width: 12px;
+  height: 12px;
+  background-color: #00ff00; /* Bright green handle */
+  border: 2px solid black; /* Add a black border for contrast */
+  border-radius: 50%; /* Make it circular */
+  position: absolute;
+  top: -6px; /* Center the handle vertically */
+  left: -4px; /* Center the handle horizontally */
+  cursor: pointer; /* Make it draggable */
+}
