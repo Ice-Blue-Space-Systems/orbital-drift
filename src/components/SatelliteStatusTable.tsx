@@ -5,7 +5,10 @@ import {
   calculateDopplerShift,
   calculateLineOfSight,
   calculateRadialVelocity,
-} from "../utils/mathUtils"; // Import utility functions
+  calculateAzimuth,
+  calculateElevation,
+} from "../utils/mathUtils";
+import { convertEcefToEnu } from "../utils/coordinateUtils";
 
 interface SatelliteStatusTableProps {
   debugInfo?: any;
@@ -17,6 +20,9 @@ const SatelliteStatusTable: React.FC<SatelliteStatusTableProps> = ({
   nextContactWindow,
 }) => {
   const [dopplerShift, setDopplerShift] = useState<number | null>(null);
+  const [azimuth, setAzimuth] = useState<number | null>(null);
+  const [elevation, setElevation] = useState<number | null>(null);
+
   const selectedSatId = useSelector((state: RootState) => state.mongo.selectedSatId); // Retrieve selected satellite ID
   const selectedGroundStationId = useSelector(
     (state: RootState) => state.mongo.selectedGroundStationId
@@ -26,22 +32,27 @@ const SatelliteStatusTable: React.FC<SatelliteStatusTableProps> = ({
   useEffect(() => {
     if (!debugInfo) return;
 
-    const satVel = debugInfo.satelliteVelocity; // velocity in m/s
     const satPos = debugInfo.satellitePosition;
     const gsPos = debugInfo.groundStationPosition;
 
-    if (!satVel || !satPos || !gsPos) return;
+    if (!satPos || !gsPos) return;
 
-    // Calculate line-of-sight vector
-    const lineOfSight = calculateLineOfSight(satPos, gsPos);
+    // Convert ECEF to ENU
+    const enuVector = convertEcefToEnu(satPos, gsPos);
 
-    // Calculate radial velocity
-    const radialVelocity = calculateRadialVelocity(satVel, lineOfSight);
+    // Calculate azimuth and elevation
+    setAzimuth(calculateAzimuth(enuVector));
+    setElevation(calculateElevation(enuVector));
 
     // Calculate Doppler shift
-    const baseFrequencyHz = 145800000; // Base frequency in Hz
-    const shift = calculateDopplerShift(baseFrequencyHz, radialVelocity);
-    setDopplerShift(shift);
+    const satVel = debugInfo.satelliteVelocity;
+    if (satVel) {
+      const lineOfSight = calculateLineOfSight(satPos, gsPos);
+      const radialVelocity = calculateRadialVelocity(satVel, lineOfSight);
+      const baseFrequencyHz = 145800000; // Base frequency in Hz
+      const shift = calculateDopplerShift(baseFrequencyHz, radialVelocity);
+      setDopplerShift(shift);
+    }
   }, [debugInfo]);
 
   // Validate debugInfo.currentTime
@@ -99,10 +110,14 @@ const SatelliteStatusTable: React.FC<SatelliteStatusTableProps> = ({
         )}
       </p>
       <p>
+        <strong>Azimuth:</strong> {azimuth !== null ? `${azimuth.toFixed(2)}°` : "N/A"}
+      </p>
+      <p>
+        <strong>Elevation:</strong> {elevation !== null ? `${elevation.toFixed(2)}°` : "N/A"}
+      </p>
+      <p>
         <strong>Doppler Shift:</strong>{" "}
-        {dopplerShift
-          ? `${(dopplerShift / 1000).toFixed(2)} kHz`
-          : "N/A"}
+        {dopplerShift !== null ? `${(dopplerShift / 1000).toFixed(2)} kHz` : "N/A"}
       </p>
       <p>
         <strong>Adjusted Frequency:</strong>{" "}

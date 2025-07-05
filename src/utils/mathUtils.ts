@@ -1,4 +1,4 @@
-import { Cartesian3, JulianDate } from "cesium";
+import { Cartesian3, JulianDate, Math as CesiumMath } from "cesium";
 
 /**
  * Calculates the velocity of a satellite based on its position at two different times.
@@ -73,4 +73,27 @@ export function calculateRadialVelocity(
   lineOfSight: Cartesian3
 ): number {
   return Cartesian3.dot(satelliteVelocity, lineOfSight);
+}
+
+/**
+ * Calculates the azimuth angle (degrees) from an ENU vector.
+ * Azimuth is the angle clockwise from North.
+ * @param enuVector - The ENU vector as a Cartesian3.
+ * @returns The azimuth angle in degrees.
+ */
+export function calculateAzimuth(enuVector: Cartesian3): number {
+  const azimuth = Math.atan2(enuVector.x, enuVector.y); // atan2(East, North)
+  return CesiumMath.toDegrees(azimuth >= 0 ? azimuth : azimuth + 2 * Math.PI); // Normalize to [0, 360]
+}
+
+/**
+ * Calculates the elevation angle (degrees) from an ENU vector.
+ * Elevation is the angle above the horizon.
+ * @param enuVector - The ENU vector as a Cartesian3.
+ * @returns The elevation angle in degrees.
+ */
+export function calculateElevation(enuVector: Cartesian3): number {
+  const horizontalDistance = Math.sqrt(enuVector.x ** 2 + enuVector.y ** 2); // Horizontal distance (East-North plane)
+  const elevation = Math.atan2(enuVector.z, horizontalDistance); // atan2(Up, Horizontal)
+  return CesiumMath.toDegrees(elevation); // Convert to degrees
 }
