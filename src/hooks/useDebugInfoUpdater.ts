@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { Cartesian3, JulianDate } from "cesium";
+import { calculateVelocity } from "../utils/mathUtils";
 
 type DebugInfoUpdaterProps = {
   viewerRef: React.MutableRefObject<any>;
@@ -52,23 +53,13 @@ export function useDebugInfoUpdater({
       const previousTime = JulianDate.addSeconds(curTime, -1, new JulianDate());
       const previousPosition = satPositionProperty?.getValue(previousTime);
 
-      let satVelocity: Cartesian3 | null = null;
-
-      if (currentPosition && previousPosition) {
-        // Calculate velocity as the difference in position divided by time interval
-        const deltaPosition = Cartesian3.subtract(
-          currentPosition,
-          previousPosition,
-          new Cartesian3()
-        );
-        const deltaTime = JulianDate.secondsDifference(curTime, previousTime);
-
-        satVelocity = Cartesian3.multiplyByScalar(
-          deltaPosition,
-          1 / deltaTime,
-          new Cartesian3()
-        ); // Velocity in meters per second
-      }
+      // Use the calculateVelocity utility function
+      const satVelocity = calculateVelocity(
+        currentPosition,
+        previousPosition,
+        curTime,
+        previousTime
+      );
 
       // Check if the satellite is in sight based on contact windows
       const currentContactWindow = contactWindows.find(

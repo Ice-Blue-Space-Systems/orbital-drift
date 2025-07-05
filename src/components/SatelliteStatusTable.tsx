@@ -1,7 +1,11 @@
 import React, { useEffect, useState } from "react";
-import { Cartesian3 } from "cesium";
 import { useSelector } from "react-redux";
 import { RootState } from "../store";
+import {
+  calculateDopplerShift,
+  calculateLineOfSight,
+  calculateRadialVelocity,
+} from "../utils/mathUtils"; // Import utility functions
 
 interface SatelliteStatusTableProps {
   debugInfo?: any;
@@ -22,34 +26,23 @@ const SatelliteStatusTable: React.FC<SatelliteStatusTableProps> = ({
   useEffect(() => {
     if (!debugInfo) return;
 
-    // Compute line-of-sight vector (station -> satellite).
     const satVel = debugInfo.satelliteVelocity; // velocity in m/s
     const satPos = debugInfo.satellitePosition;
     const gsPos = debugInfo.groundStationPosition;
 
     if (!satVel || !satPos || !gsPos) return;
 
-    // lineOfSight = normalize(satPos - gsPos)
-    const lineOfSight = Cartesian3.subtract(satPos, gsPos, new Cartesian3());
-    Cartesian3.normalize(lineOfSight, lineOfSight);
+    // Calculate line-of-sight vector
+    const lineOfSight = calculateLineOfSight(satPos, gsPos);
 
-    // radialVelocity = dot(satVel, lineOfSight)
-    const radialVelocity = Cartesian3.dot(satVel, lineOfSight);
+    // Calculate radial velocity
+    const radialVelocity = calculateRadialVelocity(satVel, lineOfSight);
 
-    // base frequency (Hz)
-    const f0 = 145800000;
-    const shift = calculateDopplerShift(f0, radialVelocity);
+    // Calculate Doppler shift
+    const baseFrequencyHz = 145800000; // Base frequency in Hz
+    const shift = calculateDopplerShift(baseFrequencyHz, radialVelocity);
     setDopplerShift(shift);
   }, [debugInfo]);
-
-  // Doppler calculation helper
-  const calculateDopplerShift = (
-    baseFrequencyHz: number,
-    radialVelocity: number
-  ) => {
-    const c = 299792458; // Speed of light (m/s)
-    return baseFrequencyHz * (radialVelocity / c);
-  };
 
   // Validate debugInfo.currentTime
   const currentTime = debugInfo?.currentTime

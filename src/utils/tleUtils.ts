@@ -6,6 +6,8 @@ import {
   Matrix3,
 } from "cesium";
 import { propagate, twoline2satrec } from "satellite.js";
+import { fetchTleBySatelliteId } from "../store/tleSlice";
+import { AppDispatch } from "../store";
 
 /**
  * Generates a SampledPositionProperty for a satellite's future positions based on TLE data.
@@ -49,92 +51,48 @@ export function getFuturePositionsWithTime(
 }
 
 /**
- * Calculates the satellite's velocity at a specific time based on TLE data.
- * Converts from ECI to ECEF for consistency with Cesium.
+ * Fetches TLE data and generates satellite positions.
+ * @param satellite - The satellite object containing TLE or NORAD ID information.
+ * @param dispatch - Redux dispatch function for fetching TLE data.
+ * @param cesiumClock - Cesium clock instance for time calculations.
+ * @returns An object containing satellite position and ground track position properties.
  */
-export function getVelocityAtTime(
-  line1: string,
-  line2: string,
-  time: JulianDate
-): Cartesian3 | null {
-  const satrec = twoline2satrec(line1, line2);
-  const date = JulianDate.toDate(time);
+export async function loadTleAndPosition(
+  satellite: any,
+  dispatch: AppDispatch,
+  cesiumClock: any
+): Promise<{
+  satPositionProperty: SampledPositionProperty | null;
+  groundTrackPositionProperty: SampledPositionProperty | null;
+}> {
+  try {
+    let line1 = "";
+    let line2 = "";
 
-  const posVel = propagate(satrec, date);
-  if (!posVel || !posVel.velocity) return null;
+    if (satellite.type === "simulated" && satellite.currentTleId) {
+      const tle = await dispatch(fetchTleBySatelliteId(satellite.currentTleId)).unwrap();
+      line1 = tle.line1;
+      line2 = tle.line2;
+    } else if (satellite.type === "live" && satellite.noradId) {
+      const res = await fetch("https://celestrak.com/NORAD/elements/stations.txt");
+      const lines = (await res.text()).split("\n");
+      const idx = lines.findIndex((l) => l.includes(String(satellite.noradId)));
+      if (idx !== -1) {
+        line1 = lines[idx];
+        line2 = lines[idx + 1];
+      }
+    }
 
-  // ECI velocity in meters per second
-  const eciVelocity = new Cartesian3(
-    posVel.velocity.x * 1000,
-    posVel.velocity.y * 1000,
-    posVel.velocity.z * 1000
-  );
+    if (line1 && line2) {
+      const satPositionProperty = getFuturePositionsWithTime(line1, line2, 1060, cesiumClock);
+      const groundTrackPositionProperty = getFuturePositionsWithTime(line1, line2, 1060, cesiumClock);
 
-  // ECI → ECEF velocity
-  const fixedMatrix = Transforms.computeIcrfToFixedMatrix(time);
-  const ecefVelocity = fixedMatrix
-    ? Matrix3.multiplyByVector(fixedMatrix, eciVelocity, new Cartesian3())
-    : eciVelocity; // fallback: better than nothing
-
-  return ecefVelocity;
-}
-
-/**
- * Calculates the Doppler shift and adjusted frequency based on satellite velocity and ground station position.
- * @param line1 - TLE line 1
- * @param line2 - TLE line 2
- * @param time - JulianDate for the calculation
- * @param groundStationPosition - Cartesian3 position of the ground station
- * @param baseFrequencyHz - Original transmission frequency (Hz)
- * @returns { dopplerShift: number, adjustedFrequency: number } or null if calculation fails
- */
-export function calculateDopplerShift(
-  line1: string,
-  line2: string,
-  time: JulianDate,
-  groundStationPosition: Cartesian3,
-  baseFrequencyHz: number
-): { dopplerShift: number; adjustedFrequency: number } | null {
-  const satrec = twoline2satrec(line1, line2);
-  const date = JulianDate.toDate(time);
-
-  const posVel = propagate(satrec, date);
-  if (!posVel || !posVel.velocity || !posVel.position) return null;
-
-  // Satellite position and velocity in ECI
-  const eciPosition = new Cartesian3(
-    posVel.position.x * 1000,
-    posVel.position.y * 1000,
-    posVel.position.z * 1000
-  );
-  const eciVelocity = new Cartesian3(
-    posVel.velocity.x * 1000,
-    posVel.velocity.y * 1000,
-    posVel.velocity.z * 1000
-  );
-
-  // Convert ECI to ECEF
-  const fixedMatrix = Transforms.computeIcrfToFixedMatrix(time);
-  const ecefPosition = fixedMatrix
-    ? Matrix3.multiplyByVector(fixedMatrix, eciPosition, new Cartesian3())
-    : eciPosition;
-  const ecefVelocity = fixedMatrix
-    ? Matrix3.multiplyByVector(fixedMatrix, eciVelocity, new Cartesian3())
-    : eciVelocity;
-
-  // Compute line-of-sight vector (station → satellite)
-  const lineOfSight = Cartesian3.subtract(ecefPosition, groundStationPosition, new Cartesian3());
-  Cartesian3.normalize(lineOfSight, lineOfSight);
-
-  // Compute radial velocity (dot product of velocity and line-of-sight)
-  const radialVelocity = Cartesian3.dot(ecefVelocity, lineOfSight);
-
-  // Calculate Doppler shift
-  const c = 299792458; // Speed of light (m/s)
-  const dopplerShift = baseFrequencyHz * (radialVelocity / c);
-
-  // Calculate adjusted frequency
-  const adjustedFrequency = baseFrequencyHz + dopplerShift;
-
-  return { dopplerShift, adjustedFrequency };
+      return { satPositionProperty, groundTrackPositionProperty };
+    } else {
+      return { satPositionProperty: null, groundTrackPositionProperty: null };
+    }
+  } catch (err) {
+    console.error("Failed to fetch TLE or compute position", err);
+    return { satPositionProperty: null, groundTrackPositionProperty: null };
+  }
 }

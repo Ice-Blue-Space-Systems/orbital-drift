@@ -2,8 +2,7 @@
 import { useEffect, useState } from "react";
 import { SampledPositionProperty } from "cesium";
 import { useDispatch } from "react-redux";
-import { fetchTleBySatelliteId } from "../store/tleSlice";
-import { getFuturePositionsWithTime } from "../utils/tleUtils";
+import { loadTleAndPosition } from "../utils/tleUtils";
 import { AppDispatch } from "../store";
 
 export function useSatellitePosition(
@@ -28,55 +27,19 @@ export function useSatellitePosition(
       return;
     }
 
-    const loadTleAndPosition = async () => {
-      try {
-        let line1 = "";
-        let line2 = "";
+    const fetchPositions = async () => {
+      const { satPositionProperty, groundTrackPositionProperty } = await loadTleAndPosition(
+        satellite,
+        dispatch,
+        viewerRef.current?.cesiumElement?.clock
+      );
 
-        if (satellite.type === "simulated" && satellite.currentTleId) {
-          const tle = await dispatch(fetchTleBySatelliteId(satellite.currentTleId)).unwrap();
-          line1 = tle.line1;
-          line2 = tle.line2;
-        } else if (satellite.type === "live" && satellite.noradId) {
-          const res = await fetch("https://celestrak.com/NORAD/elements/stations.txt");
-          const lines = (await res.text()).split("\n");
-          const idx = lines.findIndex((l) => l.includes(String(satellite.noradId)));
-          if (idx !== -1) {
-            line1 = lines[idx];
-            line2 = lines[idx + 1];
-          }
-        }
-
-        if (line1 && line2) {
-          const positionProperty = getFuturePositionsWithTime(
-            line1,
-            line2,
-            1060,
-            viewerRef.current?.cesiumElement?.clock
-          );
-
-          const groundTrackProperty = getFuturePositionsWithTime(
-            line1,
-            line2,
-            1060,
-            viewerRef.current?.cesiumElement?.clock
-          );
-
-          setSatPositionProperty(positionProperty);
-          setGroundTrackPositionProperty(groundTrackProperty);
-        } else {
-          setSatPositionProperty(null);
-          setGroundTrackPositionProperty(null);
-        }
-      } catch (err) {
-        console.error("Failed to fetch TLE or compute position", err);
-        setSatPositionProperty(null);
-        setGroundTrackPositionProperty(null);
-      }
+      setSatPositionProperty(satPositionProperty);
+      setGroundTrackPositionProperty(groundTrackPositionProperty);
     };
 
     if (selectedSatId) {
-      loadTleAndPosition();
+      fetchPositions();
     }
   }, [selectedSatId, satellites, dispatch, viewerRef]);
 
