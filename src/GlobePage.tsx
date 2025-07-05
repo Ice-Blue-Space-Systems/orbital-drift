@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { Cartesian3, JulianDate, CallbackProperty } from "cesium";
+import { Cartesian3 } from "cesium";
 import { useSelector, useDispatch } from "react-redux";
 import { RootState, AppDispatch } from "./store";
 import { fetchMongoData } from "./store/mongoSlice";
@@ -16,6 +16,7 @@ import { useGroundStationPosition } from "./hooks/useGroundStationPosition";
 import { useDebugInfoUpdater } from "./hooks/useDebugInfoUpdater";
 import { useNextContactWindow } from "./hooks/useNextContactWindow";
 import { DebugInfo } from "./types";
+import { resolveCallbackProperty } from "./utils/cesiumUtils";
 
 function GlobePage() {
   const dispatch: AppDispatch = useDispatch();
@@ -58,7 +59,7 @@ function GlobePage() {
     satelliteVelocity: null,
   });
 
-   // Use the custom hook for updating debug info
+  // Use the custom hook for updating debug info
   useDebugInfoUpdater({
     viewerRef,
     contactWindows,
@@ -146,17 +147,9 @@ function GlobePage() {
           groundStationPos={groundStationPos}
           nextAosLosLabel={nextAosLosLabel}
           tleHistory={tleHistoryRef.current}
-          tleFuture={
-            tleFuture instanceof CallbackProperty
-              ? tleFuture.getValue(JulianDate.now())
-              : tleFuture || []
-          }
+          tleFuture={resolveCallbackProperty(tleFuture)} // Cleaned up logic
           groundTrackHistory={groundTrackHistoryRef.current}
-          groundTrackFuture={
-            groundTrackFuture instanceof CallbackProperty
-              ? groundTrackFuture.getValue(JulianDate.now())
-              : []
-          }
+          groundTrackFuture={resolveCallbackProperty(groundTrackFuture)} // Cleaned up logic
           visibilityConeEntities={[]}
         />
       </div>
