@@ -9,6 +9,7 @@ import {
   calculateElevation,
 } from "../utils/mathUtils";
 import { convertEcefToEnu } from "../utils/coordinateUtils";
+import { selectCesiumClockIso } from "../store/selectors/cesiumClockSelectors";
 
 interface SatelliteStatusTableProps {
   debugInfo?: any;
@@ -23,11 +24,16 @@ const SatelliteStatusTable: React.FC<SatelliteStatusTableProps> = ({
   const [azimuth, setAzimuth] = useState<number | null>(null);
   const [elevation, setElevation] = useState<number | null>(null);
 
-  const selectedSatId = useSelector((state: RootState) => state.mongo.selectedSatId); // Retrieve selected satellite ID
+  const selectedSatId = useSelector(
+    (state: RootState) => state.mongo.selectedSatId
+  ); // Retrieve selected satellite ID
   const selectedGroundStationId = useSelector(
     (state: RootState) => state.mongo.selectedGroundStationId
   );
-  const { satellites, groundStations } = useSelector((state: RootState) => state.mongo);
+  const { satellites, groundStations } = useSelector(
+    (state: RootState) => state.mongo
+  );
+  const iso = useSelector(selectCesiumClockIso);
 
   useEffect(() => {
     if (!debugInfo) return;
@@ -55,11 +61,6 @@ const SatelliteStatusTable: React.FC<SatelliteStatusTableProps> = ({
     }
   }, [debugInfo]);
 
-  // Validate debugInfo.currentTime
-  const currentTime = debugInfo?.currentTime
-    ? debugInfo.currentTime.toISOString()
-    : "N/A";
-
   return (
     <div
       style={{
@@ -72,7 +73,7 @@ const SatelliteStatusTable: React.FC<SatelliteStatusTableProps> = ({
     >
       <h3>Satellite Status</h3>
       <p>
-        <strong>Current Time:</strong> {currentTime}
+        <strong>Current Time:</strong> {iso}
       </p>
       <p>
         <strong>Satellite Position:</strong>{" "}
@@ -91,7 +92,8 @@ const SatelliteStatusTable: React.FC<SatelliteStatusTableProps> = ({
       </p>
       <p>
         <strong>Station Name:</strong>{" "}
-        {groundStations.find((gs) => gs._id === selectedGroundStationId)?.name || "N/A"}
+        {groundStations.find((gs) => gs._id === selectedGroundStationId)
+          ?.name || "N/A"}
       </p>
       <p>
         <strong>Satellite Name:</strong>{" "}
@@ -110,14 +112,18 @@ const SatelliteStatusTable: React.FC<SatelliteStatusTableProps> = ({
         )}
       </p>
       <p>
-        <strong>Azimuth:</strong> {azimuth !== null ? `${azimuth.toFixed(2)}°` : "N/A"}
+        <strong>Azimuth:</strong>{" "}
+        {azimuth !== null ? `${azimuth.toFixed(2)}°` : "N/A"}
       </p>
       <p>
-        <strong>Elevation:</strong> {elevation !== null ? `${elevation.toFixed(2)}°` : "N/A"}
+        <strong>Elevation:</strong>{" "}
+        {elevation !== null ? `${elevation.toFixed(2)}°` : "N/A"}
       </p>
       <p>
         <strong>Doppler Shift:</strong>{" "}
-        {dopplerShift !== null ? `${(dopplerShift / 1000).toFixed(2)} kHz` : "N/A"}
+        {dopplerShift !== null
+          ? `${(dopplerShift / 1000).toFixed(2)} kHz`
+          : "N/A"}
       </p>
       <p>
         <strong>Adjusted Frequency:</strong>{" "}

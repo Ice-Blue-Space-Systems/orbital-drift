@@ -16,7 +16,7 @@ interface MongoState {
   groundStations: GroundStation[];
   contactWindows: ContactWindow[];
   selectedSatId: string | null;
-  selectedGroundStationId?: string | null;
+  selectedGroundStationId: string | null;
   status: "idle" | "loading" | "succeeded" | "failed";
   showTle: boolean;
   showGroundTrack: boolean;
@@ -32,6 +32,7 @@ const initialState: MongoState = {
   groundStations: [],
   contactWindows: [],
   selectedSatId: null,
+  selectedGroundStationId: null,
   status: "idle",
   showTle: false,
   showGroundTrack: false,
