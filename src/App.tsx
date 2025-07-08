@@ -153,14 +153,19 @@ function GlobalAppBar({
           <IconButton
             onClick={() => dispatch(setLiveMode(!liveMode))} // Toggle liveMode
             className="live-mode-button" // Add a class for styling
+            onMouseEnter={(e) => (e.currentTarget.style.color = "#FF00FF")} // Brighter purple on hover
+            onMouseLeave={(e) =>
+              (e.currentTarget.style.color =
+                currentPath === "/gs" ? "#00ff00" : "#888888")
+            }
           >
             <FontAwesomeIcon
               icon={faBolt}
               className="fa-bolt" // Add class for shimmer effect
               style={{
                 fontSize: "24px", // Adjust size
-                color: liveMode ? "#800080" : "#888888", // Purple if active, grey if inactive
-                transition: "color 0.2s ease-in-out",
+                color: "#800080", // Default bright purple
+                transition: "color 0.2s ease-in-out", // Smooth transition
               }}
             />
           </IconButton>
