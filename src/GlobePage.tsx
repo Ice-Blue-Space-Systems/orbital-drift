@@ -14,6 +14,7 @@ import { useTleTrackFuture } from "./hooks/useTleTrackFuture";
 import { useFutureGroundTrack } from "./hooks/useFutureGroundTrack";
 import { useGroundStationPosition } from "./hooks/useGroundStationPosition";
 import { useDebugInfoUpdater } from "./hooks/useDebugInfoUpdater";
+import { useCesiumClock } from "./hooks/useCesiumClock";
 import { useNextContactWindow } from "./hooks/useNextContactWindow";
 import { DebugInfo } from "./types";
 import { resolveCallbackProperty } from "./utils/cesiumUtils";
@@ -33,6 +34,9 @@ function GlobePage() {
   );
 
   const viewerRef = useRef<any>(null);
+
+  // Single source of truth for Cesium clock time
+  useCesiumClock(viewerRef);
 
   const { satPositionProperty, groundTrackPositionProperty } =
     useSatellitePosition(selectedSatId, satellites, viewerRef);
