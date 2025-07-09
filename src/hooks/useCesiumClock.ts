@@ -13,12 +13,17 @@ export function useCesiumClock(viewerRef: React.MutableRefObject<any>) {
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
+    let currentViewer: any = null; // Capture the viewer reference
+
     const attachListener = () => {
       const viewer = viewerRef.current?.cesiumElement;
       if (!viewer) {
         console.log("useCesiumClock: No viewer found, will retry");
         return false;
       }
+
+      // Store the current viewer for cleanup
+      currentViewer = viewer;
 
       // Remove existing listener if any
       if (listenerRef.current) {
@@ -68,11 +73,10 @@ export function useCesiumClock(viewerRef: React.MutableRefObject<any>) {
         intervalRef.current = null;
       }
 
-      // Clean up listener
-      const viewer = viewerRef.current?.cesiumElement;
-      if (viewer && listenerRef.current) {
+      // Clean up listener using the captured viewer reference
+      if (currentViewer && listenerRef.current) {
         console.log("useCesiumClock: Removing clock listener");
-        viewer.clock.onTick.removeEventListener(listenerRef.current);
+        currentViewer.clock.onTick.removeEventListener(listenerRef.current);
       }
     };
   }, [viewerRef, dispatch]);
