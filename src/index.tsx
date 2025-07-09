@@ -19,7 +19,7 @@ declare global {
   }
 }
 
-window.CESIUM_BASE_URL = "/Cesium"; // Path to the Cesium assets in the public folder
+window.CESIUM_BASE_URL = "/cesium"; // Path to the Cesium assets in the public folder
 
 Ion.defaultAccessToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiI3YTAzMzhmOC02M2UyLTRkZWUtYmRhMC1jYzdkNzE3ZTExMjEiLCJpZCI6MzA1Mjk5LCJpYXQiOjE3NDc5MjA2MTR9.LzEQl5G3rvwCFNmAqc_MVffLf94oaSoiorag9p5PKTc"; // Optional: Set your Cesium Ion access token
 

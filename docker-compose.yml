@@ -1,0 +1,30 @@
+version: '3'
+
+services:
+  mongo:
+    image: mongo
+    container_name: mongo
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+
+  backend:
+    build:
+      context: ./server
+    container_name: backend
+    depends_on:
+      - mongo
+    ports:
+      - "5000:5000"
+
+  seed:
+    image: mongo
+    depends_on:
+      - mongo
+    volumes:
+      - ./server/playground-1.mongodb.js:/docker-entrypoint-initdb.d/playground.js:ro
+    entrypoint: ["/bin/sh", "-c", "until mongosh --host mongo --eval 'db.runCommand({ ping: 1 })'; do echo '⏳ waiting for mongo'; sleep 2; done; echo '✅ connected, seeding'; mongosh --host mongo --file /docker-entrypoint-initdb.d/playground.js"]
+
+volumes:
+  mongo-data:
