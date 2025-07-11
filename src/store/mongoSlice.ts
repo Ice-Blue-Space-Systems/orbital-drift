@@ -3,8 +3,8 @@ import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import { ContactWindow, GroundStation, Satellite } from "../types";
 
 export const fetchMongoData = createAsyncThunk("mongo/fetchData", async () => {
-  const satRes = await fetch("http://localhost:5000/api/satellites");
-  const gsRes = await fetch("http://localhost:5000/api/ground-stations");
+  const satRes = await fetch("/api/satellites");
+  const gsRes = await fetch("/api/ground-stations");
   return {
     satellites: await satRes.json(),
     groundStations: await gsRes.json(),

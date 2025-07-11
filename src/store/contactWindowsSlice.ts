@@ -32,7 +32,7 @@ export const fetchContactWindows = createAsyncThunk(
     if (satelliteId) params.append("satelliteId", satelliteId);
     if (groundStationId) params.append("groundStationId", groundStationId);
 
-    const response = await axios.get(`http://localhost:5000/api/contact-windows?${params.toString()}`);
+    const response = await axios.get(`/api/contact-windows?${params.toString()}`);
     return response.data;
   }
 );

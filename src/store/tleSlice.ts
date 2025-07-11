@@ -4,7 +4,7 @@ import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 export const fetchTleBySatelliteId = createAsyncThunk(
   "tle/fetchTleBySatelliteId",
   async (satelliteId: string) => {
-    const response = await fetch(`http://localhost:5000/api/tle/${satelliteId}`);
+    const response = await fetch(`/api/tle/${satelliteId}`);
     const data = await response.json();
     return data;
   }

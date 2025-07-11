@@ -49,7 +49,7 @@ const ContactWindows: React.FC<ContactWindowsProps> = ({
 
   const refreshContactWindows = async () => {
     try {
-      await axios.post("http://localhost:5000/api/contact-windows/refresh");
+      await axios.post("/api/contact-windows/refresh");
       toast.success("Contact windows refreshed successfully!", {
         position: "top-right",
         autoClose: 3000,

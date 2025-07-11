@@ -6,7 +6,9 @@
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
-    "eject": "react-scripts eject"
+    "eject": "react-scripts eject",
+    "deploy": "npm run build && ssh iceblue 'rm -rf /var/www/iceblue/*' && scp -r build/* iceblue:/var/www/iceblue/",
+    "copyBuild": "ssh iceblue 'rm -rf /var/www/iceblue/*' && scp -r build/* iceblue:/var/www/iceblue/"
   },
   "eslintConfig": {
     "extends": [
