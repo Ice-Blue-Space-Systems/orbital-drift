@@ -3,7 +3,6 @@
   position: absolute;
   top: 0;
   left: 0;
-  right: 0;
   background: linear-gradient(
     180deg,
     rgba(0, 0, 0, 0.9) 0%,
@@ -20,21 +19,25 @@
     inset 0 1px 0 rgba(0, 255, 0, 0.2);
   transition: all 0.3s ease-in-out;
   z-index: 1000;
+  width: auto;
+  min-width: fit-content;
 }
 
-/* Green Arrow Connector */
-.timeline-tools::after {
+/* Green Arrow Connector pointing UP to Timeline icon */
+.timeline-tools::before {
   content: "";
   position: absolute;
-  top: 100%;
-  left: 50%;
+  bottom: 100%;
+  left: 96px; /* Position to align with Timeline icon: 16px padding + 48px (Globe button) + 16px gap + 16px (half of Timeline button) */
   transform: translateX(-50%);
   width: 0;
   height: 0;
   border-left: 10px solid transparent;
   border-right: 10px solid transparent;
-  border-top: 8px solid #00ff00;
-  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+  border-bottom: 8px solid #00ff00;
+  filter: drop-shadow(0 -2px 4px rgba(0, 0, 0, 0.3));
+  z-index: 1001;
+  pointer-events: none;
 }
 
 .timeline-tools:hover {
@@ -45,9 +48,9 @@
     0 0 15px rgba(0, 255, 0, 0.2);
 }
 
-.timeline-tools:hover::after {
-  border-top-color: #00ff00;
-  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.4)) drop-shadow(0 0 5px rgba(0, 255, 0, 0.3));
+.timeline-tools:hover::before {
+  border-bottom-color: #00ff00;
+  filter: drop-shadow(0 -2px 4px rgba(0, 0, 0, 0.4)) drop-shadow(0 0 5px rgba(0, 255, 0, 0.3));
 }
 
 /* Timeline Tools Button Container */
@@ -142,16 +145,6 @@
   box-shadow: 0 0 6px rgba(0, 255, 0, 0.6);
 }
 
-/* Arrow Styling */
-.timeline-tools-arrow {
-  filter: drop-shadow(0 0 4px rgba(0, 255, 0, 0.5));
-  transition: all 0.3s ease;
-}
-
-.timeline-tools:hover .timeline-tools-arrow {
-  filter: drop-shadow(0 0 8px rgba(0, 255, 0, 0.8));
-}
-
 /* Responsive Design */
 @media (max-width: 1200px) {
   .timeline-tools {
@@ -170,7 +163,6 @@
 @media (max-width: 900px) {
   .timeline-tools {
     max-width: 600px;
-    min-width: 500px;
   }
   
   .timeline-tools-buttons {
@@ -196,7 +188,7 @@
 
 @media (max-width: 700px) {
   .timeline-tools {
-    min-width: 400px;
+    max-width: 400px;
   }
   
   .timeline-tools-buttons {
