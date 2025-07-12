@@ -58,8 +58,8 @@ const CesiumViewer: React.FC<CesiumViewerProps> = ({
         baseLayerPicker={showCesiumOptions}
         navigationHelpButton={showCesiumOptions}
         geocoder={showCesiumOptions}
-        timeline
-        animation
+        timeline={showCesiumOptions}
+        animation={showCesiumOptions}
         fullscreenButton
       >
         {visibilityConeEntities}
