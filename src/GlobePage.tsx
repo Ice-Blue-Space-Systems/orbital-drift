@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { Cartesian3 } from "cesium";
+import { Cartesian3, JulianDate } from "cesium";
 import { useSelector, useDispatch } from "react-redux";
 import { RootState, AppDispatch } from "./store";
 import { fetchMongoData } from "./store/mongoSlice";
@@ -37,6 +37,34 @@ function GlobePage() {
 
   // Single source of truth for Cesium clock time
   useCesiumClock(viewerRef);
+
+  // Get current Redux state
+  const cesiumMultiplier = useSelector((state: RootState) => state.cesiumClock.multiplier);
+  const cesiumClockTime = useSelector((state: RootState) => state.cesiumClock.iso);
+
+  // Sync Redux state to Cesium when Globe page loads
+  useEffect(() => {
+    const viewer = viewerRef.current?.cesiumElement;
+    if (!viewer) return;
+
+    const timeout = setTimeout(() => {
+      // Set Cesium time to match Redux time (preserves Timeline → Globe continuity)
+      if (cesiumClockTime) {
+        const targetTime = new Date(cesiumClockTime);
+        const cesiumTime = JulianDate.fromDate(targetTime);
+        viewer.clock.currentTime = cesiumTime;
+        console.log(`GlobePage: Set Cesium time to ${targetTime.toISOString()}`);
+      }
+
+      // Set Cesium multiplier to match Redux multiplier
+      if (viewer.clock.multiplier !== cesiumMultiplier) {
+        viewer.clock.multiplier = cesiumMultiplier;
+        console.log(`GlobePage: Set Cesium speed to ${cesiumMultiplier}x`);
+      }
+    }, 100); // Small delay to ensure viewer is ready
+
+    return () => clearTimeout(timeout);
+  }, [viewerRef.current?.cesiumElement, cesiumMultiplier, cesiumClockTime]);
 
   const { satPositionProperty, groundTrackPositionProperty } =
     useSatellitePosition(selectedSatId, satellites, viewerRef);

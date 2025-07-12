@@ -35,17 +35,15 @@ export function useCesiumClock(viewerRef: React.MutableRefObject<any>) {
 
       const updateClock = () => {
         try {
-          const curTime = viewer.clock.currentTime;
-          const dateObject = JulianDate.toDate(curTime);
           const multiplier = viewer.clock.multiplier;
+          
+          // Only dispatch multiplier changes, let useGlobalClock handle time
+          dispatch(setCesiumClockMultiplier(multiplier));
           
           // Log occasionally to show sync is working
           if (Math.random() < 0.01) { // Log ~1% of updates
-            console.log(`useCesiumClock: Cesium time update - Speed: ${multiplier}x, Time: ${dateObject.toISOString()}`);
+            console.log(`useCesiumClock: Cesium multiplier update - Speed: ${multiplier}x`);
           }
-          
-          dispatch(setCesiumClockTime(dateObject.toISOString()));
-          dispatch(setCesiumClockMultiplier(multiplier));
         } catch (error) {
           console.error("useCesiumClock: Error updating clock", error);
         }
