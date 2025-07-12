@@ -21,8 +21,11 @@ const SimulationSpeedDial: React.FC<SimulationSpeedDialProps> = ({
   
   const [isDragging, setIsDragging] = useState(false);
   const [rotation, setRotation] = useState(0);
+  const [isEditing, setIsEditing] = useState(false);
+  const [inputValue, setInputValue] = useState("");
   const dialRef = useRef<HTMLDivElement>(null);
   const centerRef = useRef({ x: 0, y: 0 });
+  const inputRef = useRef<HTMLInputElement>(null);
 
   // Convert multiplier to rotation angle (logarithmic scale)
   const multiplierToAngle = (multiplier: number): number => {
@@ -123,6 +126,36 @@ const SimulationSpeedDial: React.FC<SimulationSpeedDialProps> = ({
     }
   };
 
+  const handleSpeedClick = () => {
+    setIsEditing(true);
+    setInputValue(currentMultiplier.toString());
+    setTimeout(() => inputRef.current?.focus(), 0);
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setInputValue(e.target.value);
+  };
+
+  const handleInputSubmit = () => {
+    const newSpeed = parseFloat(inputValue);
+    if (!isNaN(newSpeed) && newSpeed >= minSpeed && newSpeed <= maxSpeed) {
+      dispatch(setCesiumClockMultiplier(newSpeed));
+    }
+    setIsEditing(false);
+  };
+
+  const handleInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") {
+      handleInputSubmit();
+    } else if (e.key === "Escape") {
+      setIsEditing(false);
+    }
+  };
+
+  const handleInputBlur = () => {
+    handleInputSubmit();
+  };
+
   return (
     <div style={getPositionStyles()}>
       <div
@@ -218,24 +251,65 @@ const SimulationSpeedDial: React.FC<SimulationSpeedDialProps> = ({
         })}
       </div>
 
-      {/* Speed display */}
-      <div
-        style={{
-          marginTop: "10px",
-          textAlign: "center",
-          color: "#00ff00",
-          fontFamily: "Courier New, Courier, monospace",
-          fontSize: "14px",
-          fontWeight: "bold",
-          textShadow: "0 0 5px #00ff00",
-          backgroundColor: "rgba(0, 0, 0, 0.8)",
-          padding: "4px 8px",
-          borderRadius: "4px",
-          border: "1px solid #00ff00",
-        }}
-      >
-        {formatSpeed(currentMultiplier)}
-      </div>
+      {/* Interactive Speed Input/Display */}
+      {isEditing ? (
+        <input
+          ref={inputRef}
+          type="number"
+          value={inputValue}
+          onChange={handleInputChange}
+          onKeyDown={handleInputKeyDown}
+          onBlur={handleInputBlur}
+          min={minSpeed}
+          max={maxSpeed}
+          step="0.1"
+          style={{
+            marginTop: "10px",
+            textAlign: "center",
+            color: "#00ff00",
+            fontFamily: "Courier New, Courier, monospace",
+            fontSize: "14px",
+            fontWeight: "bold",
+            backgroundColor: "rgba(0, 0, 0, 0.9)",
+            padding: "4px 8px",
+            borderRadius: "4px",
+            border: "2px solid #ffff00", // Yellow border when editing
+            outline: "none",
+            width: "60px",
+            boxShadow: "0 0 10px #ffff00",
+          }}
+        />
+      ) : (
+        <div
+          onClick={handleSpeedClick}
+          style={{
+            marginTop: "10px",
+            textAlign: "center",
+            color: "#00ff00",
+            fontFamily: "Courier New, Courier, monospace",
+            fontSize: "14px",
+            fontWeight: "bold",
+            textShadow: "0 0 5px #00ff00",
+            backgroundColor: "rgba(0, 0, 0, 0.8)",
+            padding: "4px 8px",
+            borderRadius: "4px",
+            border: "1px solid #00ff00",
+            cursor: "pointer",
+            userSelect: "none",
+            transition: "all 0.2s ease",
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.backgroundColor = "rgba(0, 255, 0, 0.1)";
+            e.currentTarget.style.boxShadow = "0 0 8px #00ff00";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.backgroundColor = "rgba(0, 0, 0, 0.8)";
+            e.currentTarget.style.boxShadow = "none";
+          }}
+        >
+          {formatSpeed(currentMultiplier)}
+        </div>
+      )}
     </div>
   );
 };
