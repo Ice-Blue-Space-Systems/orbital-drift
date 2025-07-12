@@ -4,6 +4,7 @@ import { DataSet } from "vis-data";
 import { Timeline } from "vis-timeline/standalone";
 import "vis-timeline/styles/vis-timeline-graph2d.min.css";
 import { selectContactWindows } from "./store/contactWindowsSlice";
+import { selectCesiumClockUtc } from "./store/selectors/cesiumClockSelectors";
 import TimelineTools from "./components/TimelineTools";
 import { AppDispatch } from "./store";
 import "./components/TimelineTools.css";
@@ -29,12 +30,13 @@ const TimelinePage: React.FC = () => {
   const timelineRef = useRef<HTMLDivElement>(null);
   const timelineInstance = useRef<Timeline | null>(null);
 
-  // Refs for TLE and ground track history
-  const tleHistoryRef = useRef<any[]>([]);
-  const groundTrackHistoryRef = useRef<any[]>([]);
 
   // Get contact windows data from Redux
   const contactWindows = useSelector(selectContactWindows);
+  
+  // Get Cesium clock time and multiplier (single source of truth)
+  const cesiumClockTime = useSelector(selectCesiumClockUtc);
+  const cesiumMultiplier = useSelector((state: any) => state.cesiumClock.multiplier);
 
   // Fetch initial data once
   useEffect(() => {
@@ -126,6 +128,23 @@ const TimelinePage: React.FC = () => {
     timelineInstance.current.setItems(dataSet as any);
   }, [contactWindows]);
 
+  // Sync timeline current time with Cesium clock time (single source of truth)
+  useEffect(() => {
+    if (!timelineInstance.current || !cesiumClockTime) return;
+
+    try {
+      const currentTime = new Date(cesiumClockTime);
+      timelineInstance.current.setCurrentTime(currentTime);
+      
+      // Log occasionally to show timeline is syncing
+      if (Math.random() < 0.02) { // Log ~2% of updates
+        console.log(`TimelinePage: Syncing to time: ${cesiumClockTime} (Speed: ${cesiumMultiplier}x)`);
+      }
+    } catch (error) {
+      console.error("TimelinePage: Error parsing Cesium clock time", error);
+    }
+  }, [cesiumClockTime]); // Only depend on time, not multiplier
+
   // Timeline control functions
   const jumpToNextContactWindow = () => {
     if (!timelineInstance.current || !nextContactWindow) return;
@@ -214,6 +233,10 @@ const TimelinePage: React.FC = () => {
           <div>
             <strong>Selected Ground Station:</strong>{" "}
             {selectedGroundStation ? selectedGroundStation.name : "None"}
+          </div>
+          <div style={{ marginTop: "8px", fontSize: "12px", color: "#ffff00" }}>
+            <strong>Simulation Speed:</strong> {cesiumMultiplier}x
+            {cesiumMultiplier !== 1 && " (Synced with Cesium)"}
           </div>
         </div>
       </div>

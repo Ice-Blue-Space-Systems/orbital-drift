@@ -26,6 +26,7 @@ import { RootState } from "./store";
 import { setLiveMode } from "./store/mongoSlice";
 import "./App.css";
 import { selectCesiumClockUtc } from "./store/selectors/cesiumClockSelectors";
+import { useGlobalClock } from "./hooks/useGlobalClock";
 
 /** A simple top nav with the four route icons. */
 function GlobalAppBar({
@@ -38,6 +39,7 @@ function GlobalAppBar({
   const dispatch = useDispatch();
   const liveMode = useSelector((state: RootState) => state.mongo.liveMode); // Get liveMode from Redux
   const utc = useSelector(selectCesiumClockUtc);
+  const cesiumMultiplier = useSelector((state: RootState) => state.cesiumClock.multiplier);
   const navigate = useNavigate();
   const currentPath = window.location.pathname;
 
@@ -178,9 +180,17 @@ function GlobalAppBar({
             fontFamily: "Courier New, Courier, monospace", // Console-style font
             fontSize: "16px", // Slightly larger text
             marginLeft: "16px", // Add spacing after the icons
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "flex-start",
           }}
         >
-          {utc}
+          <div>{utc}</div>
+          {cesiumMultiplier !== 1 && (
+            <div style={{ fontSize: "12px", color: "#ffff00" }}>
+              {cesiumMultiplier}x speed
+            </div>
+          )}
         </div>
 
         {/* Theme Switcher */}
@@ -358,6 +368,9 @@ function GlobalAppBar({
 
 const App: React.FC = () => {
   const [currentTheme, setCurrentTheme] = useState<string>("console");
+
+  // Global clock fallback for when no Cesium viewer is active
+  useGlobalClock();
 
   return (
     <div>

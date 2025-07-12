@@ -1,19 +1,20 @@
 import { useEffect, useRef } from "react";
 import { JulianDate } from "cesium";
-import { setCesiumClockTime } from "../store/cesiumClockSlice";
+import { setCesiumClockTime, setCesiumClockMultiplier } from "../store/cesiumClockSlice";
 import { useDispatch } from "react-redux";
 
 /**
- * Simple hook that attaches to Cesium clock and dispatches time to Redux
- * This is the single source of truth for time in the app
+ * Hook that attaches to Cesium clock when available
+ * This overrides the global clock when Cesium is active
  */
 export function useCesiumClock(viewerRef: React.MutableRefObject<any>) {
   const dispatch = useDispatch();
   const listenerRef = useRef<(() => void) | null>(null);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const isActiveRef = useRef<boolean>(false);
 
   useEffect(() => {
-    let currentViewer: any = null; // Capture the viewer reference
+    let currentViewer: any = null;
 
     const attachListener = () => {
       const viewer = viewerRef.current?.cesiumElement;
@@ -22,30 +23,35 @@ export function useCesiumClock(viewerRef: React.MutableRefObject<any>) {
         return false;
       }
 
-      // Store the current viewer for cleanup
       currentViewer = viewer;
+      isActiveRef.current = true;
 
       // Remove existing listener if any
       if (listenerRef.current) {
         viewer.clock.onTick.removeEventListener(listenerRef.current);
       }
 
-      console.log("useCesiumClock: Attaching clock listener");
+      console.log("useCesiumClock: Cesium clock taking control");
 
       const updateClock = () => {
         try {
           const curTime = viewer.clock.currentTime;
           const dateObject = JulianDate.toDate(curTime);
+          const multiplier = viewer.clock.multiplier;
+          
+          // Log occasionally to show sync is working
+          if (Math.random() < 0.01) { // Log ~1% of updates
+            console.log(`useCesiumClock: Cesium time update - Speed: ${multiplier}x, Time: ${dateObject.toISOString()}`);
+          }
+          
           dispatch(setCesiumClockTime(dateObject.toISOString()));
+          dispatch(setCesiumClockMultiplier(multiplier));
         } catch (error) {
           console.error("useCesiumClock: Error updating clock", error);
         }
       };
 
-      // Store reference to the listener
       listenerRef.current = updateClock;
-      
-      // Attach the clock listener
       viewer.clock.onTick.addEventListener(updateClock);
       console.log("useCesiumClock: Clock listener attached successfully");
       
@@ -57,7 +63,6 @@ export function useCesiumClock(viewerRef: React.MutableRefObject<any>) {
       // If failed, set up an interval to retry
       intervalRef.current = setInterval(() => {
         if (attachListener()) {
-          // Success! Clear the interval
           if (intervalRef.current) {
             clearInterval(intervalRef.current);
             intervalRef.current = null;
@@ -67,17 +72,22 @@ export function useCesiumClock(viewerRef: React.MutableRefObject<any>) {
     }
 
     return () => {
+      isActiveRef.current = false;
+      console.log("useCesiumClock: Cesium clock releasing control");
+
       // Clear retry interval
       if (intervalRef.current) {
         clearInterval(intervalRef.current);
         intervalRef.current = null;
       }
 
-      // Clean up listener using the captured viewer reference
+      // Clean up listener
       if (currentViewer && listenerRef.current) {
-        console.log("useCesiumClock: Removing clock listener");
         currentViewer.clock.onTick.removeEventListener(listenerRef.current);
       }
     };
   }, [viewerRef, dispatch]);
+
+  // Return whether this hook is actively controlling the clock
+  return isActiveRef.current;
 }
