@@ -1,41 +1,53 @@
-/* Timeline Tools Panel */
+/* Timeline Tools Panel - Clean Top Border Aesthetic */
 .timeline-tools {
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(0, 255, 0, 0.3);
-  border-radius: 8px;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  background: linear-gradient(
+    180deg,
+    rgba(0, 0, 0, 0.9) 0%,
+    rgba(0, 0, 0, 0.7) 50%,
+    transparent 100%
+  );
+  border-top: 3px solid #00ff00;
+  border-left: none;
+  border-right: none;
+  border-bottom: none;
+  border-radius: 0;
   box-shadow: 
-    0 8px 32px rgba(0, 0, 0, 0.4),
-    0 0 0 1px rgba(0, 255, 0, 0.1),
-    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    0 4px 20px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(0, 255, 0, 0.2);
   transition: all 0.3s ease-in-out;
-  overflow: hidden;
-  animation: timeline-tools-glow 4s ease-in-out infinite alternate;
+  z-index: 1000;
 }
 
-@keyframes timeline-tools-glow {
-  0% {
-    box-shadow: 
-      0 8px 32px rgba(0, 0, 0, 0.4),
-      0 0 0 1px rgba(0, 255, 0, 0.1),
-      inset 0 1px 0 rgba(255, 255, 255, 0.1);
-  }
-  100% {
-    box-shadow: 
-      0 8px 32px rgba(0, 0, 0, 0.4),
-      0 0 0 1px rgba(0, 255, 0, 0.2),
-      inset 0 1px 0 rgba(255, 255, 255, 0.1),
-      0 0 20px rgba(0, 255, 0, 0.1);
-  }
+/* Green Arrow Connector */
+.timeline-tools::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: 10px solid transparent;
+  border-right: 10px solid transparent;
+  border-top: 8px solid #00ff00;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
 }
 
 .timeline-tools:hover {
-  border-color: rgba(0, 255, 0, 0.5);
+  border-top-color: #00ff00;
   box-shadow: 
-    0 12px 40px rgba(0, 0, 0, 0.5),
-    0 0 0 1px rgba(0, 255, 0, 0.2),
-    inset 0 1px 0 rgba(255, 255, 255, 0.15),
-    0 0 25px rgba(0, 255, 0, 0.3);
-  animation: none;
+    0 6px 25px rgba(0, 0, 0, 0.4),
+    inset 0 1px 0 rgba(0, 255, 0, 0.3),
+    0 0 15px rgba(0, 255, 0, 0.2);
+}
+
+.timeline-tools:hover::after {
+  border-top-color: #00ff00;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.4)) drop-shadow(0 0 5px rgba(0, 255, 0, 0.3));
 }
 
 /* Timeline Tools Button Container */
@@ -44,7 +56,9 @@
   gap: 8px;
   align-items: center;
   flex-wrap: wrap;
-  min-height: 48px;
+  min-height: 56px;
+  padding: 8px 16px 16px 16px; /* Extra bottom padding for the arrow */
+  background: transparent;
 }
 
 /* Timeline Tools Button Groups */
@@ -53,74 +67,50 @@
   gap: 4px;
   align-items: center;
   padding: 4px;
-  border-radius: 6px;
-  background: rgba(0, 0, 0, 0.2);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(0, 255, 0, 0.1);
   transition: all 0.2s ease;
   flex-shrink: 0;
 }
 
 .timeline-tools-group:hover {
-  background: rgba(0, 0, 0, 0.3);
-  border-color: rgba(0, 255, 0, 0.2);
+  background: rgba(0, 0, 0, 0.4);
+  border-color: rgba(0, 255, 0, 0.3);
+  box-shadow: 0 0 8px rgba(0, 255, 0, 0.1);
 }
 
-/* Icon Button Styling */
+/* Icon Button Styling - Clean Console Style */
 .timeline-tools .icon-button {
-  color: #b0b0b0;
+  color: #888888;
   background: transparent;
   border: 1px solid transparent;
-  border-radius: 6px;
-  padding: 8px;
-  min-width: 40px;
-  min-height: 40px;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  border-radius: 4px;
+  padding: 6px;
+  min-width: 36px;
+  min-height: 36px;
+  transition: all 0.2s ease;
   position: relative;
-  overflow: hidden;
-}
-
-.timeline-tools .icon-button::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: linear-gradient(45deg, transparent, rgba(0, 255, 0, 0.1), transparent);
-  opacity: 0;
-  transition: opacity 0.3s ease;
-  pointer-events: none;
 }
 
 .timeline-tools .icon-button:hover {
   color: #00ff00;
-  background: rgba(0, 255, 0, 0.08);
-  border-color: rgba(0, 255, 0, 0.3);
-  transform: translateY(-1px);
-  box-shadow: 
-    0 4px 12px rgba(0, 255, 0, 0.2),
-    inset 0 1px 0 rgba(255, 255, 255, 0.1);
-}
-
-.timeline-tools .icon-button:hover::before {
-  opacity: 1;
+  background: rgba(0, 255, 0, 0.1);
+  border-color: rgba(0, 255, 0, 0.2);
+  box-shadow: 0 0 8px rgba(0, 255, 0, 0.2);
 }
 
 .timeline-tools .icon-button:active {
-  transform: translateY(0);
-  box-shadow: 
-    0 2px 6px rgba(0, 255, 0, 0.1),
-    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  transform: translateY(1px);
+  box-shadow: 0 0 4px rgba(0, 255, 0, 0.1);
 }
 
 /* Active/Selected Button State */
 .timeline-tools .icon-button.active {
-  color: #00ff00;
-  background: rgba(0, 255, 0, 0.15);
-  border-color: rgba(0, 255, 0, 0.4);
-  box-shadow: 
-    0 0 20px rgba(0, 255, 0, 0.3),
-    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  color: #00ff00 !important;
+  background: rgba(0, 255, 0, 0.15) !important;
+  border-color: rgba(0, 255, 0, 0.4) !important;
+  box-shadow: 0 0 12px rgba(0, 255, 0, 0.3) !important;
 }
 
 /* Divider Styling */
