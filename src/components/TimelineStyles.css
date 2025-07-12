@@ -1,0 +1,200 @@
+/* Enhanced Timeline Styling */
+
+/* Override vis-timeline default styles */
+.vis-timeline {
+  background: linear-gradient(135deg, rgba(0, 20, 0, 0.95), rgba(0, 40, 0, 0.85)) !important;
+  border: 2px solid #00ff00 !important;
+  border-radius: 8px !important;
+  box-shadow: 0 0 20px rgba(0, 255, 0, 0.3) !important;
+  font-family: 'Courier New', Courier, monospace !important;
+}
+
+/* Timeline panel styling */
+.vis-panel {
+  background: transparent !important;
+  border: none !important;
+}
+
+/* Timeline background */
+.vis-timeline .vis-panel.vis-background {
+  background: linear-gradient(to bottom, 
+    rgba(0, 30, 0, 0.8) 0%, 
+    rgba(0, 15, 0, 0.9) 50%, 
+    rgba(0, 20, 0, 0.8) 100%) !important;
+}
+
+/* Time axis styling */
+.vis-timeline .vis-time-axis {
+  background: rgba(0, 40, 0, 0.9) !important;
+  border-top: 1px solid #00ff00 !important;
+  color: #00ff00 !important;
+  font-family: 'Courier New', Courier, monospace !important;
+  font-weight: bold !important;
+}
+
+.vis-timeline .vis-time-axis .vis-text {
+  color: #00ff00 !important;
+  text-shadow: 0 0 3px #00ff00 !important;
+}
+
+/* Timeline items (contact windows) */
+.vis-timeline .vis-item {
+  background: linear-gradient(135deg, rgba(0, 255, 0, 0.2), rgba(0, 200, 0, 0.3)) !important;
+  border: 2px solid #00ff00 !important;
+  border-radius: 6px !important;
+  color: #ffffff !important;
+  font-family: 'Courier New', Courier, monospace !important;
+  font-weight: bold !important;
+  text-shadow: 0 0 2px #000000 !important;
+  box-shadow: 0 2px 8px rgba(0, 255, 0, 0.2) !important;
+  transition: all 0.2s ease !important;
+}
+
+.vis-timeline .vis-item:hover {
+  background: linear-gradient(135deg, rgba(0, 255, 0, 0.4), rgba(0, 200, 0, 0.5)) !important;
+  box-shadow: 0 4px 16px rgba(0, 255, 0, 0.4) !important;
+  transform: translateY(-1px) !important;
+}
+
+.vis-timeline .vis-item.vis-selected {
+  background: linear-gradient(135deg, rgba(255, 255, 0, 0.3), rgba(255, 200, 0, 0.4)) !important;
+  border-color: #ffff00 !important;
+  box-shadow: 0 0 16px rgba(255, 255, 0, 0.5) !important;
+}
+
+/* Current time bar - THIS IS THE MAIN ENHANCEMENT */
+.vis-timeline .vis-current-time {
+  background: linear-gradient(to right, 
+    transparent 0%, 
+    rgba(255, 0, 0, 0.8) 45%, 
+    #ff0000 50%, 
+    rgba(255, 0, 0, 0.8) 55%, 
+    transparent 100%) !important;
+  width: 3px !important;
+  box-shadow: 0 0 10px rgba(255, 0, 0, 0.8) !important;
+  z-index: 100 !important;
+}
+
+/* Custom time bar handle - MUCH BETTER HANDLE */
+.vis-timeline .vis-current-time::before {
+  content: '' !important;
+  position: absolute !important;
+  top: -8px !important;
+  left: -6px !important;
+  width: 15px !important;
+  height: 15px !important;
+  background: linear-gradient(135deg, #ff4444, #ff0000) !important;
+  border: 2px solid #ffffff !important;
+  border-radius: 3px !important;
+  cursor: grab !important;
+  box-shadow: 
+    0 0 8px rgba(255, 0, 0, 0.8),
+    inset 0 1px 2px rgba(255, 255, 255, 0.3) !important;
+  transition: all 0.2s ease !important;
+  z-index: 101 !important;
+}
+
+.vis-timeline .vis-current-time::after {
+  content: '' !important;
+  position: absolute !important;
+  bottom: -8px !important;
+  left: -6px !important;
+  width: 15px !important;
+  height: 15px !important;
+  background: linear-gradient(135deg, #ff4444, #ff0000) !important;
+  border: 2px solid #ffffff !important;
+  border-radius: 3px !important;
+  cursor: grab !important;
+  box-shadow: 
+    0 0 8px rgba(255, 0, 0, 0.8),
+    inset 0 1px 2px rgba(255, 255, 255, 0.3) !important;
+  transition: all 0.2s ease !important;
+  z-index: 101 !important;
+}
+
+.vis-timeline .vis-current-time:hover::before,
+.vis-timeline .vis-current-time:hover::after {
+  background: linear-gradient(135deg, #ff6666, #ff2222) !important;
+  box-shadow: 
+    0 0 12px rgba(255, 0, 0, 1.0),
+    inset 0 1px 2px rgba(255, 255, 255, 0.5) !important;
+  transform: scale(1.1) !important;
+}
+
+/* Grid lines */
+.vis-timeline .vis-grid {
+  border-left: 1px solid rgba(0, 255, 0, 0.2) !important;
+}
+
+.vis-timeline .vis-grid.vis-major {
+  border-left: 1px solid rgba(0, 255, 0, 0.4) !important;
+}
+
+/* Label styling */
+.vis-timeline .vis-labelset .vis-vlabel {
+  color: #00ff00 !important;
+  background: rgba(0, 30, 0, 0.8) !important;
+  border-right: 1px solid #00ff00 !important;
+  font-family: 'Courier New', Courier, monospace !important;
+  font-weight: bold !important;
+  text-shadow: 0 0 3px #00ff00 !important;
+}
+
+/* Scrollbar styling */
+.vis-timeline::-webkit-scrollbar {
+  width: 12px !important;
+  height: 12px !important;
+}
+
+.vis-timeline::-webkit-scrollbar-track {
+  background: rgba(0, 20, 0, 0.8) !important;
+  border-radius: 6px !important;
+}
+
+.vis-timeline::-webkit-scrollbar-thumb {
+  background: linear-gradient(135deg, rgba(0, 255, 0, 0.6), rgba(0, 200, 0, 0.8)) !important;
+  border-radius: 6px !important;
+  border: 2px solid rgba(0, 20, 0, 0.8) !important;
+}
+
+.vis-timeline::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(135deg, rgba(0, 255, 0, 0.8), rgba(0, 255, 0, 1.0)) !important;
+}
+
+/* Timeline range selection */
+.vis-timeline .vis-panel.vis-background .vis-range {
+  background: rgba(0, 255, 0, 0.1) !important;
+  border: 1px solid rgba(0, 255, 0, 0.3) !important;
+}
+
+/* Tooltip styling */
+.vis-tooltip {
+  background: rgba(0, 20, 0, 0.95) !important;
+  border: 2px solid #00ff00 !important;
+  border-radius: 6px !important;
+  color: #00ff00 !important;
+  font-family: 'Courier New', Courier, monospace !important;
+  font-weight: bold !important;
+  box-shadow: 0 4px 16px rgba(0, 255, 0, 0.3) !important;
+  text-shadow: 0 0 3px #00ff00 !important;
+}
+
+/* Animation for active elements */
+@keyframes timeline-glow {
+  0% { box-shadow: 0 0 5px rgba(0, 255, 0, 0.5); }
+  50% { box-shadow: 0 0 20px rgba(0, 255, 0, 0.8); }
+  100% { box-shadow: 0 0 5px rgba(0, 255, 0, 0.5); }
+}
+
+.vis-timeline .vis-item.vis-active {
+  animation: timeline-glow 2s ease-in-out infinite !important;
+}
+
+/* Loading state */
+.vis-timeline .vis-loading {
+  background: rgba(0, 20, 0, 0.9) !important;
+  color: #00ff00 !important;
+  font-family: 'Courier New', Courier, monospace !important;
+  border: 2px solid #00ff00 !important;
+  border-radius: 6px !important;
+}
