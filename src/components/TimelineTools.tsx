@@ -6,6 +6,8 @@ import ZoomInIcon from "@mui/icons-material/ZoomIn";
 import ZoomOutIcon from "@mui/icons-material/ZoomOut";
 import FitScreenIcon from "@mui/icons-material/FitScreen";
 import AccessTimeIcon from "@mui/icons-material/AccessTime";
+import MyLocationIcon from "@mui/icons-material/MyLocation";
+import LocationDisabledIcon from "@mui/icons-material/LocationDisabled";
 import SatellitePopover from "./SatellitePopover"; // Import SatellitePopover
 import GroundStationPopover from "./GroundStationPopover"; // Import GroundStationPopover
 import ContactWindowsPopover from "./ContactWindowsPopover"; // Import ContactWindowsPopover
@@ -21,6 +23,8 @@ export interface TimelineToolsProps {
   onZoomIn: () => void;
   onZoomOut: () => void;
   onFitAll: () => void;
+  onToggleFollow: () => void;
+  followMode: boolean;
   debugInfo?: any;
   nextContactWindow: any;
 }
@@ -32,6 +36,8 @@ const TimelineTools: React.FC<TimelineToolsProps> = ({
   onZoomIn,
   onZoomOut,
   onFitAll,
+  onToggleFollow,
+  followMode,
   debugInfo,
   nextContactWindow,
 }) => {
@@ -101,6 +107,18 @@ const TimelineTools: React.FC<TimelineToolsProps> = ({
         <Tooltip title="Jump to Now" arrow>
           <IconButton onClick={onJumpToNow} className="icon-button">
             <AccessTimeIcon />
+          </IconButton>
+        </Tooltip>
+        <Tooltip title={followMode ? "Disable Follow Mode" : "Enable Follow Mode"} arrow>
+          <IconButton 
+            onClick={onToggleFollow} 
+            className="icon-button"
+            style={{
+              color: followMode ? "#00ff00" : "#888888", // Green when active
+              backgroundColor: followMode ? "rgba(0, 255, 0, 0.1)" : "transparent",
+            }}
+          >
+            {followMode ? <MyLocationIcon /> : <LocationDisabledIcon />}
           </IconButton>
         </Tooltip>
         <Tooltip title="Jump to Next Window" arrow>

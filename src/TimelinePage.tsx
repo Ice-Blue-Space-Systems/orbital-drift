@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useMemo } from "react";
+import React, { useEffect, useRef, useMemo, useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { DataSet } from "vis-data";
 import { Timeline } from "vis-timeline/standalone";
@@ -29,6 +29,7 @@ const TimelinePage: React.FC = () => {
   // State for timeline controls
   const timelineRef = useRef<HTMLDivElement>(null);
   const timelineInstance = useRef<Timeline | null>(null);
+  const [followMode, setFollowMode] = useState(false);
 
 
   // Get contact windows data from Redux
@@ -136,14 +137,33 @@ const TimelinePage: React.FC = () => {
       const currentTime = new Date(cesiumClockTime);
       timelineInstance.current.setCurrentTime(currentTime);
       
+      // Auto-follow current time if follow mode is enabled
+      if (followMode) {
+        const window = timelineInstance.current.getWindow();
+        const windowDuration = window.end.getTime() - window.start.getTime();
+        const buffer = windowDuration * 0.1; // 10% buffer on each side
+        
+        // Check if current time is outside the visible window (with buffer)
+        if (currentTime.getTime() < window.start.getTime() + buffer || 
+            currentTime.getTime() > window.end.getTime() - buffer) {
+          // Center the window around current time
+          const halfWindow = windowDuration / 2;
+          timelineInstance.current.setWindow(
+            new Date(currentTime.getTime() - halfWindow),
+            new Date(currentTime.getTime() + halfWindow),
+            { animation: false } // No animation for smooth following
+          );
+        }
+      }
+      
       // Log occasionally to show timeline is syncing
       if (Math.random() < 0.02) { // Log ~2% of updates
-        console.log(`TimelinePage: Syncing to time: ${cesiumClockTime} (Speed: ${cesiumMultiplier}x)`);
+        console.log(`TimelinePage: Syncing to time: ${cesiumClockTime} (Speed: ${cesiumMultiplier}x, Follow: ${followMode})`);
       }
     } catch (error) {
       console.error("TimelinePage: Error parsing Cesium clock time", error);
     }
-  }, [cesiumClockTime, cesiumMultiplier]); // Depend on both time and multiplier since both are used
+  }, [cesiumClockTime, cesiumMultiplier, followMode]); // Include followMode in dependencies
 
   // Timeline control functions
   const jumpToNextContactWindow = () => {
@@ -173,8 +193,27 @@ const TimelinePage: React.FC = () => {
   const jumpToNow = () => {
     if (!timelineInstance.current) return;
 
-    // Move to the current time
-    timelineInstance.current.moveTo(new Date(), { animation: true });
+    const currentTime = new Date();
+    
+    // Enable follow mode and center on current time
+    setFollowMode(true);
+    
+    // Center the timeline around current time with a reasonable window
+    const windowDuration = 2 * 60 * 60 * 1000; // 2 hours total window
+    const halfWindow = windowDuration / 2;
+    
+    timelineInstance.current.setWindow(
+      new Date(currentTime.getTime() - halfWindow),
+      new Date(currentTime.getTime() + halfWindow),
+      { animation: true }
+    );
+    
+    // Move to current time
+    timelineInstance.current.moveTo(currentTime, { animation: true });
+  };
+
+  const toggleFollowMode = () => {
+    setFollowMode(!followMode);
   };
 
   const zoomIn = () => {
@@ -212,6 +251,8 @@ const TimelinePage: React.FC = () => {
             onZoomIn={zoomIn}
             onZoomOut={zoomOut}
             onFitAll={fitAllWindows}
+            onToggleFollow={toggleFollowMode}
+            followMode={followMode}
             debugInfo={timelineInstance.current} // Pass timeline instance as debugInfo
             nextContactWindow={nextContactWindow}
           />
