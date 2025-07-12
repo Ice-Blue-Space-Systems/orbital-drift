@@ -366,26 +366,35 @@ function GlobalAppBar({
   );
 }
 
-const App: React.FC = () => {
+// Component inside Router that can use useLocation
+function AppContent() {
   const [currentTheme, setCurrentTheme] = useState<string>("console");
 
   // Global clock fallback for when no Cesium viewer is active
   useGlobalClock();
 
   return (
+    <>
+      {/* Global Navigation Bar */}
+      <GlobalAppBar currentTheme={currentTheme} setTheme={setCurrentTheme} />
+      <Routes>
+        <Route path="/globe" element={<GlobePage />} />
+        {/* Other routes */}
+        <Route path="/" element={<Navigate to="/globe" replace />} />
+        <Route path="/timeline" element={<TimelinePage />} />
+        <Route path="/sats" element={<SatsPage />} />
+        <Route path="/gs" element={<GSPage />} />
+      </Routes>
+    </>
+  );
+}
+
+const App: React.FC = () => {
+  return (
     <div>
       <ToastContainer />
       <Router>
-        {/* Global Navigation Bar */}
-        <GlobalAppBar currentTheme={currentTheme} setTheme={setCurrentTheme} />
-        <Routes>
-          <Route path="/globe" element={<GlobePage />} />
-          {/* Other routes */}
-          <Route path="/" element={<Navigate to="/globe" replace />} />
-          <Route path="/timeline" element={<TimelinePage />} />
-          <Route path="/sats" element={<SatsPage />} />
-          <Route path="/gs" element={<GSPage />} />
-        </Routes>
+        <AppContent />
       </Router>
     </div>
   );

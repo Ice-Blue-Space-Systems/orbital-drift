@@ -39,5 +39,5 @@ export function useGlobalClock() {
         intervalRef.current = null;
       }
     };
-  }, [dispatch, cesiumMultiplier]); // Restart when multiplier changes
+  }, [dispatch, cesiumMultiplier, cesiumClockTime]); // Restart when multiplier or time changes
 }

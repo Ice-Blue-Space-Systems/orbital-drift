@@ -35,7 +35,7 @@ function GlobePage() {
 
   const viewerRef = useRef<any>(null);
 
-  // Single source of truth for Cesium clock time
+  // Single source of truth for Cesium clock
   useCesiumClock(viewerRef);
 
   // Get current Redux state
@@ -45,7 +45,12 @@ function GlobePage() {
   // Sync Redux state to Cesium when Globe page loads
   useEffect(() => {
     const viewer = viewerRef.current?.cesiumElement;
-    if (!viewer) return;
+    if (!viewer) {
+      console.log("GlobePage: No viewer available yet for initialization");
+      return;
+    }
+
+    console.log(`GlobePage: Initializing with Redux state - Time: ${cesiumClockTime}, Multiplier: ${cesiumMultiplier}x`);
 
     const timeout = setTimeout(() => {
       // Set Cesium time to match Redux time (preserves Timeline → Globe continuity)
@@ -57,14 +62,42 @@ function GlobePage() {
       }
 
       // Set Cesium multiplier to match Redux multiplier
-      if (viewer.clock.multiplier !== cesiumMultiplier) {
+      const currentMultiplier = viewer.clock.multiplier;
+      if (currentMultiplier !== cesiumMultiplier) {
         viewer.clock.multiplier = cesiumMultiplier;
-        console.log(`GlobePage: Set Cesium speed to ${cesiumMultiplier}x`);
+        console.log(`GlobePage: Set Cesium speed from ${currentMultiplier}x to ${cesiumMultiplier}x`);
+      } else {
+        console.log(`GlobePage: Cesium speed already at ${cesiumMultiplier}x`);
       }
-    }, 100); // Small delay to ensure viewer is ready
+    }, 200); // Increased delay to ensure viewer is fully ready
 
     return () => clearTimeout(timeout);
-  }, [viewerRef.current?.cesiumElement, cesiumMultiplier, cesiumClockTime]);
+  }, [cesiumMultiplier, cesiumClockTime]); // Removed viewerRef dependency to avoid unnecessary re-runs
+
+  // Sync Redux state to Cesium when viewer becomes available
+  useEffect(() => {
+    const viewer = viewerRef.current?.cesiumElement;
+    if (!viewer) return;
+
+    console.log(`GlobePage: Viewer became available, syncing state - Time: ${cesiumClockTime}, Multiplier: ${cesiumMultiplier}x`);
+
+    // Set Cesium time to match Redux time
+    if (cesiumClockTime) {
+      const targetTime = new Date(cesiumClockTime);
+      const cesiumTime = JulianDate.fromDate(targetTime);
+      viewer.clock.currentTime = cesiumTime;
+      console.log(`GlobePage: Set Cesium time to ${targetTime.toISOString()}`);
+    }
+
+    // Set Cesium multiplier to match Redux multiplier
+    const currentMultiplier = viewer.clock.multiplier;
+    if (currentMultiplier !== cesiumMultiplier) {
+      viewer.clock.multiplier = cesiumMultiplier;
+      console.log(`GlobePage: Set Cesium speed from ${currentMultiplier}x to ${cesiumMultiplier}x`);
+    } else {
+      console.log(`GlobePage: Cesium speed already at ${cesiumMultiplier}x`);
+    }
+  }, [viewerRef.current?.cesiumElement, cesiumClockTime, cesiumMultiplier]); // Trigger when viewer becomes available or state changes
 
   const { satPositionProperty, groundTrackPositionProperty } =
     useSatellitePosition(selectedSatId, satellites, viewerRef);

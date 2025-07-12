@@ -143,7 +143,7 @@ const TimelinePage: React.FC = () => {
     } catch (error) {
       console.error("TimelinePage: Error parsing Cesium clock time", error);
     }
-  }, [cesiumClockTime]); // Only depend on time, not multiplier
+  }, [cesiumClockTime, cesiumMultiplier]); // Depend on both time and multiplier since both are used
 
   // Timeline control functions
   const jumpToNextContactWindow = () => {

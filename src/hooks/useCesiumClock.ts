@@ -1,6 +1,5 @@
 import { useEffect, useRef } from "react";
-import { JulianDate } from "cesium";
-import { setCesiumClockTime, setCesiumClockMultiplier } from "../store/cesiumClockSlice";
+import { setCesiumClockMultiplier } from "../store/cesiumClockSlice";
 import { useDispatch } from "react-redux";
 
 /**
