@@ -1,33 +1,222 @@
-.timeline-tools-container {
-  position: absolute;
-  border-top: 1px solid #00ff00; /* Bright green top border */
-  top: 64px; /* Position just below the top navigation bar */
-  left: 0px; /* Align to the left */
-  background-color: rgba(50, 50, 50, 0.3); /* Transparent space-grey background */
-  padding: 12px;
-  z-index: 1000;
-  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2); /* Subtle shadow for depth */
+/* Timeline Tools Panel */
+.timeline-tools {
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(0, 255, 0, 0.3);
+  border-radius: 8px;
+  box-shadow: 
+    0 8px 32px rgba(0, 0, 0, 0.4),
+    0 0 0 1px rgba(0, 255, 0, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  transition: all 0.3s ease-in-out;
+  overflow: hidden;
+  animation: timeline-tools-glow 4s ease-in-out infinite alternate;
 }
 
+@keyframes timeline-tools-glow {
+  0% {
+    box-shadow: 
+      0 8px 32px rgba(0, 0, 0, 0.4),
+      0 0 0 1px rgba(0, 255, 0, 0.1),
+      inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  }
+  100% {
+    box-shadow: 
+      0 8px 32px rgba(0, 0, 0, 0.4),
+      0 0 0 1px rgba(0, 255, 0, 0.2),
+      inset 0 1px 0 rgba(255, 255, 255, 0.1),
+      0 0 20px rgba(0, 255, 0, 0.1);
+  }
+}
+
+.timeline-tools:hover {
+  border-color: rgba(0, 255, 0, 0.5);
+  box-shadow: 
+    0 12px 40px rgba(0, 0, 0, 0.5),
+    0 0 0 1px rgba(0, 255, 0, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15),
+    0 0 25px rgba(0, 255, 0, 0.3);
+  animation: none;
+}
+
+/* Timeline Tools Button Container */
+.timeline-tools-buttons {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+  min-height: 48px;
+}
+
+/* Timeline Tools Button Groups */
+.timeline-tools-group {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+  padding: 4px;
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.timeline-tools-group:hover {
+  background: rgba(0, 0, 0, 0.3);
+  border-color: rgba(0, 255, 0, 0.2);
+}
+
+/* Icon Button Styling */
 .timeline-tools .icon-button {
-  color: #888888; /* Default grey color */
-  transition: color 0.2s ease-in-out; /* Smooth transition for hover effect */
+  color: #b0b0b0;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  padding: 8px;
+  min-width: 40px;
+  min-height: 40px;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.timeline-tools .icon-button::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(45deg, transparent, rgba(0, 255, 0, 0.1), transparent);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
 }
 
 .timeline-tools .icon-button:hover {
-  color: #00ff00; /* Bright green on hover */
+  color: #00ff00;
+  background: rgba(0, 255, 0, 0.08);
+  border-color: rgba(0, 255, 0, 0.3);
+  transform: translateY(-1px);
+  box-shadow: 
+    0 4px 12px rgba(0, 255, 0, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
 }
 
-.timeline-tools-arrow {
+.timeline-tools .icon-button:hover::before {
+  opacity: 1;
+}
+
+.timeline-tools .icon-button:active {
+  transform: translateY(0);
+  box-shadow: 
+    0 2px 6px rgba(0, 255, 0, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+/* Active/Selected Button State */
+.timeline-tools .icon-button.active {
+  color: #00ff00;
+  background: rgba(0, 255, 0, 0.15);
+  border-color: rgba(0, 255, 0, 0.4);
+  box-shadow: 
+    0 0 20px rgba(0, 255, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+/* Divider Styling */
+.timeline-tools-divider {
+  width: 1px;
+  height: 32px;
+  background: linear-gradient(
+    to bottom,
+    transparent,
+    rgba(0, 255, 0, 0.3) 20%,
+    rgba(0, 255, 0, 0.3) 80%,
+    transparent
+  );
+  margin: 0 8px;
+  position: relative;
+  flex-shrink: 0;
+}
+
+.timeline-tools-divider::before {
+  content: '';
   position: absolute;
-  top: -8px; /* Position above the Timeline Tools panel */
-  left: 85px; /* Adjust based on the Timeline button's position in the top nav */
-  width: 0;
-  height: 0;
-  border-left: 8px solid transparent;
-  border-right: 8px solid transparent;
-  border-bottom: 8px solid #00ff00; /* Bright green arrow */
-  z-index: 1001;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 3px;
+  height: 3px;
+  background: #00ff00;
+  border-radius: 50%;
+  box-shadow: 0 0 6px rgba(0, 255, 0, 0.6);
+}
+
+/* Arrow Styling */
+.timeline-tools-arrow {
+  filter: drop-shadow(0 0 4px rgba(0, 255, 0, 0.5));
+  transition: all 0.3s ease;
+}
+
+.timeline-tools:hover .timeline-tools-arrow {
+  filter: drop-shadow(0 0 8px rgba(0, 255, 0, 0.8));
+}
+
+/* Responsive Design */
+@media (max-width: 1200px) {
+  .timeline-tools {
+    max-width: 700px;
+  }
+  
+  .timeline-tools-buttons {
+    gap: 6px;
+  }
+  
+  .timeline-tools-divider {
+    margin: 0 6px;
+  }
+}
+
+@media (max-width: 900px) {
+  .timeline-tools {
+    max-width: 600px;
+    min-width: 500px;
+  }
+  
+  .timeline-tools-buttons {
+    gap: 4px;
+  }
+  
+  .timeline-tools-group {
+    gap: 2px;
+    padding: 2px;
+  }
+  
+  .timeline-tools .icon-button {
+    min-width: 36px;
+    min-height: 36px;
+    padding: 6px;
+  }
+  
+  .timeline-tools-divider {
+    margin: 0 4px;
+    height: 28px;
+  }
+}
+
+@media (max-width: 700px) {
+  .timeline-tools {
+    min-width: 400px;
+  }
+  
+  .timeline-tools-buttons {
+    flex-wrap: wrap;
+    justify-content: flex-start;
+  }
+  
+  .timeline-tools-divider {
+    display: none;
+  }
 }
 
 /* Style the current time bar */

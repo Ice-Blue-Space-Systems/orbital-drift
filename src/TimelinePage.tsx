@@ -3,6 +3,7 @@ import { useSelector, useDispatch } from "react-redux";
 import { DataSet } from "vis-data";
 import { Timeline } from "vis-timeline/standalone";
 import "vis-timeline/styles/vis-timeline-graph2d.min.css";
+import "./components/TimelineStyles.css"; // Custom timeline styling
 import { selectContactWindows } from "./store/contactWindowsSlice";
 import { selectCesiumClockUtc } from "./store/selectors/cesiumClockSelectors";
 import TimelineTools from "./components/TimelineTools";
@@ -73,13 +74,57 @@ const TimelinePage: React.FC = () => {
       start: new Date(),
       end: new Date(Date.now() + 3600 * 1000),
       showCurrentTime: true,
-      zoomMin: 1000 * 60,
-      zoomMax: 1000 * 60 * 60 * 24,
+      zoomMin: 1000 * 60, // 1 minute minimum zoom
+      zoomMax: 1000 * 60 * 60 * 24 * 7, // 1 week maximum zoom
+      moveable: true,
+      zoomable: true,
+      selectable: true,
+      multiselect: false,
+      height: '100%',
+      margin: {
+        item: {
+          horizontal: 10,
+          vertical: 8
+        }
+      },
+      orientation: {
+        axis: 'bottom' as const,
+        item: 'top' as const
+      },
+      format: {
+        minorLabels: {
+          millisecond: 'SSS',
+          second: 's',
+          minute: 'HH:mm',
+          hour: 'HH:mm',
+          weekday: 'ddd D',
+          day: 'D',
+          week: 'w',
+          month: 'MMM',
+          year: 'YYYY'
+        },
+        majorLabels: {
+          millisecond: 'HH:mm:ss',
+          second: 'HH:mm:ss',
+          minute: 'ddd D MMMM',
+          hour: 'ddd D MMMM',
+          weekday: 'MMMM YYYY',
+          day: 'MMMM YYYY',
+          week: 'MMMM YYYY',
+          month: 'YYYY',
+          year: ''
+        }
+      },
+      tooltip: {
+        followMouse: true,
+        overflowMethod: 'cap' as const,
+        delay: 300
+      }
     };
 
     timelineInstance.current = new Timeline(container, items, options);
 
-    // Enable dragging for the current time bar
+    // Enhanced dragging for the current time bar with better visual feedback
     const handleDrag = (event: MouseEvent) => {
       if (!timelineInstance.current) return;
 
@@ -88,21 +133,28 @@ const TimelinePage: React.FC = () => {
 
       // Calculate the new time based on the mouse position
       const mouseX = event.clientX - timelineBounds.left;
-      const percentage = mouseX / timelineWidth;
+      const percentage = Math.max(0, Math.min(1, mouseX / timelineWidth)); // Clamp between 0 and 1
+      const window = timelineInstance.current.getWindow();
       const newTime = new Date(
-        timelineInstance.current.getWindow().start.getTime() +
-          percentage *
-            (timelineInstance.current.getWindow().end.getTime() -
-              timelineInstance.current.getWindow().start.getTime())
+        window.start.getTime() + percentage * (window.end.getTime() - window.start.getTime())
       );
 
       timelineInstance.current.setCurrentTime(newTime);
+      
+      // Disable follow mode when manually dragging
+      setFollowMode(false);
     };
 
     const handleMouseDown = (event: MouseEvent) => {
-      if (event.target && (event.target as HTMLElement).classList.contains("vis-current-time")) {
+      const target = event.target as HTMLElement;
+      if (target && (target.classList.contains("vis-current-time") || 
+                    target.closest(".vis-current-time"))) {
+        event.preventDefault();
+        container.style.cursor = "grabbing";
+        
         document.addEventListener("mousemove", handleDrag);
         document.addEventListener("mouseup", () => {
+          container.style.cursor = "";
           document.removeEventListener("mousemove", handleDrag);
         });
       }
@@ -289,7 +341,12 @@ const TimelinePage: React.FC = () => {
           flex: 1,
           marginTop: "16px",
           height: "80vh",
-          backgroundColor: "rgba(0, 0, 0, 0.8)",
+          background: "linear-gradient(135deg, rgba(0, 20, 0, 0.95), rgba(0, 40, 0, 0.85))",
+          border: "2px solid #00ff00",
+          borderRadius: "8px",
+          boxShadow: "0 0 20px rgba(0, 255, 0, 0.3), inset 0 0 10px rgba(0, 255, 0, 0.1)",
+          overflow: "hidden",
+          position: "relative"
         }}
       />
     </div>
