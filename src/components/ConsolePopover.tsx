@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { IconButton } from "@mui/material";
 import CodeIcon from "@mui/icons-material/Code";
 import DockableComponent from "./DockableComponent";
@@ -16,16 +16,31 @@ const ConsolePopover: React.FC<ConsolePopoverProps> = ({
   nextContactWindow,
 }) => {
   const [openPopover, setOpenPopover] = useState<boolean>(false);
+  const closeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const selectedSatId = useSelector((state: RootState) => state.mongo.selectedSatId); // Retrieve selected satellite ID
   const selectedGroundStationId = useSelector(
     (state: RootState) => state.mongo.selectedGroundStationId
   );
 
+  const handleMouseEnter = () => {
+    if (closeTimeoutRef.current) {
+      clearTimeout(closeTimeoutRef.current);
+      closeTimeoutRef.current = null;
+    }
+    setOpenPopover(true);
+  };
+
+  const handleMouseLeave = () => {
+    closeTimeoutRef.current = setTimeout(() => {
+      setOpenPopover(false);
+    }, 200); // 200ms delay before closing
+  };
+
   return (
     <div
       style={{ position: "relative" }}
-      onMouseEnter={() => setOpenPopover(true)}
-      onMouseLeave={() => setOpenPopover(false)}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
     >
       {/* Console Button */}
       <IconButton

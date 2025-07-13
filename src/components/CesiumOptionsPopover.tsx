@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { IconButton, Tooltip } from "@mui/material";
 import SettingsIcon from "@mui/icons-material/Settings";
 import { useDispatch, useSelector } from "react-redux";
@@ -7,15 +7,31 @@ import { RootState } from "../store";
 
 const CesiumOptionsPopover: React.FC = () => {
   const [openPopover, setOpenPopover] = useState<boolean>(false);
+  const closeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const dispatch = useDispatch();
   const showCesiumOptions = useSelector(
     (state: RootState) => state.mongo.showCesiumOptions
   );
+
+  const handleMouseEnter = () => {
+    if (closeTimeoutRef.current) {
+      clearTimeout(closeTimeoutRef.current);
+      closeTimeoutRef.current = null;
+    }
+    setOpenPopover(true);
+  };
+
+  const handleMouseLeave = () => {
+    closeTimeoutRef.current = setTimeout(() => {
+      setOpenPopover(false);
+    }, 200); // 200ms delay before closing
+  };
+
   return (
     <div
       style={{ position: "relative" }}
-      onMouseEnter={() => setOpenPopover(true)}
-      onMouseLeave={() => setOpenPopover(false)}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
     >
       {/* Cesium Options Button */}
       <IconButton
@@ -29,7 +45,7 @@ const CesiumOptionsPopover: React.FC = () => {
         <div
           style={{
             position: "absolute",
-            top: "48px",
+            top: "46px", // Slightly reduced gap
             left: "0",
             backgroundColor: "rgba(13, 13, 13, 0.9)", // Console-style dark background
             border: "1px solid #00ff00", // Green border

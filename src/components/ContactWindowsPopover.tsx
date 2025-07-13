@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { IconButton } from "@mui/material";
 import EventIcon from "@mui/icons-material/Event";
 import ContactWindows from "./ContactWindows";
@@ -13,12 +13,27 @@ const ContactWindowsPopover: React.FC<ContactWindowsPopoverProps> = ({
   groundStationId,
 }) => {
   const [openPopover, setOpenPopover] = useState<boolean>(false);
+  const closeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  const handleMouseEnter = () => {
+    if (closeTimeoutRef.current) {
+      clearTimeout(closeTimeoutRef.current);
+      closeTimeoutRef.current = null;
+    }
+    setOpenPopover(true);
+  };
+
+  const handleMouseLeave = () => {
+    closeTimeoutRef.current = setTimeout(() => {
+      setOpenPopover(false);
+    }, 200); // 200ms delay before closing
+  };
 
   return (
     <div
       style={{ position: "relative" }}
-      onMouseEnter={() => setOpenPopover(true)}
-      onMouseLeave={() => setOpenPopover(false)}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
     >
       {/* Contact Windows Button */}
       <IconButton
@@ -32,7 +47,7 @@ const ContactWindowsPopover: React.FC<ContactWindowsPopoverProps> = ({
         <div
           style={{
             position: "absolute",
-            top: "48px",
+            top: "46px", // Slightly reduced gap
             left: "0",
             backgroundColor: "rgba(13, 13, 13, 0.9)", // Match console-style dark transparent background
             border: "1px solid #00ff00", // Green border

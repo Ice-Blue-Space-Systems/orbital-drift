@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { IconButton, Tooltip, TextField, List, ListItem, ListItemButton, ListItemText } from "@mui/material";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import RadarIcon from "@mui/icons-material/Radar";
@@ -13,15 +13,30 @@ const GroundStationPopover: React.FC = () => {
   const dispatch = useDispatch();
   const [openPopover, setOpenPopover] = useState<boolean>(false);
   const [groundStationFilter, setGroundStationFilter] = useState<string>("");
+  const closeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const {groundStations, selectedGroundStationId } = useSelector((state: RootState) => state.mongo);
   const showLineOfSight = useSelector((state: RootState) => state.mongo.showLineOfSight);
   const showVisibilityCones = useSelector((state: RootState) => state.mongo.showVisibilityCones);
 
+  const handleMouseEnter = () => {
+    if (closeTimeoutRef.current) {
+      clearTimeout(closeTimeoutRef.current);
+      closeTimeoutRef.current = null;
+    }
+    setOpenPopover(true);
+  };
+
+  const handleMouseLeave = () => {
+    closeTimeoutRef.current = setTimeout(() => {
+      setOpenPopover(false);
+    }, 200); // 200ms delay before closing
+  };
+
   return (
     <div
       style={{ position: "relative" }}
-      onMouseEnter={() => setOpenPopover(true)}
-      onMouseLeave={() => setOpenPopover(false)}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
     >
       {/* Ground Station Button */}
       <IconButton
@@ -38,7 +53,7 @@ const GroundStationPopover: React.FC = () => {
         <div
           style={{
             position: "absolute",
-            top: "48px",
+            top: "46px", // Slightly reduced gap
             left: "0",
             backgroundColor: "rgba(13, 13, 13, 0.9)",
             border: "1px solid #00ff00",
