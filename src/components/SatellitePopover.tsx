@@ -61,22 +61,12 @@ const SatellitePopover: React.FC = () => {
           ></div>
 
           {/* Show TLE, History, and Ground Track Toggles */}
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "16px",
-              marginBottom: "8px",
-            }}
-          >
+          <div className="globe-tools-group" style={{ marginBottom: "8px" }}>
             {/* Toggle TLE */}
             <Tooltip title="Toggle TLE" arrow placement="bottom">
               <IconButton
                 onClick={() => dispatch(setShowTle(!showTleState))} // Dispatch Redux action
-                style={{
-                  color: showTleState ? "#00ff00" : "#888888", // Bright green if active, grey if inactive
-                  transition: "color 0.2s ease-in-out",
-                }}
+                className={`icon-button ${showTleState ? 'active' : ''}`}
               >
                 <SatelliteIcon />
               </IconButton>
@@ -86,10 +76,7 @@ const SatellitePopover: React.FC = () => {
             <Tooltip title="Toggle History" arrow placement="bottom">
               <IconButton
                 onClick={() => dispatch(setShowHistory(!showHistoryState))} // Dispatch Redux action
-                style={{
-                  color: showHistoryState ? "#00ff00" : "#888888", // Bright green if active, grey if inactive
-                  transition: "color 0.2s ease-in-out",
-                }}
+                className={`icon-button ${showHistoryState ? 'active' : ''}`}
               >
                 <HistoryIcon />
               </IconButton>
@@ -99,10 +86,7 @@ const SatellitePopover: React.FC = () => {
             <Tooltip title="Toggle Ground Track" arrow placement="bottom">
               <IconButton
                 onClick={() => dispatch(setShowGroundTrack(!showGroundTrackState))} // Dispatch Redux action
-                style={{
-                  color: showGroundTrackState ? "#00ff00" : "#888888", // Bright green if active, grey if inactive
-                  transition: "color 0.2s ease-in-out",
-                }}
+                className={`icon-button ${showGroundTrackState ? 'active' : ''}`}
               >
                 <PublicIcon />
               </IconButton>

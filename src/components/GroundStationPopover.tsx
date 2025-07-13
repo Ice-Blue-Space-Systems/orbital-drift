@@ -65,21 +65,11 @@ const GroundStationPopover: React.FC = () => {
           ></div>
 
           {/* Line of Sight and Visibility Cones Toggles */}
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "16px",
-              marginBottom: "8px",
-            }}
-          >
+          <div className="globe-tools-group" style={{ marginBottom: "8px" }}>
             <Tooltip title="Toggle Line of Sight" arrow placement="bottom">
               <IconButton
                 onClick={() => dispatch(setShowLineOfSight(!showLineOfSight))} // Dispatch Redux action
-                style={{
-                  color: showLineOfSight ? "#00ff00" : "#888888", // Bright green if active, grey if inactive
-                  transition: "color 0.2s ease-in-out",
-                }}
+                className={`icon-button ${showLineOfSight ? 'active' : ''}`}
               >
                 <VisibilityIcon />
               </IconButton>
@@ -88,10 +78,7 @@ const GroundStationPopover: React.FC = () => {
             <Tooltip title="Toggle Visibility Cones" arrow placement="bottom">
               <IconButton
                 onClick={() => dispatch(setShowVisibilityCones(!showVisibilityCones))} // Dispatch Redux action
-                style={{
-                  color: showVisibilityCones ? "#00ff00" : "#888888", // Bright green if active, grey if inactive
-                  transition: "color 0.2s ease-in-out",
-                }}
+                className={`icon-button ${showVisibilityCones ? 'active' : ''}`}
               >
                 <RadarIcon />
               </IconButton>
