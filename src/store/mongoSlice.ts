@@ -22,6 +22,7 @@ interface MongoState {
   showGroundTrack: boolean;
   showLineOfSight: boolean;
   showVisibilityCones: boolean;
+  showNadirLines: boolean; // Add showNadirLines to the state  
   showHistory: boolean; // Add showHistory to the state
   showCesiumOptions: boolean; // Add showCesiumOptions to the state
   liveMode: boolean; // Add liveMode to the state
@@ -38,6 +39,7 @@ const initialState: MongoState = {
   showGroundTrack: false,
   showLineOfSight: false,
   showVisibilityCones: false,
+  showNadirLines: false, // Add showNadirLines to the initial state
   showHistory: false,
   showCesiumOptions: false,
   liveMode: false, // Add liveMode to the initial state
@@ -64,6 +66,9 @@ const mongoSlice = createSlice({
     },
     setShowVisibilityCones(state, action) {
       state.showVisibilityCones = action.payload;
+    },
+    setShowNadirLines(state, action) {
+      state.showNadirLines = action.payload;
     },
     setShowHistory(state, action) {
       state.showHistory = action.payload;
@@ -99,6 +104,7 @@ export const {
   setShowGroundTrack,
   setShowLineOfSight,
   setShowVisibilityCones,
+  setShowNadirLines, // Export the action
   setShowHistory,
   setShowCesiumOptions, // Export the action
   setLiveMode, // Export the action

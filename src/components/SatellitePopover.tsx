@@ -3,9 +3,10 @@ import { IconButton, Tooltip, TextField, List, ListItem, ListItemButton, ListIte
 import SatelliteIcon from "@mui/icons-material/SatelliteAlt";
 import HistoryIcon from "@mui/icons-material/History";
 import PublicIcon from "@mui/icons-material/Public";
+import MyLocationIcon from "@mui/icons-material/MyLocation"; // For nadir lines - represents targeting/location
 import { useSelector, useDispatch } from "react-redux";
 import { RootState } from "../store";
-import { setSelectedSatId, setShowHistory, setShowTle, setShowGroundTrack } from "../store/mongoSlice";
+import { setSelectedSatId, setShowHistory, setShowTle, setShowGroundTrack, setShowNadirLines } from "../store/mongoSlice";
 
 const SatellitePopover: React.FC = () => {
   const dispatch = useDispatch();
@@ -16,6 +17,7 @@ const SatellitePopover: React.FC = () => {
   const showHistoryState = useSelector((state: RootState) => state.mongo.showHistory);
   const showTleState = useSelector((state: RootState) => state.mongo.showTle);
   const showGroundTrackState = useSelector((state: RootState) => state.mongo.showGroundTrack);
+  const showNadirLinesState = useSelector((state: RootState) => state.mongo.showNadirLines);
 
   const handleMouseEnter = () => {
     if (closeTimeoutRef.current) {
@@ -104,6 +106,16 @@ const SatellitePopover: React.FC = () => {
                 className={`icon-button ${showGroundTrackState ? 'active' : ''}`}
               >
                 <PublicIcon />
+              </IconButton>
+            </Tooltip>
+
+            {/* Toggle Nadir Lines */}
+            <Tooltip title="Toggle Nadir Lines (Satellite to Ground)" arrow placement="bottom">
+              <IconButton
+                onClick={() => dispatch(setShowNadirLines(!showNadirLinesState))} // Dispatch Redux action
+                className={`icon-button ${showNadirLinesState ? 'active' : ''}`}
+              >
+                <MyLocationIcon />
               </IconButton>
             </Tooltip>
           </div>
