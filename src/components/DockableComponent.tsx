@@ -5,20 +5,28 @@ import BorderRightIcon from '@mui/icons-material/BorderRight'; // Dock Right ico
 import BorderLeftIcon from '@mui/icons-material/BorderLeft'; // Dock Left icon
 import BorderBottomIcon from '@mui/icons-material/BorderBottom'; // Dock Bottom icon
 import CloseIcon from '@mui/icons-material/Close'; // Close button icon
+import './DockableComponent.css';
 
 interface DockableComponentProps {
   content: React.ReactNode; // Content to display in the popover or docked panel
   popoverStyle?: React.CSSProperties; // Optional custom styles for the popover
   buttonRef?: React.RefObject<HTMLDivElement>; // Reference to the button for positioning
+  onDockChange?: (dockPosition: 'left' | 'right' | 'bottom' | null) => void; // Callback for dock state changes
 }
 
 const DockableComponent: React.FC<DockableComponentProps> = ({
   content,
   popoverStyle,
   buttonRef,
+  onDockChange,
 }) => {
   const [dockPosition, setDockPosition] = useState<'left' | 'right' | 'bottom' | null>(null); // Docking state
   const [hoveringDockButton, setHoveringDockButton] = useState(false); // State to track hover over the main button
+
+  const handleDockChange = (newPosition: 'left' | 'right' | 'bottom' | null) => {
+    setDockPosition(newPosition);
+    onDockChange?.(newPosition);
+  };
 
   return (
     <div style={{ position: 'relative' }}>
@@ -56,10 +64,10 @@ const DockableComponent: React.FC<DockableComponentProps> = ({
             onMouseEnter={() => setHoveringDockButton(true)} // Show docking options on hover
             onMouseLeave={() => setHoveringDockButton(false)} // Hide docking options when not hovering
           >
-            <Tooltip title="Dock Options" arrow>
+            <Tooltip title="Dock Options" arrow placement="top-end">
               <IconButton
                 style={{
-                  color: '#00ff00', // Bright green for visibility
+                  color: '#00ff41', // Bright green for visibility
                   transition: 'color 0.2s ease-in-out',
                 }}
               >
@@ -72,9 +80,9 @@ const DockableComponent: React.FC<DockableComponentProps> = ({
               <div
                 style={{
                   position: 'absolute',
-                  top: '48px', // Position below the main button
-                  left: '50%',
-                  transform: 'translateX(-50%)', // Center the options horizontally
+                  top: '50%', // Vertically center with the main button
+                  left: '48px', // Position to the right of the main button
+                  transform: 'translateY(-50%)', // Center vertically
                   display: 'flex',
                   gap: '8px', // Space between icons
                   backgroundColor: 'rgba(13, 13, 13, 0.9)', // Console-style dark background
@@ -87,10 +95,19 @@ const DockableComponent: React.FC<DockableComponentProps> = ({
                 {/* Dock Left */}
                 <Tooltip title="Dock Left" arrow>
                   <IconButton
-                    onClick={() => setDockPosition('left')}
+                    onClick={() => handleDockChange('left')}
                     style={{
-                      color: '#00ff00',
-                      transition: 'color 0.2s ease-in-out',
+                      color: '#00ff41',
+                      transition: 'all 0.2s ease-in-out',
+                      padding: '6px',
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.color = '#66ff66';
+                      e.currentTarget.style.transform = 'scale(1.1)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.color = '#00ff41';
+                      e.currentTarget.style.transform = 'scale(1)';
                     }}
                   >
                     <BorderLeftIcon />
@@ -100,10 +117,19 @@ const DockableComponent: React.FC<DockableComponentProps> = ({
                 {/* Dock Bottom */}
                 <Tooltip title="Dock Bottom" arrow>
                   <IconButton
-                    onClick={() => setDockPosition('bottom')}
+                    onClick={() => handleDockChange('bottom')}
                     style={{
-                      color: '#00ff00',
-                      transition: 'color 0.2s ease-in-out',
+                      color: '#00ff41',
+                      transition: 'all 0.2s ease-in-out',
+                      padding: '6px',
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.color = '#66ff66';
+                      e.currentTarget.style.transform = 'scale(1.1)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.color = '#00ff41';
+                      e.currentTarget.style.transform = 'scale(1)';
                     }}
                   >
                     <BorderBottomIcon />
@@ -113,10 +139,19 @@ const DockableComponent: React.FC<DockableComponentProps> = ({
                 {/* Dock Right */}
                 <Tooltip title="Dock Right" arrow>
                   <IconButton
-                    onClick={() => setDockPosition('right')}
+                    onClick={() => handleDockChange('right')}
                     style={{
-                      color: '#00ff00',
-                      transition: 'color 0.2s ease-in-out',
+                      color: '#00ff41',
+                      transition: 'all 0.2s ease-in-out',
+                      padding: '6px',
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.color = '#66ff66';
+                      e.currentTarget.style.transform = 'scale(1.1)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.color = '#00ff41';
+                      e.currentTarget.style.transform = 'scale(1)';
                     }}
                   >
                     <BorderRightIcon />
@@ -136,33 +171,87 @@ const DockableComponent: React.FC<DockableComponentProps> = ({
         <div
           style={{
             position: 'fixed',
-            [dockPosition]: '0', // Dynamically set the docking position
-            ...(dockPosition === 'bottom'
-              ? { height: '300px', width: '100%' } // Full width for bottom dock
-              : { width: '400px', height: 'calc(100vh - 64px)' }), // Full height for left/right dock
-            backgroundColor: 'rgba(13, 13, 13, 0.9)', // Console-style dark background
-            color: '#00ff00', // Green text
-            fontFamily: 'Courier New, Courier, monospace', // Console-style font
-            borderTop: dockPosition === 'bottom' ? '1px solid #00ff00' : 'none', // Border for bottom dock
-            borderLeft: dockPosition === 'right' ? '1px solid #00ff00' : 'none', // Border for right dock
-            borderRight: dockPosition === 'left' ? '1px solid #00ff00' : 'none', // Border for left dock
-            zIndex: 1001, // Ensure it appears above other elements
-            overflowY: 'auto', // Enable scrolling for long content
-            padding: '16px', // Add padding inside the panel
+            top: dockPosition === 'bottom' ? 'auto' : '64px', // Account for header height, no gap
+            bottom: dockPosition === 'bottom' ? '0' : 'auto',
+            left: dockPosition === 'left' ? '0' : dockPosition === 'right' ? 'auto' : '0',
+            right: dockPosition === 'right' ? '0' : dockPosition === 'left' ? 'auto' : '0',
+            width: dockPosition === 'bottom' ? '100%' : '450px', // Wider panels for better readability
+            height: dockPosition === 'bottom' ? '350px' : 'calc(100vh - 64px)', // Taller bottom panel
+            backgroundColor: 'rgba(8, 20, 8, 0.95)', // Darker green-tinted background
+            backdropFilter: 'blur(8px)', // Add glassmorphism effect
+            color: '#00ff41', // Brighter matrix green
+            fontFamily: 'Courier New, Courier, monospace',
+            // Professional thick borders with glow effect
+            borderLeft: dockPosition === 'right' ? '4px solid #00ff41' : 'none',
+            borderRight: dockPosition === 'left' ? '4px solid #00ff41' : 'none', 
+            borderTop: dockPosition === 'bottom' ? '4px solid #00ff41' : 'none',
+            borderBottom: 'none',
+            // Add subtle glow effect
+            boxShadow: dockPosition === 'left' ? '4px 0 15px rgba(0, 255, 65, 0.3)' :
+                      dockPosition === 'right' ? '-4px 0 15px rgba(0, 255, 65, 0.3)' :
+                      '0 -4px 15px rgba(0, 255, 65, 0.3)',
+            zIndex: 1001,
+            overflowY: 'auto',
+            // Add custom scrollbar styling
+            scrollbarWidth: 'thin',
+            scrollbarColor: '#00ff41 rgba(0, 255, 65, 0.1)',
           }}
+          // Add custom scrollbar for webkit browsers
+          className="docked-panel"
         >
-          {/* Close Button */}
-          <div style={{ textAlign: 'right' }}>
+          {/* Header bar with close button and title */}
+          <div 
+            style={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'space-between',
+              marginBottom: '16px',
+              padding: '8px 0',
+              borderBottom: '1px solid rgba(0, 255, 65, 0.3)',
+              position: 'sticky',
+              top: '0',
+              backgroundColor: 'rgba(8, 20, 8, 0.98)',
+              backdropFilter: 'blur(10px)',
+              zIndex: 10,
+            }}
+          >
+            <div style={{ 
+              fontSize: '14px', 
+              fontWeight: 'bold',
+              textTransform: 'uppercase',
+              letterSpacing: '1px',
+              color: '#00ff41',
+              textShadow: '0 0 10px rgba(0, 255, 65, 0.5)',
+            }}>
+              SATELLITE STATUS CONSOLE
+            </div>
             <IconButton
-              onClick={() => setDockPosition(null)} // Close the panel
-              style={{ color: '#00ff00' }}
+              onClick={() => handleDockChange(null)}
+              style={{ 
+                color: '#00ff41',
+                padding: '4px',
+                transition: 'all 0.2s ease',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.color = '#ff0040';
+                e.currentTarget.style.transform = 'scale(1.1)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.color = '#00ff41';
+                e.currentTarget.style.transform = 'scale(1)';
+              }}
             >
               <CloseIcon />
             </IconButton>
           </div>
 
-          {/* Docked Content */}
-          <div>{content}</div>
+          {/* Content area with improved styling */}
+          <div style={{ 
+            padding: '0 16px 16px 16px',
+            lineHeight: '1.4',
+          }}>
+            {content}
+          </div>
         </div>
       )}
     </div>

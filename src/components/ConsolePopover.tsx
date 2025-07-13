@@ -16,6 +16,7 @@ const ConsolePopover: React.FC<ConsolePopoverProps> = ({
   nextContactWindow,
 }) => {
   const [openPopover, setOpenPopover] = useState<boolean>(false);
+  const [isDocked, setIsDocked] = useState<boolean>(false);
   const closeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const selectedSatId = useSelector((state: RootState) => state.mongo.selectedSatId); // Retrieve selected satellite ID
   const selectedGroundStationId = useSelector(
@@ -31,9 +32,20 @@ const ConsolePopover: React.FC<ConsolePopoverProps> = ({
   };
 
   const handleMouseLeave = () => {
+    // Don't close if panel is docked
+    if (isDocked) return;
+    
     closeTimeoutRef.current = setTimeout(() => {
       setOpenPopover(false);
     }, 200); // 200ms delay before closing
+  };
+
+  const handleDockChange = (dockPosition: 'left' | 'right' | 'bottom' | null) => {
+    setIsDocked(!!dockPosition);
+    // If undocking, close the popover after a short delay
+    if (!dockPosition) {
+      setTimeout(() => setOpenPopover(false), 100);
+    }
   };
 
   return (
@@ -63,6 +75,7 @@ const ConsolePopover: React.FC<ConsolePopoverProps> = ({
             width: "350px",
             zIndex: 1001,
           }}
+          onDockChange={handleDockChange}
           content={
             <SatelliteStatusTable
               debugInfo={debugInfo}

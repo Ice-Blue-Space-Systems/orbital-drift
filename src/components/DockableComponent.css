@@ -1,0 +1,121 @@
+/* Custom scrollbar styling for docked panels */
+.docked-panel::-webkit-scrollbar {
+  width: 8px;
+}
+
+.docked-panel::-webkit-scrollbar-track {
+  background: rgba(0, 255, 65, 0.1);
+  border-radius: 4px;
+}
+
+.docked-panel::-webkit-scrollbar-thumb {
+  background: rgba(0, 255, 65, 0.6);
+  border-radius: 4px;
+  transition: background 0.2s ease;
+}
+
+.docked-panel::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 255, 65, 0.8);
+}
+
+/* Glow animation for terminal effect */
+@keyframes terminal-glow {
+  0%, 100% { text-shadow: 0 0 5px rgba(0, 255, 65, 0.5); }
+  50% { text-shadow: 0 0 10px rgba(0, 255, 65, 0.8), 0 0 15px rgba(0, 255, 65, 0.4); }
+}
+
+.terminal-text {
+  animation: terminal-glow 3s ease-in-out infinite;
+}
+
+/* Professional status indicator dots */
+.status-indicator {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-right: 8px;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
+.status-online {
+  background-color: #00ff41;
+  box-shadow: 0 0 8px rgba(0, 255, 65, 0.6);
+}
+
+.status-offline {
+  background-color: #ff4444;
+  box-shadow: 0 0 8px rgba(255, 68, 68, 0.6);
+}
+
+/* Professional data row styling */
+.data-row {
+  margin-bottom: 12px;
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(0, 255, 65, 0.15);
+}
+
+.data-row:last-child {
+  border-bottom: none;
+}
+
+.data-label {
+  color: #00ff41;
+  font-weight: bold;
+  text-transform: uppercase;
+  font-size: 11px;
+  letter-spacing: 0.5px;
+  margin-bottom: 4px;
+  text-shadow: 0 0 5px rgba(0, 255, 65, 0.3);
+}
+
+.data-value {
+  color: #66ff66;
+  font-size: 13px;
+  word-break: break-word;
+  line-height: 1.4;
+}
+
+@keyframes pulse {
+  0% { opacity: 1; }
+  50% { opacity: 0.6; }
+  100% { opacity: 1; }
+}
+
+/* Data field styling */
+.data-field {
+  margin: 8px 0;
+  padding: 6px 12px;
+  background: rgba(0, 255, 65, 0.05);
+  border-left: 3px solid rgba(0, 255, 65, 0.3);
+  border-radius: 0 4px 4px 0;
+  transition: all 0.2s ease;
+}
+
+.data-field:hover {
+  background: rgba(0, 255, 65, 0.1);
+  border-left-color: rgba(0, 255, 65, 0.6);
+  transform: translateX(2px);
+}
+
+.data-label {
+  color: rgba(0, 255, 65, 0.8);
+  font-weight: bold;
+  text-transform: uppercase;
+  font-size: 11px;
+  letter-spacing: 0.5px;
+  margin-bottom: 2px;
+  display: block;
+}
+
+.data-value {
+  color: #00ff41;
+  font-size: 13px;
+  font-family: 'Courier New', monospace;
+  text-shadow: 0 0 3px rgba(0, 255, 65, 0.3);
+}

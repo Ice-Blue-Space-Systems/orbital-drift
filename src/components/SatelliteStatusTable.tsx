@@ -10,6 +10,7 @@ import {
 } from "../utils/mathUtils";
 import { convertEcefToEnu } from "../utils/coordinateUtils";
 import { selectCesiumClockIso } from "../store/selectors/cesiumClockSelectors";
+import "./DockableComponent.css"; // Import the CSS for styling
 
 interface SatelliteStatusTableProps {
   debugInfo?: any;
