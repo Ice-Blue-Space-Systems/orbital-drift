@@ -89,73 +89,38 @@ const GlobeTools: React.FC<GlobeToolsProps> = ({
     debugInfo.currentTime,
   ]);
 
-  // Determine the active page and calculate the arrow's position
-  const currentPath = window.location.pathname;
-  const arrowPosition =
-    {
-      "/globe": "28px", // Position under the PublicIcon button
-      "/timeline": "92px", // Adjust based on the Timeline button's position
-      "/sats": "156px", // Adjust based on the Satellite button's position
-      "/gs": "220px", // Adjust based on the Ground Station button's position
-    }[currentPath] || "16px"; // Default to Globe if no match
-
   return (
-    <div
-      style={{
-        position: "absolute",
-        borderTop: "1px solid #00ff00", // Green top border
-        top: "64px", // Position just below the top navigation bar
-        left: "0px", // Align to the left
-        backgroundColor: "rgba(50, 50, 50, 0.3)", // Transparent space-grey background
-        padding: "12px", // Add padding around the buttons
-        zIndex: 1000, // Ensure it appears above other elements
-        boxShadow: "0px 4px 8px rgba(0, 0, 0, 0.2)", // Subtle shadow for depth
-      }}
-    >
-      {/* Green Arrow */}
-      <div
-        style={{
-          position: "absolute",
-          top: "-8px", // Position above the Globe Tools panel
-          left: arrowPosition, // Dynamically position the arrow
-          width: "0",
-          height: "0",
-          borderLeft: "8px solid transparent",
-          borderRight: "8px solid transparent",
-          borderBottom: "8px solid #00ff00", // Green arrow
-          zIndex: 1001, // Ensure it appears above the panel
-        }}
-      ></div>
+    <div className="globe-tools">
+      {/* Globe Tools Button Container */}
+      <div className="globe-tools-buttons">
+        <div className="globe-tools-group">
+          {/* Satellite Popover */}
+          <SatellitePopover />
 
-      {/* Satellite, Ground Station, Toolbox, and Contact Windows Buttons */}
-      <div
-        style={{
-          display: "flex",
-          gap: "16px", // Space between buttons
-        }}
-      >
-        {/* Satellite Button */}
-        <SatellitePopover />
+          {/* Ground Station Popover */}
+          <GroundStationPopover />
 
-        {/* Ground Station Button */}
-        <GroundStationPopover />
+          {/* Contact Windows Popover */}
+          {selectedSatelliteId && selectedGroundStationId && (
+            <ContactWindowsPopover
+              satelliteId={selectedSatelliteId}
+              groundStationId={selectedGroundStationId}
+            />
+          )}
+        </div>
 
-        {/* Contact Windows Button */}
-        {selectedSatelliteId && selectedGroundStationId && (
-          <ContactWindowsPopover
-            satelliteId={selectedSatelliteId}
-            groundStationId={selectedGroundStationId}
+        <div className="globe-tools-divider"></div>
+
+        <div className="globe-tools-group">
+          {/* Console Popover */}
+          <ConsolePopover
+            debugInfo={debugInfo}
+            nextContactWindow={nextContactWindow}
           />
-        )}
 
-        {/* Console Button */}
-        <ConsolePopover
-          debugInfo={debugInfo}
-          nextContactWindow={nextContactWindow}
-        />
-
-        {/* Cesium Options Button */}
-        <CesiumOptionsPopover />
+          {/* Cesium Options Popover */}
+          <CesiumOptionsPopover />
+        </div>
       </div>
     </div>
   );

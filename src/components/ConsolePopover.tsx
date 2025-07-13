@@ -29,15 +29,7 @@ const ConsolePopover: React.FC<ConsolePopoverProps> = ({
     >
       {/* Console Button */}
       <IconButton
-        style={{
-          color: selectedSatId || selectedGroundStationId ? "#00ff00" : "#555555",
-          transition: "color 0.2s ease-in-out",
-        }}
-        onMouseEnter={(e) => (e.currentTarget.style.color = "#00ff00")}
-        onMouseLeave={(e) =>
-          (e.currentTarget.style.color =
-            selectedSatId || selectedGroundStationId ? "#00ff00" : "#555555")
-        }
+        className={`icon-button ${selectedSatId || selectedGroundStationId ? 'active' : ''}`}
       >
         <CodeIcon />
       </IconButton>

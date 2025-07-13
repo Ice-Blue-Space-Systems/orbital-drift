@@ -24,14 +24,7 @@ const SatellitePopover: React.FC = () => {
     >
       {/* Satellite Button */}
       <IconButton
-        style={{
-          color: selectedSatId ? "#00ff00" : "#888888",
-          transition: "color 0.2s ease-in-out",
-        }}
-        onMouseEnter={(e) => (e.currentTarget.style.color = "#00ff00")}
-        onMouseLeave={(e) =>
-          (e.currentTarget.style.color = selectedSatId ? "#00ff00" : "#888888")
-        }
+        className={`icon-button ${selectedSatId ? 'active' : ''}`}
       >
         <SatelliteIcon />
       </IconButton>

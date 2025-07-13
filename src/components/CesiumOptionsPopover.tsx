@@ -19,12 +19,7 @@ const CesiumOptionsPopover: React.FC = () => {
     >
       {/* Cesium Options Button */}
       <IconButton
-        style={{
-          color: "#888888",
-          transition: "color 0.2s ease-in-out",
-        }}
-        onMouseEnter={(e) => (e.currentTarget.style.color = "#00ff00")}
-        onMouseLeave={(e) => (e.currentTarget.style.color = "#888888")}
+        className="icon-button"
       >
         <SettingsIcon />
       </IconButton>

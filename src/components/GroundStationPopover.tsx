@@ -25,14 +25,7 @@ const GroundStationPopover: React.FC = () => {
     >
       {/* Ground Station Button */}
       <IconButton
-        style={{
-          color: selectedGroundStationId ? "#00ff00" : "#888888",
-          transition: "color 0.2s ease-in-out",
-        }}
-        onMouseEnter={(e) => (e.currentTarget.style.color = "#00ff00")}
-        onMouseLeave={(e) =>
-          (e.currentTarget.style.color = selectedGroundStationId ? "#00ff00" : "#888888")
-        }
+        className={`icon-button ${selectedGroundStationId ? 'active' : ''}`}
       >
         <FontAwesomeIcon
           icon={faSatelliteDish}

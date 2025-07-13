@@ -1,33 +1,202 @@
+/* Globe Tools Panel - Clean Top Border Aesthetic */
 .globe-tools {
   position: absolute;
-  border-top: 1px solid #00ff00;
   top: 64px;
-  left: 0px;
-  background-color: rgba(50, 50, 50, 0.3);
-  padding: 12px;
+  left: 0;
+  background: linear-gradient(
+    180deg,
+    rgba(0, 0, 0, 0.9) 0%,
+    rgba(0, 0, 0, 0.7) 50%,
+    transparent 100%
+  );
+  border-top: 3px solid #00ff00;
+  border-left: none;
+  border-right: none;
+  border-bottom: none;
+  border-radius: 0;
+  box-shadow: 
+    0 4px 20px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(0, 255, 0, 0.2);
+  transition: all 0.3s ease-in-out;
   z-index: 1000;
-  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
+  width: auto;
+  min-width: fit-content;
 }
 
-.globe-tools-arrow {
+/* Green Arrow Connector pointing UP to Globe icon */
+.globe-tools::before {
+  content: "";
   position: absolute;
-  top: -8px;
+  bottom: 100%;
+  left: 40px; /* Position to align with Globe icon: 16px padding + 24px (half of Globe button) */
+  transform: translateX(-50%);
   width: 0;
   height: 0;
-  border-left: 8px solid transparent;
-  border-right: 8px solid transparent;
+  border-left: 10px solid transparent;
+  border-right: 10px solid transparent;
   border-bottom: 8px solid #00ff00;
+  filter: drop-shadow(0 -2px 4px rgba(0, 0, 0, 0.3));
   z-index: 1001;
+  pointer-events: none;
 }
 
-.icon-button {
-  transition: color 0.2s ease-in-out;
+.globe-tools:hover {
+  border-top-color: #00ff00;
+  box-shadow: 
+    0 6px 25px rgba(0, 0, 0, 0.4),
+    inset 0 1px 0 rgba(0, 255, 0, 0.3),
+    0 0 15px rgba(0, 255, 0, 0.2);
 }
 
-.icon-button-active {
-  color: #00ff00;
+.globe-tools:hover::before {
+  border-bottom-color: #00ff00;
+  filter: drop-shadow(0 -2px 4px rgba(0, 0, 0, 0.4)) drop-shadow(0 0 5px rgba(0, 255, 0, 0.3));
 }
 
-.icon-button-inactive {
+/* Globe Tools Button Container */
+.globe-tools-buttons {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+  min-height: 56px;
+  padding: 8px 16px 16px 16px; /* Extra bottom padding for the arrow */
+  background: transparent;
+}
+
+/* Globe Tools Button Groups */
+.globe-tools-group {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+  padding: 4px;
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(0, 255, 0, 0.1);
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.globe-tools-group:hover {
+  background: rgba(0, 0, 0, 0.4);
+  border-color: rgba(0, 255, 0, 0.3);
+  box-shadow: 0 0 8px rgba(0, 255, 0, 0.1);
+}
+
+/* Icon Button Styling - Clean Console Style */
+.globe-tools .icon-button {
   color: #888888;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  padding: 6px;
+  min-width: 36px;
+  min-height: 36px;
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.globe-tools .icon-button:hover {
+  color: #00ff00;
+  background: rgba(0, 255, 0, 0.1);
+  border-color: rgba(0, 255, 0, 0.2);
+  box-shadow: 0 0 8px rgba(0, 255, 0, 0.2);
+}
+
+.globe-tools .icon-button:active {
+  transform: translateY(1px);
+  box-shadow: 0 0 4px rgba(0, 255, 0, 0.1);
+}
+
+/* Active/Selected Button State */
+.globe-tools .icon-button.active {
+  color: #00ff00 !important;
+  background: rgba(0, 255, 0, 0.15) !important;
+  border-color: rgba(0, 255, 0, 0.4) !important;
+  box-shadow: 0 0 12px rgba(0, 255, 0, 0.3) !important;
+}
+
+/* Divider Styling */
+.globe-tools-divider {
+  width: 1px;
+  height: 32px;
+  background: linear-gradient(
+    to bottom,
+    transparent,
+    rgba(0, 255, 0, 0.3) 20%,
+    rgba(0, 255, 0, 0.3) 80%,
+    transparent
+  );
+  margin: 0 8px;
+  position: relative;
+  flex-shrink: 0;
+}
+
+.globe-tools-divider::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 3px;
+  height: 3px;
+  background: #00ff00;
+  border-radius: 50%;
+  box-shadow: 0 0 6px rgba(0, 255, 0, 0.6);
+}
+
+/* Responsive Design */
+@media (max-width: 1200px) {
+  .globe-tools {
+    max-width: 700px;
+  }
+  
+  .globe-tools-buttons {
+    gap: 6px;
+  }
+  
+  .globe-tools-divider {
+    margin: 0 6px;
+  }
+}
+
+@media (max-width: 900px) {
+  .globe-tools {
+    max-width: 600px;
+  }
+  
+  .globe-tools-buttons {
+    gap: 4px;
+  }
+  
+  .globe-tools-group {
+    gap: 2px;
+    padding: 2px;
+  }
+  
+  .globe-tools .icon-button {
+    min-width: 36px;
+    min-height: 36px;
+    padding: 6px;
+  }
+  
+  .globe-tools-divider {
+    margin: 0 4px;
+    height: 28px;
+  }
+}
+
+@media (max-width: 700px) {
+  .globe-tools {
+    max-width: 400px;
+  }
+  
+  .globe-tools-buttons {
+    flex-wrap: wrap;
+    justify-content: flex-start;
+  }
+  
+  .globe-tools-divider {
+    display: none;
+  }
 }

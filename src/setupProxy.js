@@ -2,6 +2,8 @@
 const { createProxyMiddleware } = require("http-proxy-middleware");
 
 module.exports = function (app) {
+  console.log("🔧 Setting up proxies...");
+  
   app.use(
     "/n2yo",
     createProxyMiddleware({
@@ -12,4 +14,24 @@ module.exports = function (app) {
       },
     })
   );
+
+  // Proxy for local backend API - preserve full path including /api
+  app.use(
+    '/api',
+    createProxyMiddleware({
+      target: 'http://localhost:5000/api',
+      changeOrigin: true,
+      pathRewrite: {
+        '^/api': '', // Remove /api from request since target already includes it
+      },
+      onProxyReq: (proxyReq, req, res) => {
+        console.log(`🚀 Proxying: ${req.method} ${req.url} -> http://localhost:5000/api${req.url.replace('/api', '')}`);
+      },
+      onError: (err, req, res) => {
+        console.log("❌ Proxy error:", err.message);
+      }
+    })
+  );
+  
+  console.log("✅ Proxies configured!");
 };

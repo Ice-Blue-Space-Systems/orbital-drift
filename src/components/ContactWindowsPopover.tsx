@@ -22,12 +22,7 @@ const ContactWindowsPopover: React.FC<ContactWindowsPopoverProps> = ({
     >
       {/* Contact Windows Button */}
       <IconButton
-        style={{
-          color: "#00ff00", // Bright green to make it visible
-          transition: "color 0.2s ease-in-out",
-        }}
-        onMouseEnter={(e) => (e.currentTarget.style.color = "#00ff00")}
-        onMouseLeave={(e) => (e.currentTarget.style.color = "#00ff00")}
+        className="icon-button active"
       >
         <EventIcon />
       </IconButton>
