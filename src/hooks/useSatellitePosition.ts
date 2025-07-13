@@ -28,10 +28,17 @@ export function useSatellitePosition(
     }
 
     const fetchPositions = async () => {
+      // Wait for viewer to be available
+      if (!viewerRef.current?.cesiumElement?.clock) {
+        // If viewer isn't ready yet, try again in the next tick
+        setTimeout(fetchPositions, 10);
+        return;
+      }
+
       const { satPositionProperty, groundTrackPositionProperty } = await loadTleAndPosition(
         satellite,
         dispatch,
-        viewerRef.current?.cesiumElement?.clock
+        viewerRef.current.cesiumElement.clock
       );
 
       setSatPositionProperty(satPositionProperty);
@@ -41,7 +48,7 @@ export function useSatellitePosition(
     if (selectedSatId) {
       fetchPositions();
     }
-  }, [selectedSatId, satellites, dispatch, viewerRef]);
+  }, [selectedSatId, satellites, dispatch, viewerRef.current?.cesiumElement]);
 
   return { satPositionProperty, groundTrackPositionProperty };
 }

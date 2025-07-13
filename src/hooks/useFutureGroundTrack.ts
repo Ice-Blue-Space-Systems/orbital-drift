@@ -12,7 +12,7 @@ export function useFutureGroundTrack(
     return new CallbackProperty(() => {
       const futurePositions: Cartesian3[] = [];
       const viewer = viewerRef.current?.cesiumElement;
-      if (!viewer) return futurePositions;
+      if (!viewer?.clock) return futurePositions;
 
       const currentTime = viewer.clock.currentTime;
       if (!currentTime) return futurePositions;
@@ -32,5 +32,5 @@ export function useFutureGroundTrack(
       }
       return futurePositions;
     }, false);
-  }, [showGroundTrack, groundTrackPositionProperty, viewerRef]);
+  }, [showGroundTrack, groundTrackPositionProperty, viewerRef.current?.cesiumElement]);
 }

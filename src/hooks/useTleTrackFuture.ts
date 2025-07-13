@@ -12,7 +12,7 @@ export function useTleTrackFuture(
     return new CallbackProperty(() => {
       const positions: Cartesian3[] = [];
       const viewer = viewerRef.current?.cesiumElement;
-      if (!viewer) return positions;
+      if (!viewer?.clock) return positions;
 
       const currentTime = viewer.clock.currentTime;
       if (!currentTime) return positions;
@@ -28,5 +28,5 @@ export function useTleTrackFuture(
       }
       return positions;
     }, false);
-  }, [showTle, satPositionProperty, viewerRef]);
+  }, [showTle, satPositionProperty, viewerRef.current?.cesiumElement]);
 }
