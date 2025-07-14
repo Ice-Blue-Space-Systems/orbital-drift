@@ -86,8 +86,62 @@ app.delete("/api/satellites/:id", async (req, res) => {
 // API endpoint to fetch ground stations
 app.get("/api/ground-stations", async (req, res) => {
   try {
-    const groundStations = await GroundStation.find(); // Query the correct collection
+    const groundStations = await GroundStation.find();
     res.json(groundStations);
+  } catch (err) {
+    res.status(500).send(err.message);
+  }
+});
+
+// API endpoint to fetch a specific ground station by ID
+app.get("/api/ground-stations/:id", async (req, res) => {
+  try {
+    const groundStation = await GroundStation.findById(req.params.id);
+    if (!groundStation) {
+      return res.status(404).send("Ground station not found");
+    }
+    res.json(groundStation);
+  } catch (err) {
+    res.status(500).send(err.message);
+  }
+});
+
+// API endpoint to create a new ground station
+app.post("/api/ground-stations", async (req, res) => {
+  try {
+    const newGroundStation = new GroundStation(req.body);
+    const savedGroundStation = await newGroundStation.save();
+    res.status(201).json(savedGroundStation);
+  } catch (err) {
+    res.status(400).send(err.message);
+  }
+});
+
+// API endpoint to update a ground station
+app.put("/api/ground-stations/:id", async (req, res) => {
+  try {
+    const updatedGroundStation = await GroundStation.findByIdAndUpdate(
+      req.params.id,
+      req.body,
+      { new: true, runValidators: true }
+    );
+    if (!updatedGroundStation) {
+      return res.status(404).send("Ground station not found");
+    }
+    res.json(updatedGroundStation);
+  } catch (err) {
+    res.status(400).send(err.message);
+  }
+});
+
+// API endpoint to delete a ground station
+app.delete("/api/ground-stations/:id", async (req, res) => {
+  try {
+    const deletedGroundStation = await GroundStation.findByIdAndDelete(req.params.id);
+    if (!deletedGroundStation) {
+      return res.status(404).send("Ground station not found");
+    }
+    res.status(200).json({ message: "Ground station deleted successfully", groundStation: deletedGroundStation });
   } catch (err) {
     res.status(500).send(err.message);
   }

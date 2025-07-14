@@ -3,7 +3,10 @@ import { AgGridReact } from "ag-grid-react";
 import { ModuleRegistry, AllCommunityModule } from "ag-grid-community";
 import "ag-grid-community/styles/ag-grid.css";
 import "ag-grid-community/styles/ag-theme-alpine.css";
-import { ColDef, GridApi, CellValueChangedEvent } from "ag-grid-community";
+import { ColDef, CellValueChangedEvent } from "ag-grid-community";
+import { useSelector, useDispatch } from "react-redux";
+import { RootState, AppDispatch } from "./store";
+import { fetchMongoData } from "./store/mongoSlice";
 import { 
   Button, 
   Dialog, 
@@ -24,9 +27,15 @@ import {
 import AddIcon from "@mui/icons-material/Add";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import DeleteIcon from "@mui/icons-material/Delete";
-import EditIcon from "@mui/icons-material/Edit";
 import SaveIcon from "@mui/icons-material/Save";
 import CancelIcon from "@mui/icons-material/Cancel";
+import { 
+  DisplayGroundStation, 
+  convertApiGroundStationToDisplay, 
+  getPredefinedGroundStations, 
+  mergeGroundStationSources,
+  getGroundStationStats 
+} from "./utils/groundStationDataUtils";
 import "./GSPage.css"; // We'll create this for matrix styling
 
 // Country code mapping for flags
@@ -59,218 +68,110 @@ const countryCodeMap: Record<string, string> = {
 // Register AG Grid modules
 ModuleRegistry.registerModules([AllCommunityModule]);
 
-interface GroundStation {
-  id: string;
-  name: string;
-  source: "predefined" | "custom";
-  country: string;
-  city?: string;
-  latitude: number;
-  longitude: number;
-  altitude: number; // meters above sea level
-  status: "Active" | "Inactive" | "Maintenance" | "Decommissioned";
-  frequency?: string; // MHz
-  bandType?: "S" | "X" | "Ka" | "Ku" | "L" | "C" | "Unknown";
-  elevation?: number; // minimum elevation angle
-  azimuth?: number; // antenna azimuth range
-  operator?: string;
-  established?: string; // establishment date
-  lastUpdate: string;
-}
-
 export default function GSPage() {
-  const [groundStations, setGroundStations] = useState<GroundStation[]>([]);
-  const [customGroundStations, setCustomGroundStations] = useState<GroundStation[]>([]);
+  const dispatch = useDispatch<AppDispatch>();
+  // Get ground stations from Redux store
+  const { groundStations: mongoGroundStations, status } = useSelector((state: RootState) => state.mongo);
   const [loading, setLoading] = useState(false);
   const [addDialogOpen, setAddDialogOpen] = useState(false);
-  const [newGroundStation, setNewGroundStation] = useState<Partial<GroundStation>>({
+  const [predefinedGroundStations, setPredefinedGroundStations] = useState<DisplayGroundStation[]>([]);
+  const [newGroundStation, setNewGroundStation] = useState<Partial<DisplayGroundStation>>({
     source: "custom",
     status: "Active",
     bandType: "S",
     elevation: 5,
     azimuth: 360,
   });
-  const [editMode, setEditMode] = useState<string | null>(null);
   const gridRef = useRef<AgGridReact>(null);
-  const [gridApi, setGridApi] = useState<GridApi | null>(null);
 
-  // Initialize with predefined ground stations
+  // Fetch ground stations data from API on component mount
   useEffect(() => {
-    const predefinedStations: GroundStation[] = [
-      {
-        id: "predefined-1",
-        name: "Goldstone Deep Space Communications Complex",
-        source: "predefined",
-        country: "USA",
-        city: "Goldstone, California",
-        latitude: 35.4267,
-        longitude: -116.8900,
-        altitude: 1036,
-        status: "Active",
-        frequency: "2290-2300",
-        bandType: "S",
-        elevation: 5,
-        azimuth: 360,
-        operator: "NASA/JPL",
-        established: "1958-10-01",
-        lastUpdate: new Date().toISOString(),
-      },
-      {
-        id: "predefined-2", 
-        name: "Madrid Deep Space Communications Complex",
-        source: "predefined",
-        country: "Spain",
-        city: "Robledo de Chavela",
-        latitude: 40.4552,
-        longitude: -4.2517,
-        altitude: 834,
-        status: "Active",
-        frequency: "2270-2300",
-        bandType: "S",
-        elevation: 5,
-        azimuth: 360,
-        operator: "NASA/ESA",
-        established: "1965-05-17",
-        lastUpdate: new Date().toISOString(),
-      },
-      {
-        id: "predefined-3",
-        name: "Canberra Deep Space Communications Complex", 
-        source: "predefined",
-        country: "Australia",
-        city: "Tidbinbilla",
-        latitude: -35.4014,
-        longitude: 148.9819,
-        altitude: 692,
-        status: "Active",
-        frequency: "2290-2300",
-        bandType: "S",
-        elevation: 5,
-        azimuth: 360,
-        operator: "NASA/CSIRO",
-        established: "1965-03-19",
-        lastUpdate: new Date().toISOString(),
-      },
-      {
-        id: "predefined-4",
-        name: "ESOC - European Space Operations Centre",
-        source: "predefined",
-        country: "Germany",
-        city: "Darmstadt",
-        latitude: 49.8728,
-        longitude: 8.6512,
-        altitude: 144,
-        status: "Active",
-        frequency: "2025-2110",
-        bandType: "S",
-        elevation: 10,
-        azimuth: 360,
-        operator: "ESA",
-        established: "1967-09-08",
-        lastUpdate: new Date().toISOString(),
-      },
-      {
-        id: "predefined-5",
-        name: "Wallops Flight Facility",
-        source: "predefined",
-        country: "USA",
-        city: "Wallops Island, Virginia",
-        latitude: 37.9407,
-        longitude: -75.4663,
-        altitude: 12,
-        status: "Active",
-        frequency: "2200-2300",
-        bandType: "S",
-        elevation: 5,
-        azimuth: 360,
-        operator: "NASA",
-        established: "1945-07-04",
-        lastUpdate: new Date().toISOString(),
-      },
-    ];
-    setGroundStations(predefinedStations);
-  }, []);
-
-  // Initialize with some mock custom ground stations
-  useEffect(() => {
-    setCustomGroundStations([
-      {
-        id: "custom-1",
-        name: "ICEBLUE Mission Control",
-        source: "custom",
-        country: "USA",
-        city: "Austin, Texas",
-        latitude: 30.2672,
-        longitude: -97.7431,
-        altitude: 149,
-        status: "Active",
-        frequency: "2400-2450",
-        bandType: "S",
-        elevation: 10,
-        azimuth: 360,
-        operator: "ICEBLUE Systems",
-        established: "2024-01-15",
-        lastUpdate: new Date().toISOString(),
-      },
-      {
-        id: "custom-2",
-        name: "Arctic Research Station",
-        source: "custom", 
-        country: "Norway",
-        city: "Svalbard",
-        latitude: 78.9230,
-        longitude: 11.9738,
-        altitude: 72,
-        status: "Active",
-        frequency: "8025-8400",
-        bandType: "X",
-        elevation: 5,
-        azimuth: 180,
-        operator: "Arctic Sciences",
-        established: "2023-06-12",
-        lastUpdate: new Date().toISOString(),
-      },
-    ]);
-  }, []);
-
-  // Combine predefined and custom ground stations
-  const allGroundStations = [...groundStations, ...customGroundStations];
-
-  // Add a new custom ground station
-  const addCustomGroundStation = () => {
-    const groundStation: GroundStation = {
-      id: `custom-${Date.now()}`,
-      name: newGroundStation.name || `Custom-GS-${customGroundStations.length + 1}`,
-      source: "custom",
-      country: newGroundStation.country || "",
-      city: newGroundStation.city,
-      latitude: newGroundStation.latitude || 0,
-      longitude: newGroundStation.longitude || 0,
-      altitude: newGroundStation.altitude || 0,
-      status: newGroundStation.status || "Active",
-      frequency: newGroundStation.frequency,
-      bandType: newGroundStation.bandType || "S",
-      elevation: newGroundStation.elevation || 5,
-      azimuth: newGroundStation.azimuth || 360,
-      operator: newGroundStation.operator,
-      established: newGroundStation.established,
-      lastUpdate: new Date().toISOString(),
-    };
+    dispatch(fetchMongoData());
     
-    setCustomGroundStations(prev => [...prev, groundStation]);
-    setAddDialogOpen(false);
-    setNewGroundStation({
-      source: "custom",
-      status: "Active",
-      bandType: "S",
-      elevation: 5,
-      azimuth: 360,
-    });
+    // Load predefined ground stations
+    const predefinedStations = getPredefinedGroundStations();
+    setPredefinedGroundStations(predefinedStations);
+  }, [dispatch]);
+
+  // Convert API ground stations to our display format
+  const apiGroundStations: DisplayGroundStation[] = mongoGroundStations.map(convertApiGroundStationToDisplay);
+
+  // Merge all ground station sources
+  const allGroundStations = mergeGroundStationSources(apiGroundStations, predefinedGroundStations);
+  
+  // Get statistics
+  const stats = getGroundStationStats(allGroundStations);
+
+  // Add a new custom ground station (save to DB)
+  const addCustomGroundStation = async () => {
+    try {
+      setLoading(true);
+      await fetch("/api/ground-stations", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: newGroundStation.name,
+          location: {
+            lat: newGroundStation.latitude || 0,
+            lon: newGroundStation.longitude || 0,
+            alt: newGroundStation.altitude || 0,
+          },
+          country: newGroundStation.country,
+          city: newGroundStation.city,
+          status: newGroundStation.status,
+          frequency: newGroundStation.frequency,
+          bandType: newGroundStation.bandType,
+          elevation: newGroundStation.elevation,
+          azimuth: newGroundStation.azimuth,
+          operator: newGroundStation.operator,
+          established: newGroundStation.established ? new Date(newGroundStation.established) : undefined,
+          description: newGroundStation.description,
+          source: "custom",
+        }),
+      });
+      setAddDialogOpen(false);
+      setNewGroundStation({
+        source: "custom",
+        status: "Active",
+        bandType: "S",
+        elevation: 5,
+        azimuth: 360,
+      });
+      await dispatch(fetchMongoData()); // Reload from DB
+    } catch (err) {
+      console.error("Failed to add custom ground station", err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   // Delete ground station
-  const deleteGroundStation = (id: string) => {
-    setCustomGroundStations(prev => prev.filter(gs => gs.id !== id));
+  const deleteGroundStation = async (id: string) => {
+    // Extract the database ID from the display ID
+    const dbId = id.replace("api-", "");
+    try {
+      setLoading(true);
+      await fetch(`/api/ground-stations/${dbId}`, {
+        method: "DELETE",
+      });
+      await dispatch(fetchMongoData()); // Reload from DB
+    } catch (error) {
+      console.error("Failed to delete ground station:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Refresh ground station data from API
+  const refreshGroundStationData = async () => {
+    setLoading(true);
+    try {
+      await dispatch(fetchMongoData()).unwrap();
+    } catch (error) {
+      console.error("Failed to refresh ground stations:", error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   // Status cell renderer with colored chips
@@ -327,19 +228,11 @@ export default function GSPage() {
 
   // Actions cell renderer
   const ActionsCellRenderer = (params: any) => {
-    if (params.data.source === "predefined") return null;
+    // Only show actions for custom ground stations (from our API) that can be deleted
+    if (params.data.source !== "api") return null;
     
     return (
       <Box sx={{ display: "flex", gap: 0.5 }}>
-        <Tooltip title="Edit">
-          <IconButton
-            size="small"
-            onClick={() => setEditMode(params.data.id)}
-            sx={{ color: "#00ff41", padding: "2px" }}
-          >
-            <EditIcon fontSize="small" />
-          </IconButton>
-        </Tooltip>
         <Tooltip title="Delete">
           <IconButton
             size="small"
@@ -383,7 +276,7 @@ export default function GSPage() {
   };
 
   // AG Grid column definitions
-  const columnDefs: ColDef<GroundStation>[] = [
+  const columnDefs: ColDef<DisplayGroundStation>[] = [
     { 
       headerName: "NAME", 
       field: "name", 
@@ -524,7 +417,7 @@ export default function GSPage() {
             <Button
               variant="outlined"
               startIcon={<RefreshIcon />}
-              onClick={() => window.location.reload()}
+              onClick={refreshGroundStationData}
               disabled={loading}
               className="action-button refresh-button"
             >
@@ -536,41 +429,47 @@ export default function GSPage() {
         {/* Enhanced Stats */}
         <Box className="gs-stats">
           <Box className="stat-item">
-            <Typography variant="h6" className="stat-number">{groundStations.length}</Typography>
+            <Typography variant="h6" className="stat-number">{stats.api}</Typography>
+            <Typography variant="caption" className="stat-label">API</Typography>
+          </Box>
+          <Box className="stat-item">
+            <Typography variant="h6" className="stat-number">{stats.predefined}</Typography>
             <Typography variant="caption" className="stat-label">PREDEFINED</Typography>
           </Box>
           <Box className="stat-item">
-            <Typography variant="h6" className="stat-number">{customGroundStations.length}</Typography>
-            <Typography variant="caption" className="stat-label">CUSTOM</Typography>
-          </Box>
-          <Box className="stat-item">
-            <Typography variant="h6" className="stat-number">{allGroundStations.filter(gs => gs.status === "Active").length}</Typography>
+            <Typography variant="h6" className="stat-number">{stats.active}</Typography>
             <Typography variant="caption" className="stat-label">ACTIVE</Typography>
           </Box>
           <Box className="stat-item">
-            <Typography variant="h6" className="stat-number">{allGroundStations.filter(gs => gs.status === "Maintenance").length}</Typography>
+            <Typography variant="h6" className="stat-number">{stats.maintenance}</Typography>
             <Typography variant="caption" className="stat-label">MAINT</Typography>
           </Box>
           <Box className="stat-item">
-            <Typography variant="h6" className="stat-number">{allGroundStations.filter(gs => gs.bandType === "X").length}</Typography>
+            <Typography variant="h6" className="stat-number">{stats.xBand}</Typography>
             <Typography variant="caption" className="stat-label">X-BAND</Typography>
           </Box>
           <Box className="stat-item">
-            <Typography variant="h6" className="stat-number">{allGroundStations.filter(gs => gs.bandType === "S").length}</Typography>
+            <Typography variant="h6" className="stat-number">{stats.sBand}</Typography>
             <Typography variant="caption" className="stat-label">S-BAND</Typography>
           </Box>
           <Box className="stat-item">
-            <Typography variant="h6" className="stat-number">{new Set(allGroundStations.map(gs => gs.country)).size}</Typography>
+            <Typography variant="h6" className="stat-number">{stats.countries}</Typography>
             <Typography variant="caption" className="stat-label">COUNTRIES</Typography>
           </Box>
           <Box className="stat-item">
-            <Typography variant="h6" className="stat-number">{allGroundStations.length}</Typography>
+            <Typography variant="h6" className="stat-number">{stats.total}</Typography>
             <Typography variant="caption" className="stat-label">TOTAL</Typography>
           </Box>
         </Box>
 
         {/* Console Status Bar */}
         <Box className="console-status-bar">
+          <Box className="status-section">
+            <Typography variant="caption" className="status-label">SYS:</Typography>
+            <Typography variant="caption" className={`status-value ${status === "succeeded" ? "online" : "loading"}`}>
+              {status === "succeeded" ? "ONLINE" : status.toUpperCase()}
+            </Typography>
+          </Box>
           <Box className="status-section">
             <Typography variant="caption" className="status-label">NET:</Typography>
             <Typography variant="caption" className="status-value online">ONLINE</Typography>
@@ -621,18 +520,16 @@ export default function GSPage() {
             rowHeight={40}
             headerHeight={45}
             onGridReady={(params) => {
-              setGridApi(params.api);
               params.api.sizeColumnsToFit();
+              console.log("Grid ready, row count:", params.api.getDisplayedRowCount());
             }}
             onCellValueChanged={(event: CellValueChangedEvent) => {
               // Handle cell edits for custom ground stations only
-              if (event.data.source === "custom") {
-                const updatedCustomGS = customGroundStations.map(gs => 
-                  gs.id === event.data.id 
-                    ? { ...event.data, lastUpdate: new Date().toISOString() }
-                    : gs
-                );
-                setCustomGroundStations(updatedCustomGS);
+              // Note: For now we'll just log the change. In a full implementation,
+              // you'd want to call a PUT endpoint to update the ground station in the database
+              if (event.data.source === "api") {
+                console.log("Ground station edit:", event.data);
+                // TODO: Implement PUT /api/ground-stations/:id endpoint call
               }
             }}
             onFirstDataRendered={() => {
@@ -646,7 +543,7 @@ export default function GSPage() {
             enableRangeSelection={true}
             suppressCellFocus={false}
             getRowId={(params) => params.data.id}
-            loading={loading}
+            loading={loading || status === "loading"}
           />
         </div>
       </Box>

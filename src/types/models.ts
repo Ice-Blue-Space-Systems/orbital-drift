@@ -17,6 +17,20 @@ export interface GroundStation {
     lon: number;
     alt: number;
   };
+  // Enhanced fields for comprehensive ground station management
+  country?: string;
+  city?: string;
+  status?: "Active" | "Inactive" | "Maintenance" | "Decommissioned";
+  frequency?: string; // Frequency range in MHz
+  bandType?: "S" | "X" | "Ka" | "Ku" | "L" | "C" | "Unknown";
+  elevation?: number; // Minimum elevation angle
+  azimuth?: number; // Antenna azimuth range
+  operator?: string;
+  established?: Date;
+  description?: string;
+  source?: "predefined" | "custom";
+  createdAt?: Date;
+  updatedAt?: Date;
 }
 
 export interface ContactWindow {
