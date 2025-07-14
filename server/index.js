@@ -42,6 +42,47 @@ app.get("/api/satellites/:id", async (req, res) => {
   }
 });
 
+// API endpoint to create a new satellite
+app.post("/api/satellites", async (req, res) => {
+  try {
+    const newSatellite = new Satellite(req.body);
+    const savedSatellite = await newSatellite.save();
+    res.status(201).json(savedSatellite);
+  } catch (err) {
+    res.status(400).send(err.message);
+  }
+});
+
+// API endpoint to update a satellite
+app.put("/api/satellites/:id", async (req, res) => {
+  try {
+    const updatedSatellite = await Satellite.findByIdAndUpdate(
+      req.params.id,
+      req.body,
+      { new: true, runValidators: true }
+    );
+    if (!updatedSatellite) {
+      return res.status(404).send("Satellite not found");
+    }
+    res.json(updatedSatellite);
+  } catch (err) {
+    res.status(400).send(err.message);
+  }
+});
+
+// API endpoint to delete a satellite
+app.delete("/api/satellites/:id", async (req, res) => {
+  try {
+    const deletedSatellite = await Satellite.findByIdAndDelete(req.params.id);
+    if (!deletedSatellite) {
+      return res.status(404).send("Satellite not found");
+    }
+    res.status(200).json({ message: "Satellite deleted successfully", satellite: deletedSatellite });
+  } catch (err) {
+    res.status(500).send(err.message);
+  }
+});
+
 // API endpoint to fetch ground stations
 app.get("/api/ground-stations", async (req, res) => {
   try {

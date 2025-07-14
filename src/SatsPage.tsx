@@ -3,7 +3,7 @@ import { AgGridReact } from "ag-grid-react";
 import { ModuleRegistry, AllCommunityModule } from "ag-grid-community";
 import "ag-grid-community/styles/ag-grid.css";
 import "ag-grid-community/styles/ag-theme-alpine.css";
-import { ColDef, GridApi, CellValueChangedEvent } from "ag-grid-community";
+import { ColDef, CellValueChangedEvent } from "ag-grid-community";
 import { useSelector, useDispatch } from "react-redux";
 import { RootState, AppDispatch } from "./store";
 import { fetchMongoData } from "./store/mongoSlice";
@@ -27,10 +27,15 @@ import {
 import AddIcon from "@mui/icons-material/Add";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import DeleteIcon from "@mui/icons-material/Delete";
-import EditIcon from "@mui/icons-material/Edit";
 import SaveIcon from "@mui/icons-material/Save";
 import CancelIcon from "@mui/icons-material/Cancel";
-import { Satellite as ApiSatellite } from "./types";
+import { 
+  DisplaySatellite, 
+  convertApiSatelliteToDisplay, 
+  fetchCelesTrakSatellites, 
+  mergeSatelliteSources,
+  getSatelliteStats 
+} from "./utils/satelliteDataUtils";
 import "./SatsPage.css"; // We'll create this for matrix styling
 
 // Country code mapping for flags
@@ -63,139 +68,100 @@ const countryCodeMap: Record<string, string> = {
 // Register AG Grid modules
 ModuleRegistry.registerModules([AllCommunityModule]);
 
-// Extended interface for display purposes (combines API and custom satellites)
-interface DisplaySatellite {
-  id: string;
-  name: string;
-  source: "api" | "custom";
-  type?: "live" | "simulated";
-  noradId?: number;
-  country?: string;
-  launchDate?: string;
-  orbitType?: "LEO" | "MEO" | "GEO" | "HEO" | "Unknown";
-  status: "Active" | "Inactive" | "Decayed" | "Unknown";
-  apogee?: number; // km
-  perigee?: number; // km
-  inclination?: number; // degrees
-  period?: number; // minutes
-  lastUpdate: string;
-  description?: string;
-}
-
 export default function SatsPage() {
   const dispatch = useDispatch<AppDispatch>();
-  
   // Get satellites from Redux store
   const { satellites: mongoSatellites, status } = useSelector((state: RootState) => state.mongo);
-  
-  const [customSatellites, setCustomSatellites] = useState<DisplaySatellite[]>([]);
   const [loading, setLoading] = useState(false);
   const [addDialogOpen, setAddDialogOpen] = useState(false);
+  const [celestrakSatellites, setCelestrakSatellites] = useState<DisplaySatellite[]>([]);
   const [newSatellite, setNewSatellite] = useState<Partial<DisplaySatellite>>({
     source: "custom",
     status: "Active",
     orbitType: "LEO",
   });
-  const [editMode, setEditMode] = useState<string | null>(null);
   const gridRef = useRef<AgGridReact>(null);
-  const [gridApi, setGridApi] = useState<GridApi | null>(null);
 
   // Fetch satellites data from API on component mount
   useEffect(() => {
-    console.log("useEffect triggered, status:", status);
-    console.log("Dispatching fetchMongoData...");
     dispatch(fetchMongoData());
+    
+    // Also fetch CelesTrak data for enhanced satellite list
+    const fetchCelestrakData = async () => {
+      const celestrakData = await fetchCelesTrakSatellites();
+      setCelestrakSatellites(celestrakData);
+    };
+    
+    fetchCelestrakData();
   }, [dispatch]);
 
   // Convert API satellites to our display format
-  const apiSatellites: DisplaySatellite[] = mongoSatellites.map((sat: ApiSatellite, index) => ({
-    id: `api-${sat._id}`,
-    name: sat.name || "Unknown Satellite",
-    source: "api" as const,
-    type: sat.type,
-    noradId: sat.noradId,
-    status: "Active" as const, // Default, could be enhanced
-    orbitType: "LEO" as const, // Default, could be enhanced based on orbital data
-    description: sat.description,
-    lastUpdate: new Date().toISOString(),
-  }));
+  const apiSatellites: DisplaySatellite[] = mongoSatellites.map(convertApiSatelliteToDisplay);
 
-  // Initialize with some mock custom satellites
-  useEffect(() => {
-    setCustomSatellites([
-      {
-        id: "custom-1",
-        name: "ICEBLUE-SAT-1",
-        source: "custom",
-        status: "Active",
-        orbitType: "LEO",
-        apogee: 450,
-        perigee: 420,
-        inclination: 98.2,
-        period: 93.5,
-        country: "USA",
-        launchDate: "2024-03-15",
-        lastUpdate: new Date().toISOString(),
-      },
-      {
-        id: "custom-2", 
-        name: "MISSION-OPS-SAT",
-        source: "custom",
-        status: "Active",
-        orbitType: "GEO",
-        apogee: 35786,
-        perigee: 35786,
-        inclination: 0.1,
-        period: 1436,
-        country: "International",
-        launchDate: "2023-11-22",
-        lastUpdate: new Date().toISOString(),
-      },
-    ]);
-  }, []);
+  // Merge all satellite sources
+  const allSatellites = mergeSatelliteSources(apiSatellites, celestrakSatellites);
+  
+  // Get statistics
+  const stats = getSatelliteStats(allSatellites);
 
-  // Combine API and custom satellites
-  const allSatellites = [...apiSatellites, ...customSatellites];
-
-  // Debug logging to see what we have
-  console.log("Redux Status:", status);
-  console.log("Mongo Satellites count:", mongoSatellites.length);
-  console.log("Mongo Satellites raw:", mongoSatellites);
-  console.log("API Satellites count:", apiSatellites.length);
-  console.log("API Satellites:", apiSatellites);
-  console.log("Custom Satellites count:", customSatellites.length);
-  console.log("All Satellites count:", allSatellites.length);
-  console.log("All Satellites:", allSatellites);
-
-  // Add a new custom satellite
-  const addCustomSatellite = () => {
-    const satellite: DisplaySatellite = {
-      id: `custom-${Date.now()}`,
-      name: newSatellite.name || `Custom-Sat-${customSatellites.length + 1}`,
-      source: "custom",
-      status: newSatellite.status || "Active",
-      orbitType: newSatellite.orbitType || "LEO",
-      apogee: newSatellite.apogee,
-      perigee: newSatellite.perigee,
-      inclination: newSatellite.inclination,
-      period: newSatellite.period,
-      country: newSatellite.country,
-      launchDate: newSatellite.launchDate,
-      lastUpdate: new Date().toISOString(),
-    };
-    
-    setCustomSatellites(prev => [...prev, satellite]);
-    setAddDialogOpen(false);
-    setNewSatellite({
-      source: "custom",
-      status: "Active", 
-      orbitType: "LEO",
-    });
+  // Add a new custom satellite (save to DB)
+  const addCustomSatellite = async () => {
+    try {
+      setLoading(true);
+      const response = await fetch("/api/satellites", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: newSatellite.name,
+          type: "simulated", // Custom satellites are simulated
+          description: newSatellite.description,
+          // Additional fields for custom satellites (if your API supports them)
+          status: newSatellite.status,
+          orbitType: newSatellite.orbitType,
+          apogee: newSatellite.apogee,
+          perigee: newSatellite.perigee,
+          inclination: newSatellite.inclination,
+          period: newSatellite.period,
+          country: newSatellite.country,
+          launchDate: newSatellite.launchDate,
+          source: "custom",
+        }),
+      });
+      
+      if (response.ok) {
+        setAddDialogOpen(false);
+        setNewSatellite({ source: "custom", status: "Active", orbitType: "LEO" });
+        await dispatch(fetchMongoData()); // Reload from DB
+      } else {
+        console.error("Failed to add satellite:", response.statusText);
+      }
+    } catch (err) {
+      console.error("Failed to add custom satellite", err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   // Delete satellite
-  const deleteSatellite = (id: string) => {
-    setCustomSatellites(prev => prev.filter(sat => sat.id !== id));
+  const deleteSatellite = async (id: string) => {
+    try {
+      setLoading(true);
+      // Extract the actual MongoDB ID from the display ID
+      const mongoId = id.replace('api-', '');
+      const response = await fetch(`/api/satellites/${mongoId}`, {
+        method: "DELETE",
+      });
+      
+      if (response.ok) {
+        await dispatch(fetchMongoData()); // Reload from DB
+      } else {
+        console.error("Failed to delete satellite:", response.statusText);
+      }
+    } catch (err) {
+      console.error("Failed to delete satellite", err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   // Refresh satellite data from API
@@ -203,6 +169,10 @@ export default function SatsPage() {
     setLoading(true);
     try {
       await dispatch(fetchMongoData()).unwrap();
+      
+      // Also refresh CelesTrak data
+      const celestrakData = await fetchCelesTrakSatellites();
+      setCelestrakSatellites(celestrakData);
     } catch (error) {
       console.error("Failed to refresh satellites:", error);
     } finally {
@@ -253,19 +223,11 @@ export default function SatsPage() {
 
   // Actions cell renderer
   const ActionsCellRenderer = (params: any) => {
-    if (params.data.source === "api") return null;
+    // Only show actions for custom satellites (from our API) that can be deleted
+    if (params.data.source !== "api") return null;
     
     return (
       <Box sx={{ display: "flex", gap: 0.5 }}>
-        <Tooltip title="Edit">
-          <IconButton
-            size="small"
-            onClick={() => setEditMode(params.data.id)}
-            sx={{ color: "#00ff41", padding: "2px" }}
-          >
-            <EditIcon fontSize="small" />
-          </IconButton>
-        </Tooltip>
         <Tooltip title="Delete">
           <IconButton
             size="small"
@@ -506,35 +468,35 @@ export default function SatsPage() {
         {/* Enhanced Stats */}
         <Box className="sats-stats">
           <Box className="stat-item">
-            <Typography variant="h6" className="stat-number">{mongoSatellites.length}</Typography>
+            <Typography variant="h6" className="stat-number">{stats.api}</Typography>
             <Typography variant="caption" className="stat-label">API SATS</Typography>
           </Box>
           <Box className="stat-item">
-            <Typography variant="h6" className="stat-number">{customSatellites.length}</Typography>
-            <Typography variant="caption" className="stat-label">CUSTOM</Typography>
+            <Typography variant="h6" className="stat-number">{stats.celestrak}</Typography>
+            <Typography variant="caption" className="stat-label">CELESTRAK</Typography>
           </Box>
           <Box className="stat-item">
-            <Typography variant="h6" className="stat-number">{allSatellites.filter(s => s.status === "Active").length}</Typography>
+            <Typography variant="h6" className="stat-number">{stats.active}</Typography>
             <Typography variant="caption" className="stat-label">ACTIVE</Typography>
           </Box>
           <Box className="stat-item">
-            <Typography variant="h6" className="stat-number">{allSatellites.filter(s => s.orbitType === "LEO").length}</Typography>
+            <Typography variant="h6" className="stat-number">{stats.leo}</Typography>
             <Typography variant="caption" className="stat-label">LEO</Typography>
           </Box>
           <Box className="stat-item">
-            <Typography variant="h6" className="stat-number">{allSatellites.filter(s => s.orbitType === "GEO").length}</Typography>
+            <Typography variant="h6" className="stat-number">{stats.geo}</Typography>
             <Typography variant="caption" className="stat-label">GEO</Typography>
           </Box>
           <Box className="stat-item">
-            <Typography variant="h6" className="stat-number">{allSatellites.filter(s => s.type === "live").length}</Typography>
+            <Typography variant="h6" className="stat-number">{stats.live}</Typography>
             <Typography variant="caption" className="stat-label">LIVE</Typography>
           </Box>
           <Box className="stat-item">
-            <Typography variant="h6" className="stat-number">{allSatellites.filter(s => s.type === "simulated").length}</Typography>
+            <Typography variant="h6" className="stat-number">{stats.simulated}</Typography>
             <Typography variant="caption" className="stat-label">SIM</Typography>
           </Box>
           <Box className="stat-item">
-            <Typography variant="h6" className="stat-number">{allSatellites.length}</Typography>
+            <Typography variant="h6" className="stat-number">{stats.total}</Typography>
             <Typography variant="caption" className="stat-label">TOTAL</Typography>
           </Box>
         </Box>
@@ -574,7 +536,7 @@ export default function SatsPage() {
               {status === "loading" ? "Loading satellites..." : "No satellites found"}
             </Typography>
             <Typography variant="body2" sx={{ mt: 1 }}>
-              Status: {status} | MongoDB Count: {mongoSatellites.length} | Custom Count: {customSatellites.length}
+              Status: {status} | MongoDB Count: {mongoSatellites.length} | Total: {allSatellites.length}
             </Typography>
           </Box>
         ) : (
@@ -603,19 +565,15 @@ export default function SatsPage() {
               rowHeight={40}
               headerHeight={45}
               onGridReady={(params) => {
-                setGridApi(params.api);
                 params.api.sizeColumnsToFit();
                 console.log("Grid ready, row count:", params.api.getDisplayedRowCount());
               }}
               onCellValueChanged={(event: CellValueChangedEvent) => {
                 // Handle cell edits for custom satellites only
                 if (event.data.source === "custom") {
-                  const updatedCustomSats = customSatellites.map(sat => 
-                    sat.id === event.data.id 
-                      ? { ...event.data, lastUpdate: new Date().toISOString() }
-                      : sat
-                  );
-                  setCustomSatellites(updatedCustomSats);
+                  // Here you could implement API call to update the satellite
+                  console.log("Cell value changed:", event.data);
+                  // For now, just log - you can implement PUT API call here
                 }
               }}
               onFirstDataRendered={() => {
