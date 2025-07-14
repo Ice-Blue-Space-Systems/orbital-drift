@@ -69,10 +69,26 @@ const GlobeTools: React.FC<GlobeToolsProps> = ({
 
     const cesiumCurrentTime = debugInfo.currentTime;
 
+    // Extract real MongoDB ObjectIds from synthetic IDs
+    let realSatId = selectedSatelliteId;
+    let realGroundStationId = selectedGroundStationId;
+
+    if (selectedSatelliteId.startsWith('api-')) {
+      realSatId = selectedSatelliteId.replace('api-', '');
+    }
+    if (selectedGroundStationId.startsWith('api-')) {
+      realGroundStationId = selectedGroundStationId.replace('api-', '');
+    }
+
+    // For predefined ground stations, there are no contact windows in the database
+    if (selectedGroundStationId.startsWith('predefined-')) {
+      return null;
+    }
+
     const futureWindows = contactWindows.filter(
       (win: ContactWindow) =>
-        win.satelliteId === selectedSatelliteId &&
-        win.groundStationId === selectedGroundStationId &&
+        win.satelliteId === realSatId &&
+        win.groundStationId === realGroundStationId &&
         new Date(win.scheduledLOS) > cesiumCurrentTime
     );
 

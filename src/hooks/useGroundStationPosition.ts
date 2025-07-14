@@ -1,5 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { Cartesian3 } from "cesium";
+import { getDisplayGroundStations, type DisplayGroundStation } from "../utils/groundStationDataUtils";
 
 export function useGroundStationPosition(
   selectedGroundStationId: string | null,
@@ -9,17 +10,33 @@ export function useGroundStationPosition(
     null
   );
 
+  // Get merged ground station data (API + predefined)
+  const displayGroundStations = useMemo(() => {
+    return getDisplayGroundStations(groundStations);
+  }, [groundStations]);
+
   useEffect(() => {
-    const station = groundStations.find(
-      (gs) => gs._id === selectedGroundStationId
+    if (!selectedGroundStationId) {
+      setGroundStationPos(null);
+      return;
+    }
+
+    // Find ground station by ID (works for both API and predefined stations)
+    const station = displayGroundStations.find(
+      (gs: DisplayGroundStation) => gs.id === selectedGroundStationId
     );
+    
     if (station) {
-      const { lat, lon, alt } = station.location;
-      setGroundStationPos(Cartesian3.fromDegrees(lon, lat, alt * 1000));
+      // Use the standardized DisplayGroundStation format
+      setGroundStationPos(Cartesian3.fromDegrees(
+        station.longitude, 
+        station.latitude, 
+        station.altitude
+      ));
     } else {
       setGroundStationPos(null);
     }
-  }, [selectedGroundStationId, groundStations]);
+  }, [selectedGroundStationId, displayGroundStations]);
 
   return groundStationPos;
 }

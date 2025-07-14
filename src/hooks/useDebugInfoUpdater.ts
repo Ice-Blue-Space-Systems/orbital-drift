@@ -66,18 +66,32 @@ export function useDebugInfoUpdater({
         );
 
         // Check if the satellite is in sight based on contact windows
-        const currentContactWindow = contactWindows.find(
+        // Extract real MongoDB ObjectIds from synthetic IDs
+        let realSatId = selectedSatId;
+        let realGroundStationId = selectedGroundStationId;
+
+        if (selectedSatId?.startsWith('api-')) {
+          realSatId = selectedSatId.replace('api-', '');
+        }
+        if (selectedGroundStationId?.startsWith('api-')) {
+          realGroundStationId = selectedGroundStationId.replace('api-', '');
+        }
+
+        // For predefined ground stations, there are no contact windows in the database
+        const isPredefineGroundStation = selectedGroundStationId?.startsWith('predefined-');
+
+        const currentContactWindow = !isPredefineGroundStation ? contactWindows.find(
           (win: {
             satelliteId: string;
             groundStationId: string;
             scheduledAOS: string | number | Date;
             scheduledLOS: string | number | Date;
           }) =>
-            win.satelliteId === selectedSatId &&
-            win.groundStationId === selectedGroundStationId &&
+            win.satelliteId === realSatId &&
+            win.groundStationId === realGroundStationId &&
             new Date(win.scheduledAOS) <= dateObject &&
             new Date(win.scheduledLOS) >= dateObject
-        );
+        ) : null;
 
         const inSight = !!currentContactWindow;
 

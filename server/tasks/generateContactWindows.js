@@ -11,6 +11,12 @@ const GroundStation = require("../models/GroundStation");
  * @returns An array of contact windows.
  */
 async function generateContactWindows(satellite, groundStation, timeRangeMinutes = 1440) {
+  // Check if TLE data exists
+  if (!satellite.currentTleId || !satellite.currentTleId.line1 || !satellite.currentTleId.line2) {
+    console.warn(`Satellite ${satellite.name} does not have TLE data. Skipping contact window generation.`);
+    return [];
+  }
+
   // Access TLE data from the populated currentTleId field
   const { line1, line2 } = satellite.currentTleId;
   const { lat, lon, alt } = groundStation.location; // alt stored in kilometers

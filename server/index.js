@@ -179,6 +179,12 @@ app.post("/api/contact-windows/refresh", async (req, res) => {
     const groundStations = await GroundStation.find();
 
     for (const satellite of satellites) {
+      // Skip satellites without TLE data
+      if (!satellite.currentTleId) {
+        console.warn(`Satellite ${satellite.name} does not have TLE data. Skipping.`);
+        continue;
+      }
+
       for (const groundStation of groundStations) {
         // Clear old contact windows for this satellite/ground station pair
         await ContactWindow.deleteMany({
@@ -236,10 +242,28 @@ app.get("/api/contact-windows", async (req, res) => {
       return res.status(400).json({ error: "Both satelliteId and groundStationId are required." });
     }
 
+    // Extract real MongoDB ObjectIds from synthetic IDs
+    let realSatelliteId = satelliteId;
+    let realGroundStationId = groundStationId;
+
+    // Handle synthetic IDs from the frontend (e.g., "api-66502a4e1f9c9f1a9c13b001" -> "66502a4e1f9c9f1a9c13b001")
+    if (satelliteId.startsWith('api-')) {
+      realSatelliteId = satelliteId.replace('api-', '');
+    }
+    if (groundStationId.startsWith('api-')) {
+      realGroundStationId = groundStationId.replace('api-', '');
+    }
+
+    // For predefined ground stations (e.g., "predefined-1"), we can't find contact windows
+    // since they don't exist in the database
+    if (groundStationId.startsWith('predefined-')) {
+      return res.status(200).json([]); // Return empty array for predefined ground stations
+    }
+
     // Query the contact_windows collection
     const contactWindows = await ContactWindow.find({
-      satelliteId,
-      groundStationId,
+      satelliteId: realSatelliteId,
+      groundStationId: realGroundStationId,
     }).sort({ scheduledAOS: 1 }); // Sort by scheduledAOS ascending
 
     // Return the results

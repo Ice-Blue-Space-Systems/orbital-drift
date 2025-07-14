@@ -256,6 +256,18 @@ export const getPredefinedGroundStations = (): DisplayGroundStation[] => {
   return PREDEFINED_GROUND_STATIONS;
 };
 
+// Get display ground stations by merging API and predefined data
+export const getDisplayGroundStations = (apiGroundStations: any[]): DisplayGroundStation[] => {
+  // Convert API ground stations to DisplayGroundStation format
+  const convertedApiGS: DisplayGroundStation[] = apiGroundStations.map(gs => convertApiGroundStationToDisplay(gs));
+  
+  // Get predefined ground stations
+  const predefinedGS = getPredefinedGroundStations();
+  
+  // Merge both sources
+  return mergeGroundStationSources(convertedApiGS, predefinedGS);
+};
+
 // Merge ground stations from different sources, removing duplicates by name and location
 export const mergeGroundStationSources = (
   apiGroundStations: DisplayGroundStation[],

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import { useSelector } from "react-redux";
 import { RootState } from "../store";
 import {
@@ -10,6 +10,7 @@ import {
 } from "../utils/mathUtils";
 import { convertEcefToEnu } from "../utils/coordinateUtils";
 import { selectCesiumClockIso } from "../store/selectors/cesiumClockSelectors";
+import { getDisplayGroundStations, type DisplayGroundStation } from "../utils/groundStationDataUtils";
 import "./DockableComponent.css"; // Import the CSS for styling
 
 interface SatelliteStatusTableProps {
@@ -34,6 +35,12 @@ const SatelliteStatusTable: React.FC<SatelliteStatusTableProps> = ({
   const { satellites, groundStations } = useSelector(
     (state: RootState) => state.mongo
   );
+  
+  // Get merged ground station data (API + predefined)
+  const displayGroundStations = useMemo(() => {
+    return getDisplayGroundStations(groundStations);
+  }, [groundStations]);
+  
   const iso = useSelector(selectCesiumClockIso);
 
   useEffect(() => {
@@ -93,7 +100,7 @@ const SatelliteStatusTable: React.FC<SatelliteStatusTableProps> = ({
       </p>
       <p>
         <strong>Station Name:</strong>{" "}
-        {groundStations.find((gs) => gs._id === selectedGroundStationId)
+        {displayGroundStations.find((gs: DisplayGroundStation) => gs.id === selectedGroundStationId)
           ?.name || "N/A"}
       </p>
       <p>

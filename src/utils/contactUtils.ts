@@ -16,10 +16,26 @@ export function getNextContactWindow(
 ): ContactWindow | null {
   if (!selectedSatId || !selectedGroundStationId || !currentTime) return null;
 
+  // Extract real MongoDB ObjectIds from synthetic IDs
+  let realSatId = selectedSatId;
+  let realGroundStationId = selectedGroundStationId;
+
+  if (selectedSatId.startsWith('api-')) {
+    realSatId = selectedSatId.replace('api-', '');
+  }
+  if (selectedGroundStationId.startsWith('api-')) {
+    realGroundStationId = selectedGroundStationId.replace('api-', '');
+  }
+
+  // For predefined ground stations, there are no contact windows in the database
+  if (selectedGroundStationId.startsWith('predefined-')) {
+    return null;
+  }
+
   const futureWindows = contactWindows.filter(
     (win) =>
-      win.satelliteId === selectedSatId &&
-      win.groundStationId === selectedGroundStationId &&
+      win.satelliteId === realSatId &&
+      win.groundStationId === realGroundStationId &&
       new Date(win.scheduledLOS) > currentTime
   );
 
