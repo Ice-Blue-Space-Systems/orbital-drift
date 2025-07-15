@@ -23,12 +23,16 @@ import {
   Typography,
   IconButton,
   Tooltip,
+  Tabs,
+  Tab,
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import DeleteIcon from "@mui/icons-material/Delete";
 import SaveIcon from "@mui/icons-material/Save";
 import CancelIcon from "@mui/icons-material/Cancel";
+import ManageSearchIcon from "@mui/icons-material/ManageSearch";
+import ExploreIcon from "@mui/icons-material/Explore";
 import { 
   DisplaySatellite, 
   convertApiSatelliteToDisplay, 
@@ -75,12 +79,14 @@ export default function SatsPage() {
   const [loading, setLoading] = useState(false);
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [celestrakSatellites, setCelestrakSatellites] = useState<DisplaySatellite[]>([]);
+  const [activeTab, setActiveTab] = useState(0); // 0 = My Satellites, 1 = Discover More
   const [newSatellite, setNewSatellite] = useState<Partial<DisplaySatellite>>({
     source: "custom",
     status: "Active",
     orbitType: "LEO",
   });
-  const gridRef = useRef<AgGridReact>(null);
+  const myGridRef = useRef<AgGridReact>(null);
+  const discoverGridRef = useRef<AgGridReact>(null);
 
   // Fetch satellites data from API on component mount
   useEffect(() => {
@@ -98,11 +104,19 @@ export default function SatsPage() {
   // Convert API satellites to our display format
   const apiSatellites: DisplaySatellite[] = mongoSatellites.map(convertApiSatelliteToDisplay);
 
-  // Merge all satellite sources
+  // Separate my satellites from discoverable satellites
+  const mySatellites = apiSatellites; // Satellites from MongoDB API
+  const discoverableSatellites = celestrakSatellites.filter(sat => 
+    !apiSatellites.some(apiSat => apiSat.name.toLowerCase() === sat.name.toLowerCase())
+  ); // CelesTrak satellites not already in MongoDB
+  
+  // All satellites for overall stats
   const allSatellites = mergeSatelliteSources(apiSatellites, celestrakSatellites);
   
   // Get statistics
   const stats = getSatelliteStats(allSatellites);
+  const myStats = getSatelliteStats(mySatellites);
+  const discoverStats = getSatelliteStats(discoverableSatellites);
 
   // Add a new custom satellite (save to DB)
   const addCustomSatellite = async () => {
@@ -137,6 +151,40 @@ export default function SatsPage() {
       }
     } catch (err) {
       console.error("Failed to add custom satellite", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Quick-add satellite from CelesTrak to my satellites
+  const quickAddSatellite = async (satellite: DisplaySatellite) => {
+    try {
+      setLoading(true);
+      const response = await fetch("/api/satellites", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: satellite.name,
+          noradId: satellite.noradId,
+          country: satellite.country || 'Unknown',
+          launchDate: satellite.launchDate,
+          orbitType: satellite.orbitType || 'Unknown',
+          status: satellite.status,
+          description: `Added from CelesTrak - ${satellite.description || 'Satellite from CelesTrak database'}`,
+          source: "celestrak",
+          type: "live"
+        }),
+      });
+
+      if (response.ok) {
+        await dispatch(fetchMongoData()); // Reload from DB
+        // Optionally switch to "My Satellites" tab
+        setActiveTab(0);
+      } else {
+        console.error("Failed to add satellite:", response.statusText);
+      }
+    } catch (err) {
+      console.error("Failed to quick-add satellite", err);
     } finally {
       setLoading(false);
     }
@@ -270,12 +318,30 @@ export default function SatsPage() {
     );
   };
 
-  // AG Grid column definitions
-  const columnDefs: ColDef<DisplaySatellite>[] = [
+  // Quick-Add Cell Renderer for Discover More tab
+  const QuickAddCellRenderer = (params: any) => {
+    return (
+      <Tooltip title="Add to My Satellites">
+        <IconButton
+          size="small"
+          onClick={() => quickAddSatellite(params.data)}
+          disabled={loading}
+          sx={{
+            color: "#00ff41",
+            "&:hover": { backgroundColor: "rgba(0, 255, 65, 0.1)" }
+          }}
+        >
+          <AddIcon fontSize="small" />
+        </IconButton>
+      </Tooltip>
+    );
+  };
+
+  // Base column definitions (shared between both tabs)
+  const getBaseColumnDefs = (): ColDef<DisplaySatellite>[] => [
     { 
       headerName: "NAME", 
       field: "name", 
-      editable: true,
       filter: "agTextColumnFilter",
       width: 180,
       cellStyle: { color: "#00ff41", fontWeight: "bold" }
@@ -283,7 +349,6 @@ export default function SatsPage() {
     { 
       headerName: "SOURCE", 
       field: "source", 
-      editable: false,
       filter: "agSetColumnFilter",
       width: 90,
       cellRenderer: SourceCellRenderer,
@@ -291,7 +356,6 @@ export default function SatsPage() {
     { 
       headerName: "TYPE", 
       field: "type", 
-      editable: false,
       filter: "agSetColumnFilter",
       width: 80,
       cellStyle: { color: "#66aaff" },
@@ -300,7 +364,6 @@ export default function SatsPage() {
     { 
       headerName: "NORAD ID", 
       field: "noradId", 
-      editable: false,
       filter: "agNumberColumnFilter",
       type: "numericColumn",
       width: 90,
@@ -310,31 +373,21 @@ export default function SatsPage() {
     { 
       headerName: "STATUS", 
       field: "status", 
-      editable: true,
       filter: "agSetColumnFilter",
-      cellEditor: "agSelectCellEditor",
-      cellEditorParams: {
-        values: ["Active", "Inactive", "Decayed", "Unknown"]
-      },
       width: 100,
       cellRenderer: StatusCellRenderer,
     },
     { 
       headerName: "ORBIT TYPE", 
       field: "orbitType", 
-      editable: true,
       filter: "agSetColumnFilter",
-      cellEditor: "agSelectCellEditor",
-      cellEditorParams: {
-        values: ["LEO", "MEO", "GEO", "HEO", "Unknown"]
-      },
       width: 100,
-      cellStyle: { color: "#00aaff" }
+      cellStyle: { color: "#00aaff" },
+      valueFormatter: (params) => params.value || "N/A"
     },
     { 
       headerName: "APOGEE (km)", 
       field: "apogee", 
-      editable: true,
       filter: "agNumberColumnFilter",
       type: "numericColumn",
       width: 110,
@@ -344,7 +397,6 @@ export default function SatsPage() {
     { 
       headerName: "PERIGEE (km)", 
       field: "perigee", 
-      editable: true,
       filter: "agNumberColumnFilter", 
       type: "numericColumn",
       width: 110,
@@ -354,7 +406,6 @@ export default function SatsPage() {
     { 
       headerName: "INCLINATION (°)", 
       field: "inclination", 
-      editable: true,
       filter: "agNumberColumnFilter",
       type: "numericColumn", 
       width: 130,
@@ -364,7 +415,6 @@ export default function SatsPage() {
     { 
       headerName: "PERIOD (min)", 
       field: "period", 
-      editable: true,
       filter: "agNumberColumnFilter",
       type: "numericColumn",
       width: 110,
@@ -374,7 +424,6 @@ export default function SatsPage() {
     { 
       headerName: "COUNTRY", 
       field: "country", 
-      editable: true,
       filter: "agTextColumnFilter",
       width: 140,
       cellRenderer: CountryCellRenderer,
@@ -382,7 +431,6 @@ export default function SatsPage() {
     { 
       headerName: "LAUNCH DATE", 
       field: "launchDate", 
-      editable: true,
       filter: "agDateColumnFilter",
       width: 120,
       cellStyle: { color: "#cc88ff" },
@@ -391,12 +439,23 @@ export default function SatsPage() {
     { 
       headerName: "DESCRIPTION", 
       field: "description", 
-      editable: true,
       filter: "agTextColumnFilter",
       width: 150,
       cellStyle: { color: "#88ddff" },
       valueFormatter: (params) => params.value || "N/A"
     },
+  ];
+
+  // Column definitions for "My Satellites" tab (editable, with delete actions)
+  const myColumnDefs: ColDef<DisplaySatellite>[] = [
+    ...getBaseColumnDefs().map(col => ({ 
+      ...col, 
+      editable: col.field !== "source" && col.field !== "type",
+      cellEditor: col.field === "status" ? "agSelectCellEditor" : 
+                  col.field === "orbitType" ? "agSelectCellEditor" : undefined,
+      cellEditorParams: col.field === "status" ? {values: ["Active", "Inactive", "Decayed", "Unknown"]} :
+                        col.field === "orbitType" ? {values: ["LEO", "MEO", "GEO", "HEO", "Unknown"]} : undefined
+    })),
     { 
       headerName: "ACTIONS", 
       colId: "actions",
@@ -405,6 +464,21 @@ export default function SatsPage() {
       filter: false,
       width: 100,
       cellRenderer: ActionsCellRenderer,
+      pinned: "right"
+    },
+  ];
+
+  // Column definitions for "Discover More" tab (read-only, with add actions)
+  const discoverColumnDefs: ColDef<DisplaySatellite>[] = [
+    ...getBaseColumnDefs().map(col => ({ ...col, editable: false })),
+    { 
+      headerName: "ADD", 
+      colId: "quickAdd",
+      editable: false,
+      sortable: false,
+      filter: false,
+      width: 60,
+      cellRenderer: QuickAddCellRenderer,
       pinned: "right"
     },
   ];
@@ -528,15 +602,62 @@ export default function SatsPage() {
         </Box>
       </Box>
 
-      {/* AG Grid Table */}
+      {/* Tabs and Grid Section */}
       <Box className="sats-grid-container">
-        {allSatellites.length === 0 ? (
+        
+        {/* Tabs */}
+        <Box sx={{ borderBottom: 1, borderColor: 'rgba(0, 255, 65, 0.3)', marginBottom: 2 }}>
+          <Tabs 
+            value={activeTab} 
+            onChange={(_, newValue) => setActiveTab(newValue)}
+            sx={{
+              '& .MuiTabs-indicator': {
+                backgroundColor: '#00ff41',
+                height: '2px',
+              },
+              '& .MuiTab-root': {
+                color: 'rgba(0, 255, 65, 0.7)',
+                fontFamily: "'Courier New', Courier, monospace",
+                fontSize: '0.9rem',
+                fontWeight: 'bold',
+                textTransform: 'uppercase',
+                '&.Mui-selected': {
+                  color: '#00ff41',
+                },
+                '&:hover': {
+                  color: '#00ff41',
+                  backgroundColor: 'rgba(0, 255, 65, 0.1)',
+                },
+              },
+            }}
+          >
+            <Tab 
+              icon={<ManageSearchIcon />} 
+              iconPosition="start"
+              label={`My Satellites (${mySatellites.length})`} 
+            />
+            <Tab 
+              icon={<ExploreIcon />} 
+              iconPosition="start"
+              label={`Discover More (${discoverableSatellites.length})`} 
+            />
+          </Tabs>
+        </Box>
+
+        {/* Grid Content */}
+        {(activeTab === 0 ? mySatellites : discoverableSatellites).length === 0 ? (
           <Box sx={{ padding: 4, textAlign: 'center', color: '#888' }}>
             <Typography variant="h6">
-              {status === "loading" ? "Loading satellites..." : "No satellites found"}
+              {activeTab === 0 
+                ? (status === "loading" ? "Loading my satellites..." : "No managed satellites found") 
+                : "Loading discoverable satellites..."
+              }
             </Typography>
             <Typography variant="body2" sx={{ mt: 1 }}>
-              Status: {status} | MongoDB Count: {mongoSatellites.length} | Total: {allSatellites.length}
+              {activeTab === 0 
+                ? `MongoDB Count: ${mongoSatellites.length}` 
+                : `CelesTrak Available: ${celestrakSatellites.length}`
+              }
             </Typography>
           </Box>
         ) : (
@@ -548,9 +669,9 @@ export default function SatsPage() {
             }}
           >
             <AgGridReact
-              ref={gridRef}
-              rowData={allSatellites}
-              columnDefs={columnDefs}
+              ref={activeTab === 0 ? myGridRef : discoverGridRef}
+              rowData={activeTab === 0 ? mySatellites : discoverableSatellites}
+              columnDefs={activeTab === 0 ? myColumnDefs : discoverColumnDefs}
               defaultColDef={{
                 sortable: true,
                 filter: true,
@@ -569,16 +690,16 @@ export default function SatsPage() {
                 console.log("Grid ready, row count:", params.api.getDisplayedRowCount());
               }}
               onCellValueChanged={(event: CellValueChangedEvent) => {
-                // Handle cell edits for custom satellites only
-                if (event.data.source === "custom") {
-                  // Here you could implement API call to update the satellite
+                // Handle cell edits for managed satellites only (My Satellites tab)
+                if (activeTab === 0 && event.data.source === "api") {
                   console.log("Cell value changed:", event.data);
-                  // For now, just log - you can implement PUT API call here
+                  // Here you could implement PUT API call to update the satellite
                 }
               }}
               onFirstDataRendered={() => {
-                if (gridRef.current) {
-                  gridRef.current.api.sizeColumnsToFit();
+                const currentGrid = activeTab === 0 ? myGridRef.current : discoverGridRef.current;
+                if (currentGrid) {
+                  currentGrid.api.sizeColumnsToFit();
                 }
               }}
               pagination={true}
