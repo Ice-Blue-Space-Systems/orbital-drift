@@ -23,12 +23,16 @@ import {
   Typography,
   IconButton,
   Tooltip,
+  Tabs,
+  Tab,
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import DeleteIcon from "@mui/icons-material/Delete";
 import SaveIcon from "@mui/icons-material/Save";
 import CancelIcon from "@mui/icons-material/Cancel";
+import ManageSearchIcon from "@mui/icons-material/ManageSearch";
+import ExploreIcon from "@mui/icons-material/Explore";
 import { 
   DisplayGroundStation, 
   convertApiGroundStationToDisplay, 
@@ -75,6 +79,7 @@ export default function GSPage() {
   const [loading, setLoading] = useState(false);
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [predefinedGroundStations, setPredefinedGroundStations] = useState<DisplayGroundStation[]>([]);
+  const [activeTab, setActiveTab] = useState(0); // 0 = My Ground Stations, 1 = Discover More
   const [newGroundStation, setNewGroundStation] = useState<Partial<DisplayGroundStation>>({
     source: "custom",
     status: "Active",
@@ -82,7 +87,8 @@ export default function GSPage() {
     elevation: 5,
     azimuth: 360,
   });
-  const gridRef = useRef<AgGridReact>(null);
+  const myGridRef = useRef<AgGridReact>(null);
+  const discoverGridRef = useRef<AgGridReact>(null);
 
   // Fetch ground stations data from API on component mount
   useEffect(() => {
@@ -96,11 +102,19 @@ export default function GSPage() {
   // Convert API ground stations to our display format
   const apiGroundStations: DisplayGroundStation[] = mongoGroundStations.map(convertApiGroundStationToDisplay);
 
-  // Merge all ground station sources
+  // Separate my ground stations from discoverable ground stations
+  const myGroundStations = apiGroundStations; // Ground stations from MongoDB API
+  const discoverableGroundStations = predefinedGroundStations.filter(station => 
+    !apiGroundStations.some(apiStation => apiStation.name.toLowerCase() === station.name.toLowerCase())
+  ); // Predefined stations not already in MongoDB
+
+  // Merge all ground station sources for overall stats
   const allGroundStations = mergeGroundStationSources(apiGroundStations, predefinedGroundStations);
   
   // Get statistics
   const stats = getGroundStationStats(allGroundStations);
+  const myStats = getGroundStationStats(myGroundStations);
+  const discoverStats = getGroundStationStats(discoverableGroundStations);
 
   // Add a new custom ground station (save to DB)
   const addCustomGroundStation = async () => {
@@ -145,6 +159,48 @@ export default function GSPage() {
     }
   };
 
+  // Quick-add ground station from predefined to my ground stations
+  const quickAddGroundStation = async (station: DisplayGroundStation) => {
+    try {
+      setLoading(true);
+      const response = await fetch("/api/ground-stations", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: station.name,
+          location: {
+            lat: station.latitude,
+            lon: station.longitude,
+            alt: station.altitude,
+          },
+          country: station.country,
+          city: station.city,
+          status: station.status,
+          frequency: station.frequency,
+          bandType: station.bandType,
+          elevation: station.elevation,
+          azimuth: station.azimuth,
+          operator: station.operator,
+          established: station.established ? new Date(station.established) : undefined,
+          description: `Added from predefined - ${station.description || 'Predefined ground station'}`,
+          source: "predefined",
+        }),
+      });
+
+      if (response.ok) {
+        await dispatch(fetchMongoData()); // Reload from DB
+        // Optionally switch to "My Ground Stations" tab
+        setActiveTab(0);
+      } else {
+        console.error("Failed to add ground station:", response.statusText);
+      }
+    } catch (err) {
+      console.error("Failed to quick-add ground station", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Delete ground station
   const deleteGroundStation = async (id: string) => {
     // Extract the database ID from the display ID
@@ -167,6 +223,10 @@ export default function GSPage() {
     setLoading(true);
     try {
       await dispatch(fetchMongoData()).unwrap();
+      
+      // Also refresh predefined stations
+      const predefinedStations = getPredefinedGroundStations();
+      setPredefinedGroundStations(predefinedStations);
     } catch (error) {
       console.error("Failed to refresh ground stations:", error);
     } finally {
@@ -275,12 +335,30 @@ export default function GSPage() {
     );
   };
 
-  // AG Grid column definitions
-  const columnDefs: ColDef<DisplayGroundStation>[] = [
+  // Quick-Add Cell Renderer for Discover More tab
+  const QuickAddCellRenderer = (params: any) => {
+    return (
+      <Tooltip title="Add to My Ground Stations">
+        <IconButton
+          size="small"
+          onClick={() => quickAddGroundStation(params.data)}
+          disabled={loading}
+          sx={{
+            color: "#00ff41",
+            "&:hover": { backgroundColor: "rgba(0, 255, 65, 0.1)" }
+          }}
+        >
+          <AddIcon fontSize="small" />
+        </IconButton>
+      </Tooltip>
+    );
+  };
+
+  // Base column definitions (shared between both tabs)
+  const getBaseColumnDefs = (): ColDef<DisplayGroundStation>[] => [
     { 
       headerName: "NAME", 
       field: "name", 
-      editable: true,
       filter: "agTextColumnFilter",
       width: 180,
       cellStyle: { color: "#00ff41", fontWeight: "bold" }
@@ -288,7 +366,6 @@ export default function GSPage() {
     { 
       headerName: "SOURCE", 
       field: "source", 
-      editable: false,
       filter: "agSetColumnFilter",
       width: 100,
       cellRenderer: SourceCellRenderer,
@@ -296,7 +373,6 @@ export default function GSPage() {
     { 
       headerName: "STATUS", 
       field: "status", 
-      editable: true,
       filter: "agSetColumnFilter",
       cellEditor: "agSelectCellEditor",
       cellEditorParams: {
@@ -308,7 +384,6 @@ export default function GSPage() {
     { 
       headerName: "COUNTRY", 
       field: "country", 
-      editable: true,
       filter: "agTextColumnFilter",
       width: 140,
       cellRenderer: CountryCellRenderer,
@@ -316,7 +391,6 @@ export default function GSPage() {
     { 
       headerName: "CITY", 
       field: "city", 
-      editable: true,
       filter: "agTextColumnFilter",
       flex: 1,
       cellStyle: { color: "#cccccc" }
@@ -332,7 +406,6 @@ export default function GSPage() {
     { 
       headerName: "ALTITUDE (m)", 
       field: "altitude", 
-      editable: true,
       filter: "agNumberColumnFilter",
       type: "numericColumn",
       flex: 1,
@@ -342,7 +415,6 @@ export default function GSPage() {
     { 
       headerName: "FREQUENCY", 
       field: "frequency", 
-      editable: true,
       filter: "agTextColumnFilter",
       flex: 1,
       cellStyle: { color: "#ff6600" },
@@ -351,7 +423,6 @@ export default function GSPage() {
     { 
       headerName: "BAND", 
       field: "bandType", 
-      editable: true,
       filter: "agSetColumnFilter",
       cellEditor: "agSelectCellEditor",
       cellEditorParams: {
@@ -363,7 +434,6 @@ export default function GSPage() {
     { 
       headerName: "OPERATOR", 
       field: "operator", 
-      editable: true,
       filter: "agTextColumnFilter",
       flex: 1.5,
       cellStyle: { color: "#cc88ff" }
@@ -371,12 +441,19 @@ export default function GSPage() {
     { 
       headerName: "ESTABLISHED", 
       field: "established", 
-      editable: true,
       filter: "agDateColumnFilter",
       flex: 1,
       cellStyle: { color: "#88ccff" },
       valueFormatter: (params) => params.value ? new Date(params.value).toLocaleDateString() : "N/A"
     },
+  ];
+
+  // Column definitions for "My Ground Stations" tab (editable, with delete actions)
+  const myColumnDefs: ColDef<DisplayGroundStation>[] = [
+    ...getBaseColumnDefs().map(col => ({ 
+      ...col, 
+      editable: col.field !== "source" && col.colId !== "coordinates",
+    })),
     { 
       headerName: "ACTIONS", 
       colId: "actions",
@@ -385,6 +462,21 @@ export default function GSPage() {
       filter: false,
       flex: 1,
       cellRenderer: ActionsCellRenderer,
+      pinned: "right"
+    },
+  ];
+
+  // Column definitions for "Discover More" tab (read-only, with add actions)
+  const discoverColumnDefs: ColDef<DisplayGroundStation>[] = [
+    ...getBaseColumnDefs().map(col => ({ ...col, editable: false })),
+    { 
+      headerName: "ADD", 
+      colId: "quickAdd",
+      editable: false,
+      sortable: false,
+      filter: false,
+      width: 60,
+      cellRenderer: QuickAddCellRenderer,
       pinned: "right"
     },
   ];
@@ -495,57 +587,114 @@ export default function GSPage() {
 
       {/* AG Grid Table */}
       <Box className="gs-grid-container">
-        <div 
-          className="ag-theme-alpine-dark matrix-grid" 
-          style={{ 
-            height: '600px',
-            width: '100%'
-          }}
-        >
-          <AgGridReact
-            ref={gridRef}
-            rowData={allGroundStations}
-            columnDefs={columnDefs}
-            defaultColDef={{
-              sortable: true,
-              filter: true,
-              resizable: true,
-              editable: false,
-              minWidth: 100,
+        
+        {/* Tabs */}
+        <Box sx={{ borderBottom: 1, borderColor: 'rgba(0, 255, 65, 0.3)', marginBottom: 2 }}>
+          <Tabs 
+            value={activeTab} 
+            onChange={(_, newValue) => setActiveTab(newValue)}
+            sx={{
+              '& .MuiTabs-indicator': {
+                backgroundColor: '#00ff41',
+                height: '2px',
+              },
+              '& .MuiTab-root': {
+                color: 'rgba(0, 255, 65, 0.7)',
+                fontFamily: "'Courier New', Courier, monospace",
+                fontSize: '0.9rem',
+                fontWeight: 'bold',
+                textTransform: 'uppercase',
+                '&.Mui-selected': {
+                  color: '#00ff41',
+                },
+                '&:hover': {
+                  color: '#00ff41',
+                  backgroundColor: 'rgba(0, 255, 65, 0.1)',
+                },
+              },
             }}
-            animateRows={true}
-            rowSelection="single"
-            enableCellTextSelection={true}
-            suppressRowDeselection={true}
-            rowHeight={40}
-            headerHeight={45}
-            onGridReady={(params) => {
-              params.api.sizeColumnsToFit();
-              console.log("Grid ready, row count:", params.api.getDisplayedRowCount());
-            }}
-            onCellValueChanged={(event: CellValueChangedEvent) => {
-              // Handle cell edits for custom ground stations only
-              // Note: For now we'll just log the change. In a full implementation,
-              // you'd want to call a PUT endpoint to update the ground station in the database
-              if (event.data.source === "api") {
-                console.log("Ground station edit:", event.data);
-                // TODO: Implement PUT /api/ground-stations/:id endpoint call
+          >
+            <Tab 
+              icon={<ManageSearchIcon />} 
+              iconPosition="start"
+              label={`My Ground Stations (${myGroundStations.length})`} 
+            />
+            <Tab 
+              icon={<ExploreIcon />} 
+              iconPosition="start"
+              label={`Discover More (${discoverableGroundStations.length})`} 
+            />
+          </Tabs>
+        </Box>
+
+        {/* Grid Content */}
+        {(activeTab === 0 ? myGroundStations : discoverableGroundStations).length === 0 ? (
+          <Box sx={{ padding: 4, textAlign: 'center', color: '#888' }}>
+            <Typography variant="h6">
+              {activeTab === 0 
+                ? (status === "loading" ? "Loading my ground stations..." : "No managed ground stations found") 
+                : "Loading discoverable ground stations..."
               }
-            }}
-            onFirstDataRendered={() => {
-              if (gridRef.current) {
-                gridRef.current.api.sizeColumnsToFit();
+            </Typography>
+            <Typography variant="body2" sx={{ mt: 1 }}>
+              {activeTab === 0 
+                ? `MongoDB Count: ${mongoGroundStations.length}` 
+                : `Predefined Available: ${predefinedGroundStations.length}`
               }
+            </Typography>
+          </Box>
+        ) : (
+          <div 
+            className="ag-theme-alpine-dark matrix-grid" 
+            style={{ 
+              height: '600px',
+              width: '100%'
             }}
-            pagination={true}
-            paginationPageSize={25}
-            suppressMenuHide={true}
-            enableRangeSelection={true}
-            suppressCellFocus={false}
-            getRowId={(params) => params.data.id}
-            loading={loading || status === "loading"}
-          />
-        </div>
+          >
+            <AgGridReact
+              ref={activeTab === 0 ? myGridRef : discoverGridRef}
+              rowData={activeTab === 0 ? myGroundStations : discoverableGroundStations}
+              columnDefs={activeTab === 0 ? myColumnDefs : discoverColumnDefs}
+              defaultColDef={{
+                sortable: true,
+                filter: true,
+                resizable: true,
+                editable: false,
+                minWidth: 100,
+              }}
+              animateRows={true}
+              rowSelection="single"
+              enableCellTextSelection={true}
+              suppressRowDeselection={true}
+              rowHeight={40}
+              headerHeight={45}
+              onGridReady={(params) => {
+                params.api.sizeColumnsToFit();
+                console.log("Grid ready, row count:", params.api.getDisplayedRowCount());
+              }}
+              onCellValueChanged={(event: CellValueChangedEvent) => {
+                // Handle cell edits for managed ground stations only (My Ground Stations tab)
+                if (activeTab === 0 && event.data.source === "api") {
+                  console.log("Ground station edit:", event.data);
+                  // TODO: Implement PUT /api/ground-stations/:id endpoint call
+                }
+              }}
+              onFirstDataRendered={() => {
+                const currentGrid = activeTab === 0 ? myGridRef.current : discoverGridRef.current;
+                if (currentGrid) {
+                  currentGrid.api.sizeColumnsToFit();
+                }
+              }}
+              pagination={true}
+              paginationPageSize={25}
+              suppressMenuHide={true}
+              enableRangeSelection={true}
+              suppressCellFocus={false}
+              getRowId={(params) => params.data.id}
+              loading={loading || status === "loading"}
+            />
+          </div>
+        )}
       </Box>
 
       {/* Add Ground Station Dialog */}
