@@ -116,12 +116,11 @@ const GlobeTools: React.FC<GlobeToolsProps> = ({
           <GroundStationPopover />
 
           {/* Contact Windows Popover */}
-          {selectedSatelliteId && selectedGroundStationId && (
-            <ContactWindowsPopover
-              satelliteId={selectedSatelliteId}
-              groundStationId={selectedGroundStationId}
-            />
-          )}
+          <ContactWindowsPopover
+            satelliteId={selectedSatelliteId || ''}
+            groundStationId={selectedGroundStationId || ''}
+            showPlaceholder={!selectedSatelliteId || !selectedGroundStationId}
+          />
         </div>
 
         <div className="globe-tools-divider"></div>
