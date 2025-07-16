@@ -10,7 +10,6 @@ import SatellitePopover from "./SatellitePopover"; // Import the SatellitePopove
 import GroundStationPopover from "./GroundStationPopover"; // Import the GroundStationPopover component
 import ContactWindowsPopover from "./ContactWindowsPopover"; // Import the ContactWindowsPopover component
 import ConsolePopover from "./ConsolePopover"; // Import the ConsolePopover component
-import CesiumOptionsPopover from "./CesiumOptionsPopover"; // Import the CesiumOptionsPopover component
 import { ContactWindow } from "../types";
 
 interface GlobeToolsProps {
@@ -133,9 +132,6 @@ const GlobeTools: React.FC<GlobeToolsProps> = ({
             debugInfo={debugInfo}
             nextContactWindow={nextContactWindow}
           />
-
-          {/* Cesium Options Popover */}
-          <CesiumOptionsPopover />
         </div>
       </div>
     </div>
