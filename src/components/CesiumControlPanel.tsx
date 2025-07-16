@@ -15,6 +15,7 @@ import {
   Fullscreen as FullscreenIcon,
   Tune as TuneIcon,
   Memory as MemoryIcon,
+  Palette as PaletteIcon,
 } from "@mui/icons-material";
 import { setCesiumClockMultiplier } from "../store/cesiumClockSlice";
 import { setShowCesiumOptions } from "../store/mongoSlice";
@@ -23,6 +24,47 @@ import { RootState } from "../store";
 interface CesiumControlPanelProps {
   position?: "top-left" | "top-right" | "bottom-left" | "bottom-right";
 }
+
+// Theme definitions
+interface Theme {
+  name: string;
+  primary: string;
+  primaryRGB: string;
+  secondary: string;
+  accent: string;
+  background: string;
+  backgroundGradient: string;
+  borderGradient: string;
+  textShadow: string;
+  glowColor: string;
+}
+
+const themes: Record<string, Theme> = {
+  matrix: {
+    name: "Matrix",
+    primary: "#00ff41",
+    primaryRGB: "0, 255, 65",
+    secondary: "#00aaff",
+    accent: "#ffaa00",
+    background: "linear-gradient(135deg, rgba(10, 10, 10, 0.95) 0%, rgba(20, 20, 20, 0.90) 100%)",
+    backgroundGradient: "linear-gradient(135deg, rgba(0, 255, 65, 0.5), rgba(0, 170, 255, 0.3), rgba(255, 170, 0, 0.3))",
+    borderGradient: "rgba(0, 255, 65, 0.3)",
+    textShadow: "0 0 10px rgba(0, 255, 65, 0.5)",
+    glowColor: "rgba(0, 255, 65, 0.3)"
+  },
+  iceBlue: {
+    name: "Ice Blue",
+    primary: "#00d4ff",
+    primaryRGB: "0, 212, 255",
+    secondary: "#ffffff",
+    accent: "#b3e5fc",
+    background: "linear-gradient(135deg, rgba(10, 20, 30, 0.95) 0%, rgba(20, 30, 40, 0.90) 100%)",
+    backgroundGradient: "linear-gradient(135deg, rgba(0, 212, 255, 0.5), rgba(255, 255, 255, 0.3), rgba(179, 229, 252, 0.3))",
+    borderGradient: "rgba(0, 212, 255, 0.3)",
+    textShadow: "0 0 10px rgba(0, 212, 255, 0.5)",
+    glowColor: "rgba(0, 212, 255, 0.3)"
+  }
+};
 
 const CesiumControlPanel: React.FC<CesiumControlPanelProps> = ({
   position = "top-right"
@@ -37,9 +79,12 @@ const CesiumControlPanel: React.FC<CesiumControlPanelProps> = ({
   const [speedMode, setSpeedMode] = useState<'dial' | 'slider'>('dial');
   const [currentTime, setCurrentTime] = useState(new Date());
   const [memoryUsage, setMemoryUsage] = useState(0);
+  const [currentTheme, setCurrentTheme] = useState<keyof typeof themes>('matrix');
   
   const dialRef = useRef<HTMLDivElement>(null);
   const centerRef = useRef({ x: 0, y: 0 });
+
+  const theme = themes[currentTheme];
 
   const minSpeed = 0.1;
   const maxSpeed = 1000;
@@ -183,13 +228,13 @@ const CesiumControlPanel: React.FC<CesiumControlPanelProps> = ({
       {/* Main Control Panel */}
       <Box
         sx={{
-          background: 'linear-gradient(135deg, rgba(10, 10, 10, 0.95) 0%, rgba(20, 20, 20, 0.90) 100%)',
+          background: theme.background,
           backdropFilter: 'blur(20px)',
-          border: '1px solid rgba(0, 255, 65, 0.3)',
+          border: `1px solid ${theme.borderGradient}`,
           borderRadius: '20px',
           boxShadow: isExpanded 
-            ? '0 25px 80px rgba(0, 255, 65, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.1), 0 0 40px rgba(0, 255, 65, 0.2)'
-            : '0 16px 50px rgba(0, 255, 65, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.1)',
+            ? `0 25px 80px ${theme.glowColor}, inset 0 1px 0 rgba(255, 255, 255, 0.1), 0 0 40px ${theme.glowColor}`
+            : `0 16px 50px ${theme.glowColor}, inset 0 1px 0 rgba(255, 255, 255, 0.1)`,
           padding: 2,
           minWidth: isExpanded ? '300px' : '280px',
           fontFamily: "'Courier New', Courier, monospace",
@@ -204,7 +249,7 @@ const CesiumControlPanel: React.FC<CesiumControlPanelProps> = ({
             bottom: 0,
             borderRadius: '20px',
             padding: '1px',
-            background: 'linear-gradient(135deg, rgba(0, 255, 65, 0.5), rgba(0, 170, 255, 0.3), rgba(255, 170, 0, 0.3))',
+            background: theme.backgroundGradient,
             mask: 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
             maskComposite: 'exclude',
             opacity: isExpanded ? 1 : 0,
@@ -226,14 +271,14 @@ const CesiumControlPanel: React.FC<CesiumControlPanelProps> = ({
           padding: '8px 4px'
         }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <TuneIcon sx={{ color: '#00ff41', fontSize: 20 }} />
+            <TuneIcon sx={{ color: theme.primary, fontSize: 20 }} />
             <Typography 
               variant="body2" 
               sx={{ 
-                color: '#00ff41', 
+                color: theme.primary, 
                 fontFamily: 'inherit',
                 fontWeight: 'bold',
-                textShadow: '0 0 10px rgba(0, 255, 65, 0.5)'
+                textShadow: theme.textShadow
               }}
             >
               CONTROL
@@ -241,18 +286,36 @@ const CesiumControlPanel: React.FC<CesiumControlPanelProps> = ({
           </Box>
           
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            {/* Theme Switcher */}
+            <Tooltip title="Switch Theme" arrow>
+              <IconButton
+                onClick={() => setCurrentTheme(currentTheme === 'matrix' ? 'iceBlue' : 'matrix')}
+                sx={{
+                  color: theme.primary,
+                  padding: '4px',
+                  transition: 'all 0.2s ease',
+                  '&:hover': {
+                    backgroundColor: `rgba(${theme.primaryRGB}, 0.1)`,
+                    transform: 'scale(1.1)',
+                  },
+                }}
+              >
+                <PaletteIcon sx={{ fontSize: 16 }} />
+              </IconButton>
+            </Tooltip>
+
             {/* Speed Display */}
             <Chip 
               label={formatSpeed(currentMultiplier)}
               size="small"
               sx={{
-                backgroundColor: currentMultiplier !== 1 ? 'rgba(255, 170, 0, 0.3)' : 'rgba(0, 255, 65, 0.2)',
-                color: currentMultiplier !== 1 ? '#ffaa00' : '#00ff41',
+                backgroundColor: currentMultiplier !== 1 ? `rgba(255, 170, 0, 0.3)` : `rgba(${theme.primaryRGB}, 0.2)`,
+                color: currentMultiplier !== 1 ? '#ffaa00' : theme.primary,
                 fontFamily: 'inherit',
                 fontWeight: 'bold',
                 animation: currentMultiplier !== 1 ? 'pulse 2s infinite' : 'none',
-                border: currentMultiplier !== 1 ? '1px solid rgba(255, 170, 0, 0.5)' : '1px solid rgba(0, 255, 65, 0.3)',
-                boxShadow: currentMultiplier !== 1 ? '0 0 15px rgba(255, 170, 0, 0.4)' : '0 0 10px rgba(0, 255, 65, 0.3)',
+                border: currentMultiplier !== 1 ? '1px solid rgba(255, 170, 0, 0.5)' : `1px solid rgba(${theme.primaryRGB}, 0.3)`,
+                boxShadow: currentMultiplier !== 1 ? '0 0 15px rgba(255, 170, 0, 0.4)' : `0 0 10px rgba(${theme.primaryRGB}, 0.3)`,
                 '@keyframes pulse': {
                   '0%, 100%': { 
                     opacity: 1,
@@ -270,11 +333,11 @@ const CesiumControlPanel: React.FC<CesiumControlPanelProps> = ({
             <IconButton
               onClick={() => setIsExpanded(!isExpanded)}
               sx={{
-                color: '#00ff41',
+                color: theme.primary,
                 padding: '4px',
                 transition: 'all 0.2s ease',
                 '&:hover': {
-                  backgroundColor: 'rgba(0, 255, 65, 0.1)',
+                  backgroundColor: `rgba(${theme.primaryRGB}, 0.1)`,
                   transform: 'scale(1.1)',
                 },
               }}
@@ -299,10 +362,10 @@ const CesiumControlPanel: React.FC<CesiumControlPanelProps> = ({
               padding: 2,
               backgroundColor: 'rgba(0, 0, 0, 0.3)',
               borderRadius: '12px',
-              border: '1px solid rgba(0, 255, 65, 0.2)'
+              border: `1px solid rgba(${theme.primaryRGB}, 0.2)`
             }}>
               <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 2 }}>
-                <Typography variant="caption" sx={{ color: '#00ff41', fontFamily: 'inherit', fontWeight: 'bold' }}>
+                <Typography variant="caption" sx={{ color: theme.primary, fontFamily: 'inherit', fontWeight: 'bold' }}>
                   SIMULATION SPEED
                 </Typography>
                 <Box sx={{ display: 'flex', gap: 0.5 }}>
@@ -310,7 +373,7 @@ const CesiumControlPanel: React.FC<CesiumControlPanelProps> = ({
                     size="small"
                     onClick={() => setSpeedMode('dial')}
                     sx={{
-                      color: speedMode === 'dial' ? '#00ff41' : '#666',
+                      color: speedMode === 'dial' ? theme.primary : '#666',
                       padding: '2px',
                     }}
                   >
@@ -320,7 +383,7 @@ const CesiumControlPanel: React.FC<CesiumControlPanelProps> = ({
                     size="small"
                     onClick={() => setSpeedMode('slider')}
                     sx={{
-                      color: speedMode === 'slider' ? '#00ff41' : '#666',
+                      color: speedMode === 'slider' ? theme.primary : '#666',
                       padding: '2px',
                     }}
                   >
@@ -341,12 +404,12 @@ const CesiumControlPanel: React.FC<CesiumControlPanelProps> = ({
                       position: 'relative',
                       cursor: isDragging ? 'grabbing' : 'grab',
                       borderRadius: '50%',
-                      background: 'conic-gradient(from 225deg, transparent 0deg, rgba(0, 255, 65, 0.3) 270deg, transparent 270deg)',
+                      background: `conic-gradient(from 225deg, transparent 0deg, rgba(${theme.primaryRGB}, 0.3) 270deg, transparent 270deg)`,
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      border: '2px solid rgba(0, 255, 65, 0.5)',
-                      boxShadow: '0 0 20px rgba(0, 255, 65, 0.3), inset 0 0 20px rgba(0, 255, 65, 0.1)',
+                      border: `2px solid rgba(${theme.primaryRGB}, 0.5)`,
+                      boxShadow: `0 0 20px rgba(${theme.primaryRGB}, 0.3), inset 0 0 20px rgba(${theme.primaryRGB}, 0.1)`,
                     }}
                   >
                     {/* Dial Handle */}
@@ -355,12 +418,12 @@ const CesiumControlPanel: React.FC<CesiumControlPanelProps> = ({
                         position: 'absolute',
                         width: 6,
                         height: 35,
-                        backgroundColor: '#00ff41',
+                        backgroundColor: theme.primary,
                         borderRadius: '3px',
                         top: 10,
                         transformOrigin: '3px 40px',
                         transform: `rotate(${rotation - 135}deg)`,
-                        boxShadow: '0 0 10px rgba(0, 255, 65, 0.8)',
+                        boxShadow: `0 0 10px rgba(${theme.primaryRGB}, 0.8)`,
                         transition: isDragging ? 'none' : 'transform 0.2s ease',
                       }}
                     />
@@ -370,9 +433,9 @@ const CesiumControlPanel: React.FC<CesiumControlPanelProps> = ({
                       sx={{
                         width: 12,
                         height: 12,
-                        backgroundColor: '#00ff41',
+                        backgroundColor: theme.primary,
                         borderRadius: '50%',
-                        boxShadow: '0 0 15px rgba(0, 255, 65, 0.8)',
+                        boxShadow: `0 0 15px rgba(${theme.primaryRGB}, 0.8)`,
                       }}
                     />
                   </Box>
@@ -386,16 +449,16 @@ const CesiumControlPanel: React.FC<CesiumControlPanelProps> = ({
                     min={0}
                     max={100}
                     sx={{
-                      color: '#00ff41',
+                      color: theme.primary,
                       '& .MuiSlider-track': {
-                        background: 'linear-gradient(90deg, rgba(0, 255, 65, 0.3) 0%, rgba(0, 255, 65, 0.8) 100%)',
+                        background: `linear-gradient(90deg, rgba(${theme.primaryRGB}, 0.3) 0%, rgba(${theme.primaryRGB}, 0.8) 100%)`,
                         border: 'none',
                       },
                       '& .MuiSlider-thumb': {
-                        backgroundColor: '#00ff41',
-                        boxShadow: '0 0 15px rgba(0, 255, 65, 0.8)',
+                        backgroundColor: theme.primary,
+                        boxShadow: `0 0 15px rgba(${theme.primaryRGB}, 0.8)`,
                         '&:hover': {
-                          boxShadow: '0 0 20px rgba(0, 255, 65, 1)',
+                          boxShadow: `0 0 20px rgba(${theme.primaryRGB}, 1)`,
                         },
                       },
                       '& .MuiSlider-rail': {
@@ -416,14 +479,14 @@ const CesiumControlPanel: React.FC<CesiumControlPanelProps> = ({
                     clickable
                     onClick={() => dispatch(setCesiumClockMultiplier(speed))}
                     sx={{
-                      backgroundColor: currentMultiplier === speed ? 'rgba(0, 255, 65, 0.3)' : 'rgba(255, 255, 255, 0.1)',
-                      color: currentMultiplier === speed ? '#00ff41' : '#aaa',
+                      backgroundColor: currentMultiplier === speed ? `rgba(${theme.primaryRGB}, 0.3)` : 'rgba(255, 255, 255, 0.1)',
+                      color: currentMultiplier === speed ? theme.primary : '#aaa',
                       fontFamily: 'inherit',
                       fontSize: '0.6rem',
                       height: '20px',
                       '&:hover': {
-                        backgroundColor: 'rgba(0, 255, 65, 0.2)',
-                        color: '#00ff41',
+                        backgroundColor: `rgba(${theme.primaryRGB}, 0.2)`,
+                        color: theme.primary,
                       },
                     }}
                   />
@@ -436,10 +499,10 @@ const CesiumControlPanel: React.FC<CesiumControlPanelProps> = ({
               padding: 2,
               backgroundColor: 'rgba(0, 0, 0, 0.3)',
               borderRadius: '12px',
-              border: '1px solid rgba(0, 255, 65, 0.2)'
+              border: `1px solid rgba(${theme.primaryRGB}, 0.2)`
             }}>
               <Typography variant="caption" sx={{ 
-                color: '#00ff41', 
+                color: theme.primary, 
                 fontFamily: 'inherit', 
                 fontWeight: 'bold',
                 display: 'block',
@@ -456,10 +519,10 @@ const CesiumControlPanel: React.FC<CesiumControlPanelProps> = ({
                     onChange={(e) => dispatch(setShowCesiumOptions(e.target.checked))}
                     sx={{
                       '& .MuiSwitch-switchBase.Mui-checked': {
-                        color: '#00ff41',
+                        color: theme.primary,
                       },
                       '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
-                        backgroundColor: '#00ff41',
+                        backgroundColor: theme.primary,
                       },
                       '& .MuiSwitch-track': {
                         backgroundColor: 'rgba(255, 255, 255, 0.2)',
@@ -469,7 +532,7 @@ const CesiumControlPanel: React.FC<CesiumControlPanelProps> = ({
                 }
                 label={
                   <Typography variant="body2" sx={{ 
-                    color: showCesiumOptions ? '#00ff41' : '#666', 
+                    color: showCesiumOptions ? theme.primary : '#666', 
                     fontFamily: 'inherit',
                     fontSize: '0.8rem'
                   }}>
@@ -506,15 +569,15 @@ const CesiumControlPanel: React.FC<CesiumControlPanelProps> = ({
                         justifyContent: 'center',
                         padding: 1,
                         borderRadius: '8px',
-                        backgroundColor: showCesiumOptions ? 'rgba(0, 255, 65, 0.15)' : 'rgba(100, 100, 100, 0.1)',
-                        border: `1px solid ${showCesiumOptions ? 'rgba(0, 255, 65, 0.3)' : 'rgba(100, 100, 100, 0.2)'}`,
-                        color: showCesiumOptions ? '#00ff41' : '#666',
+                        backgroundColor: showCesiumOptions ? `rgba(${theme.primaryRGB}, 0.15)` : 'rgba(100, 100, 100, 0.1)',
+                        border: `1px solid ${showCesiumOptions ? `rgba(${theme.primaryRGB}, 0.3)` : 'rgba(100, 100, 100, 0.2)'}`,
+                        color: showCesiumOptions ? theme.primary : '#666',
                         fontSize: '14px',
                         cursor: 'pointer',
                         transition: 'all 0.2s ease',
                         '&:hover': showCesiumOptions ? {
-                          backgroundColor: 'rgba(0, 255, 65, 0.25)',
-                          boxShadow: '0 0 10px rgba(0, 255, 65, 0.4)',
+                          backgroundColor: `rgba(${theme.primaryRGB}, 0.25)`,
+                          boxShadow: `0 0 10px rgba(${theme.primaryRGB}, 0.4)`,
                           transform: 'scale(1.05)',
                         } : {},
                       }}
@@ -531,11 +594,11 @@ const CesiumControlPanel: React.FC<CesiumControlPanelProps> = ({
               padding: 2,
               backgroundColor: 'rgba(0, 0, 0, 0.3)',
               borderRadius: '12px',
-              border: '1px solid rgba(0, 255, 65, 0.2)',
+              border: `1px solid rgba(${theme.primaryRGB}, 0.2)`,
               marginTop: 2
             }}>
               <Typography variant="caption" sx={{ 
-                color: '#00ff41', 
+                color: theme.primary, 
                 fontFamily: 'inherit', 
                 fontWeight: 'bold',
                 display: 'block',
@@ -547,12 +610,12 @@ const CesiumControlPanel: React.FC<CesiumControlPanelProps> = ({
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5, fontSize: '0.7rem' }}>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', color: '#aaa', fontFamily: 'inherit' }}>
                   <span>FPS:</span>
-                  <span style={{ color: '#00ff41' }}>60 FPS</span>
+                  <span style={{ color: theme.primary }}>60 FPS</span>
                 </Box>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', color: '#aaa', fontFamily: 'inherit' }}>
                   <span>Memory:</span>
                   <span style={{ 
-                    color: memoryUsage > 100 ? '#ff6600' : '#00aaff',
+                    color: memoryUsage > 100 ? '#ff6600' : theme.secondary,
                     fontWeight: memoryUsage > 100 ? 'bold' : 'normal'
                   }}>
                     ~{memoryUsage || Math.round(50000000 / 1024 / 1024)}MB
@@ -560,12 +623,12 @@ const CesiumControlPanel: React.FC<CesiumControlPanelProps> = ({
                 </Box>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', color: '#aaa', fontFamily: 'inherit' }}>
                   <span>Time:</span>
-                  <span style={{ color: '#ffaa00' }}>{currentTime.toLocaleTimeString()}</span>
+                  <span style={{ color: theme.accent }}>{currentTime.toLocaleTimeString()}</span>
                 </Box>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', color: '#aaa', fontFamily: 'inherit' }}>
                   <span>Speed:</span>
                   <span style={{ 
-                    color: currentMultiplier === 1 ? '#00ff41' : currentMultiplier > 1 ? '#ffaa00' : '#ff6600',
+                    color: currentMultiplier === 1 ? theme.primary : currentMultiplier > 1 ? theme.accent : '#ff6600',
                     fontWeight: 'bold'
                   }}>
                     {formatSpeed(currentMultiplier)}
@@ -580,12 +643,12 @@ const CesiumControlPanel: React.FC<CesiumControlPanelProps> = ({
                 alignItems: 'center', 
                 gap: 1,
                 padding: '4px 8px',
-                backgroundColor: memoryUsage > 100 ? 'rgba(255, 102, 0, 0.1)' : 'rgba(0, 255, 65, 0.1)',
+                backgroundColor: memoryUsage > 100 ? 'rgba(255, 102, 0, 0.1)' : `rgba(${theme.primaryRGB}, 0.1)`,
                 borderRadius: '6px',
                 transition: 'background-color 0.3s ease'
               }}>
                 <MemoryIcon sx={{ 
-                  color: memoryUsage > 100 ? '#ff6600' : '#00ff41', 
+                  color: memoryUsage > 100 ? '#ff6600' : theme.primary, 
                   fontSize: 12,
                   animation: memoryUsage > 100 ? 'warning-pulse 1.5s infinite' : 'none',
                   '@keyframes warning-pulse': {
@@ -594,7 +657,7 @@ const CesiumControlPanel: React.FC<CesiumControlPanelProps> = ({
                   },
                 }} />
                 <Typography variant="caption" sx={{ 
-                  color: memoryUsage > 100 ? '#ff6600' : '#00ff41', 
+                  color: memoryUsage > 100 ? '#ff6600' : theme.primary, 
                   fontFamily: 'inherit',
                   fontSize: '0.65rem'
                 }}>
@@ -624,19 +687,19 @@ const CesiumControlPanel: React.FC<CesiumControlPanelProps> = ({
                   size="small"
                   onClick={() => dispatch(setCesiumClockMultiplier(speed))}
                   sx={{
-                    color: currentMultiplier === speed ? '#00ff41' : '#666',
-                    backgroundColor: currentMultiplier === speed ? 'rgba(0, 255, 65, 0.2)' : 'rgba(255, 255, 255, 0.05)',
-                    border: '1px solid rgba(0, 255, 65, 0.3)',
+                    color: currentMultiplier === speed ? theme.primary : '#666',
+                    backgroundColor: currentMultiplier === speed ? `rgba(${theme.primaryRGB}, 0.2)` : 'rgba(255, 255, 255, 0.05)',
+                    border: `1px solid rgba(${theme.primaryRGB}, 0.3)`,
                     borderRadius: '6px',
                     fontSize: '0.6rem',
                     fontFamily: 'inherit',
                     minWidth: '28px',
                     height: '28px',
                     '&:hover': {
-                      backgroundColor: 'rgba(0, 255, 65, 0.1)',
-                      color: '#00ff41',
+                      backgroundColor: `rgba(${theme.primaryRGB}, 0.1)`,
+                      color: theme.primary,
                       transform: 'scale(1.05)',
-                      boxShadow: '0 0 8px rgba(0, 255, 65, 0.4)',
+                      boxShadow: `0 0 8px rgba(${theme.primaryRGB}, 0.4)`,
                     },
                     transition: 'all 0.2s ease',
                   }}
