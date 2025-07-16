@@ -22,7 +22,7 @@ import GlobePage from "./GlobePage";
 import TimelinePage from "./TimelinePage";
 import SatsPage from "./SatsPage";
 import GSPage from "./GSPage";
-import SimulationSpeedDial from "./components/SimulationSpeedDial";
+import CesiumControlPanel from "./components/CesiumControlPanel";
 import { RootState } from "./store";
 import { setLiveMode } from "./store/mongoSlice";
 import "./App.css";
@@ -379,13 +379,8 @@ function AppContent() {
       {/* Global Navigation Bar */}
       <GlobalAppBar currentTheme={currentTheme} setTheme={setCurrentTheme} />
       
-      {/* Global Simulation Speed Dial - appears on all pages */}
-      <SimulationSpeedDial 
-        size={90}
-        position="top-right"
-        minSpeed={0.1}
-        maxSpeed={1000}
-      />
+      {/* Global Cesium Control Panel - appears on all pages */}
+      <CesiumControlPanel position="top-right" />
       
       <Routes>
         <Route path="/globe" element={<GlobePage />} />
