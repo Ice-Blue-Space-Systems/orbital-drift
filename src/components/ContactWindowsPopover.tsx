@@ -15,6 +15,7 @@ import SignalCellularAltIcon from "@mui/icons-material/SignalCellularAlt";
 import ContactWindows from "./ContactWindows";
 import { useSelector } from "react-redux";
 import { selectContactWindows, selectContactWindowsStatus } from "../store/contactWindowsSlice";
+import { useTheme } from "../contexts/ThemeContext";
 
 interface ContactWindowsPopoverProps {
   satelliteId: string;
@@ -34,6 +35,7 @@ const ContactWindowsPopover: React.FC<ContactWindowsPopoverProps> = ({
   const [anchorEl, setAnchorEl] = useState<HTMLButtonElement | null>(null);
   const contactWindows = useSelector(selectContactWindows);
   const status = useSelector(selectContactWindowsStatus);
+  const { theme } = useTheme();
   
   const open = Boolean(anchorEl);
   
@@ -57,13 +59,13 @@ const ContactWindowsPopover: React.FC<ContactWindowsPopoverProps> = ({
 
   const getStatusColor = () => {
     if (showPlaceholder) return "#666"; // Placeholder state - gray
-    if (activeWindow) return "#00ff41"; // Active contact - bright green
-    if (upcomingWindows > 0) return "#ffaa00"; // Upcoming contacts - orange
+    if (activeWindow) return theme.primary; // Active contact - theme primary
+    if (upcomingWindows > 0) return theme.accent; // Upcoming contacts - theme accent
     return "#666"; // No contacts - gray
   };
 
   const getStatusIcon = () => {
-    if (activeWindow && !showPlaceholder) return <SignalCellularAltIcon sx={{ color: "#00ff41" }} />;
+    if (activeWindow && !showPlaceholder) return <SignalCellularAltIcon sx={{ color: theme.primary }} />;
     return <EventIcon />;
   };
 

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import { ToastContainer } from "react-toastify";
 import {
   BrowserRouter as Router,
@@ -7,12 +7,11 @@ import {
   Navigate,
   useNavigate,
 } from "react-router-dom";
-import { AppBar, Toolbar, IconButton, Tooltip } from "@mui/material";
+import { AppBar, Toolbar, IconButton, Tooltip, Box } from "@mui/material";
 import PublicIcon from "@mui/icons-material/Public";
 import TimelineIcon from "@mui/icons-material/Timeline";
 import SatelliteIcon from "@mui/icons-material/SatelliteAlt";
 import RadarIcon from "@mui/icons-material/Radar";
-import Brightness4Icon from "@mui/icons-material/Brightness4";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faUserAstronaut } from "@fortawesome/free-solid-svg-icons";
 import { faBolt } from "@fortawesome/free-solid-svg-icons"; // Import the slanted lightning bolt icon
@@ -28,32 +27,19 @@ import { setLiveMode } from "./store/mongoSlice";
 import "./App.css";
 import { selectCesiumClockUtc } from "./store/selectors/cesiumClockSelectors";
 import { useGlobalClock } from "./hooks/useGlobalClock";
+import { ThemeProvider, useTheme } from "./contexts/ThemeContext";
 
 /** A simple top nav with the four route icons. */
-function GlobalAppBar({
-  currentTheme,
-  setTheme,
-}: {
-  currentTheme: string;
-  setTheme: (theme: string) => void;
-}) {
+function GlobalAppBar() {
   const dispatch = useDispatch();
   const liveMode = useSelector((state: RootState) => state.mongo.liveMode); // Get liveMode from Redux
   const utc = useSelector(selectCesiumClockUtc);
   const cesiumMultiplier = useSelector((state: RootState) => state.cesiumClock.multiplier);
   const navigate = useNavigate();
   const currentPath = window.location.pathname;
+  const { theme } = useTheme();
 
-  const [themePopoverOpen, setThemePopoverOpen] = React.useState(false);
   const [accountPopoverOpen, setAccountPopoverOpen] = React.useState(false);
-
-  const handleThemePopoverOpen = () => {
-    setThemePopoverOpen(true);
-  };
-
-  const handleThemePopoverClose = () => {
-    setThemePopoverOpen(false);
-  };
 
   const handleAccountPopoverOpen = () => {
     setAccountPopoverOpen(true);
@@ -67,8 +53,9 @@ function GlobalAppBar({
     <AppBar
       position="static"
       style={{
-        backgroundColor: "rgba(13, 13, 13, 0.9)", // Transparent console-style background
-        boxShadow: "none",
+        backgroundColor: theme.navBackground,
+        boxShadow: `0 2px 10px ${theme.glowColor}`,
+        borderBottom: `1px solid ${theme.borderGradient}`,
       }}
     >
       <Toolbar
@@ -84,13 +71,13 @@ function GlobalAppBar({
           <IconButton
             onClick={() => navigate("/globe")}
             style={{
-              color: currentPath === "/globe" ? "#00ff00" : "#888888",
+              color: currentPath === "/globe" ? theme.primary : theme.textSecondary,
               transition: "color 0.2s ease-in-out",
             }}
-            onMouseEnter={(e) => (e.currentTarget.style.color = "#00ff00")}
+            onMouseEnter={(e) => (e.currentTarget.style.color = theme.primary)}
             onMouseLeave={(e) =>
               (e.currentTarget.style.color =
-                currentPath === "/globe" ? "#00ff00" : "#888888")
+                currentPath === "/globe" ? theme.primary : theme.textSecondary)
             }
           >
             <PublicIcon style={{ fontSize: "24px" }} />
@@ -102,13 +89,13 @@ function GlobalAppBar({
           <IconButton
             onClick={() => navigate("/timeline")}
             style={{
-              color: currentPath === "/timeline" ? "#00ff00" : "#888888",
+              color: currentPath === "/timeline" ? theme.primary : theme.textSecondary,
               transition: "color 0.2s ease-in-out",
             }}
-            onMouseEnter={(e) => (e.currentTarget.style.color = "#00ff00")}
+            onMouseEnter={(e) => (e.currentTarget.style.color = theme.primary)}
             onMouseLeave={(e) =>
               (e.currentTarget.style.color =
-                currentPath === "/timeline" ? "#00ff00" : "#888888")
+                currentPath === "/timeline" ? theme.primary : theme.textSecondary)
             }
           >
             <TimelineIcon style={{ fontSize: "24px" }} />
@@ -120,13 +107,13 @@ function GlobalAppBar({
           <IconButton
             onClick={() => navigate("/sats")}
             style={{
-              color: currentPath === "/sats" ? "#00ff00" : "#888888",
+              color: currentPath === "/sats" ? theme.primary : theme.textSecondary,
               transition: "color 0.2s ease-in-out",
             }}
-            onMouseEnter={(e) => (e.currentTarget.style.color = "#00ff00")}
+            onMouseEnter={(e) => (e.currentTarget.style.color = theme.primary)}
             onMouseLeave={(e) =>
               (e.currentTarget.style.color =
-                currentPath === "/sats" ? "#00ff00" : "#888888")
+                currentPath === "/sats" ? theme.primary : theme.textSecondary)
             }
           >
             <SatelliteIcon style={{ fontSize: "24px" }} />
@@ -138,13 +125,13 @@ function GlobalAppBar({
           <IconButton
             onClick={() => navigate("/gs")}
             style={{
-              color: currentPath === "/gs" ? "#00ff00" : "#888888",
+              color: currentPath === "/gs" ? theme.primary : theme.textSecondary,
               transition: "color 0.2s ease-in-out",
             }}
-            onMouseEnter={(e) => (e.currentTarget.style.color = "#00ff00")}
+            onMouseEnter={(e) => (e.currentTarget.style.color = theme.primary)}
             onMouseLeave={(e) =>
               (e.currentTarget.style.color =
-                currentPath === "/gs" ? "#00ff00" : "#888888")
+                currentPath === "/gs" ? theme.primary : theme.textSecondary)
             }
           >
             <RadarIcon style={{ fontSize: "24px" }} />
@@ -197,8 +184,6 @@ function GlobalAppBar({
         {/* Theme Switcher */}
         <div
           style={{ position: "relative", marginLeft: "auto" }}
-          onMouseEnter={handleThemePopoverOpen}
-          onMouseLeave={handleThemePopoverClose}
         >
           <Tooltip title="Switch Theme" arrow>
             <IconButton
@@ -209,12 +194,13 @@ function GlobalAppBar({
               onMouseEnter={(e) => (e.currentTarget.style.color = "#00ff00")}
               onMouseLeave={(e) => (e.currentTarget.style.color = "#888888")}
             >
-              <Brightness4Icon style={{ fontSize: "24px" }} />
+              {/* <Brightness4Icon style={{ fontSize: "24px" }} /> */}
+              <span>🎨</span>
             </IconButton>
           </Tooltip>
 
-          {/* Theme Switcher Popover */}
-          {themePopoverOpen && (
+          {/* Theme popover disabled - using global theme from CesiumControlPanel */}
+          {false && (
             <div
               style={{
                 position: "absolute",
@@ -256,7 +242,7 @@ function GlobalAppBar({
                     gap: "8px",
                     cursor: "pointer",
                   }}
-                  onClick={() => setTheme("console")}
+                  // onClick={() => setTheme("console")}
                 >
                   <div
                     style={{
@@ -264,10 +250,7 @@ function GlobalAppBar({
                       height: "16px",
                       backgroundColor: "#00ff00", // Green swatch
                       borderRadius: "50%",
-                      border:
-                        currentTheme === "console"
-                          ? "2px solid #00ff00"
-                          : "2px solid transparent",
+                      // border: currentTheme === "console" ? "2px solid #00ff00" : "2px solid transparent",
                     }}
                   ></div>
                   <span style={{ fontSize: "14px" }}>Console Theme</span>
@@ -281,7 +264,7 @@ function GlobalAppBar({
                     gap: "8px",
                     cursor: "pointer",
                   }}
-                  onClick={() => setTheme("light")}
+                  // onClick={() => setTheme("light")}
                 >
                   <div
                     style={{
@@ -289,10 +272,7 @@ function GlobalAppBar({
                       height: "16px",
                       backgroundColor: "#ffffff", // White swatch
                       borderRadius: "50%",
-                      border:
-                        currentTheme === "light"
-                          ? "2px solid #00ff00"
-                          : "2px solid transparent",
+                      // border: currentTheme === "light" ? "2px solid #00ff00" : "2px solid transparent",
                     }}
                   ></div>
                   <span style={{ fontSize: "14px" }}>Light Theme</span>
@@ -369,15 +349,19 @@ function GlobalAppBar({
 
 // Component inside Router that can use useLocation
 function AppContent() {
-  const [currentTheme, setCurrentTheme] = useState<string>("console");
+  const { theme } = useTheme();
 
   // Global clock fallback for when no Cesium viewer is active
   useGlobalClock();
 
   return (
-    <>
+    <Box sx={{
+      minHeight: '100vh',
+      background: theme.appBackground,
+      transition: 'background 0.5s ease',
+    }}>
       {/* Global Navigation Bar */}
-      <GlobalAppBar currentTheme={currentTheme} setTheme={setCurrentTheme} />
+      <GlobalAppBar />
       
       {/* Global Cesium Control Panel - appears on all pages */}
       <CesiumControlPanel position="top-right" />
@@ -390,18 +374,20 @@ function AppContent() {
         <Route path="/sats" element={<SatsPage />} />
         <Route path="/gs" element={<GSPage />} />
       </Routes>
-    </>
+    </Box>
   );
 }
 
 const App: React.FC = () => {
   return (
-    <div>
-      <ToastContainer />
-      <Router>
-        <AppContent />
-      </Router>
-    </div>
+    <ThemeProvider>
+      <div>
+        <ToastContainer />
+        <Router>
+          <AppContent />
+        </Router>
+      </div>
+    </ThemeProvider>
   );
 };
 

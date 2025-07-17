@@ -20,51 +20,11 @@ import {
 import { setCesiumClockMultiplier } from "../store/cesiumClockSlice";
 import { setShowCesiumOptions } from "../store/mongoSlice";
 import { RootState } from "../store";
+import { useTheme } from "../contexts/ThemeContext";
 
 interface CesiumControlPanelProps {
   position?: "top-left" | "top-right" | "bottom-left" | "bottom-right";
 }
-
-// Theme definitions
-interface Theme {
-  name: string;
-  primary: string;
-  primaryRGB: string;
-  secondary: string;
-  accent: string;
-  background: string;
-  backgroundGradient: string;
-  borderGradient: string;
-  textShadow: string;
-  glowColor: string;
-}
-
-const themes: Record<string, Theme> = {
-  matrix: {
-    name: "Matrix",
-    primary: "#00ff41",
-    primaryRGB: "0, 255, 65",
-    secondary: "#00aaff",
-    accent: "#ffaa00",
-    background: "linear-gradient(135deg, rgba(10, 10, 10, 0.95) 0%, rgba(20, 20, 20, 0.90) 100%)",
-    backgroundGradient: "linear-gradient(135deg, rgba(0, 255, 65, 0.5), rgba(0, 170, 255, 0.3), rgba(255, 170, 0, 0.3))",
-    borderGradient: "rgba(0, 255, 65, 0.3)",
-    textShadow: "0 0 10px rgba(0, 255, 65, 0.5)",
-    glowColor: "rgba(0, 255, 65, 0.3)"
-  },
-  iceBlue: {
-    name: "Ice Blue",
-    primary: "#00d4ff",
-    primaryRGB: "0, 212, 255",
-    secondary: "#ffffff",
-    accent: "#b3e5fc",
-    background: "linear-gradient(135deg, rgba(10, 20, 30, 0.95) 0%, rgba(20, 30, 40, 0.90) 100%)",
-    backgroundGradient: "linear-gradient(135deg, rgba(0, 212, 255, 0.5), rgba(255, 255, 255, 0.3), rgba(179, 229, 252, 0.3))",
-    borderGradient: "rgba(0, 212, 255, 0.3)",
-    textShadow: "0 0 10px rgba(0, 212, 255, 0.5)",
-    glowColor: "rgba(0, 212, 255, 0.3)"
-  }
-};
 
 const CesiumControlPanel: React.FC<CesiumControlPanelProps> = ({
   position = "top-right"
@@ -72,6 +32,7 @@ const CesiumControlPanel: React.FC<CesiumControlPanelProps> = ({
   const dispatch = useDispatch();
   const currentMultiplier = useSelector((state: RootState) => state.cesiumClock.multiplier);
   const showCesiumOptions = useSelector((state: RootState) => state.mongo.showCesiumOptions);
+  const { theme, toggleTheme } = useTheme();
   
   const [isExpanded, setIsExpanded] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
@@ -79,12 +40,9 @@ const CesiumControlPanel: React.FC<CesiumControlPanelProps> = ({
   const [speedMode, setSpeedMode] = useState<'dial' | 'slider'>('dial');
   const [currentTime, setCurrentTime] = useState(new Date());
   const [memoryUsage, setMemoryUsage] = useState(0);
-  const [currentTheme, setCurrentTheme] = useState<keyof typeof themes>('matrix');
   
   const dialRef = useRef<HTMLDivElement>(null);
   const centerRef = useRef({ x: 0, y: 0 });
-
-  const theme = themes[currentTheme];
 
   const minSpeed = 0.1;
   const maxSpeed = 1000;
@@ -289,7 +247,7 @@ const CesiumControlPanel: React.FC<CesiumControlPanelProps> = ({
             {/* Theme Switcher */}
             <Tooltip title="Switch Theme" arrow>
               <IconButton
-                onClick={() => setCurrentTheme(currentTheme === 'matrix' ? 'iceBlue' : 'matrix')}
+                onClick={toggleTheme}
                 sx={{
                   color: theme.primary,
                   padding: '4px',
