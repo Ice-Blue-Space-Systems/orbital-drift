@@ -14,6 +14,7 @@ import { useTheme } from "../contexts/ThemeContext";
 const GroundStationPopover: React.FC = () => {
 
   const dispatch = useDispatch<AppDispatch>();
+  const { theme } = useTheme();
   const [openPopover, setOpenPopover] = useState<boolean>(false);
   const [groundStationFilter, setGroundStationFilter] = useState<string>("");
   const closeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -165,16 +166,16 @@ const GroundStationPopover: React.FC = () => {
             position: "absolute",
             top: "46px",
             left: "0",
-            backgroundColor: "rgba(13, 13, 13, 0.95)",
-            border: "1px solid rgba(0, 255, 65, 0.4)",
-            color: "#00ff00",
+            backgroundColor: theme.backgroundDark,
+            border: `1px solid rgba(${theme.primaryRGB}, 0.4)`,
+            color: theme.primary,
             fontFamily: "Courier New, Courier, monospace",
             borderRadius: "8px",
             padding: "12px",
             width: "420px",
             maxHeight: "70vh", // Limit to 70% of viewport height
             zIndex: 1001,
-            boxShadow: "0 8px 32px rgba(0, 255, 65, 0.15)",
+            boxShadow: `0 8px 32px rgba(${theme.primaryRGB}, 0.15)`,
             backdropFilter: "blur(10px)",
             display: "flex",
             flexDirection: "column",
@@ -191,8 +192,8 @@ const GroundStationPopover: React.FC = () => {
               height: "0",
               borderLeft: "9px solid transparent",
               borderRight: "9px solid transparent",
-              borderBottom: "9px solid rgba(0, 255, 65, 0.4)",
-              filter: "drop-shadow(0 -2px 4px rgba(0, 255, 65, 0.2))",
+              borderBottom: `9px solid rgba(${theme.primaryRGB}, 0.4)`,
+              filter: `drop-shadow(0 -2px 4px rgba(${theme.primaryRGB}, 0.2))`,
             }}
           ></div>
 
@@ -228,23 +229,23 @@ const GroundStationPopover: React.FC = () => {
               sx={{
                 marginBottom: "12px",
                 "& .MuiOutlinedInput-root": {
-                  backgroundColor: "rgba(30, 30, 30, 0.8)",
-                  color: "#00ff41",
+                  backgroundColor: theme.inputBackground,
+                  color: theme.primary,
                   fontFamily: "'Courier New', Courier, monospace",
                   fontSize: "0.9rem",
                   "& fieldset": {
-                    borderColor: "rgba(0, 255, 65, 0.3)",
+                    borderColor: `rgba(${theme.primaryRGB}, 0.3)`,
                   },
                   "&:hover fieldset": {
-                    borderColor: "rgba(0, 255, 65, 0.5)",
+                    borderColor: `rgba(${theme.primaryRGB}, 0.5)`,
                   },
                   "&.Mui-focused fieldset": {
-                    borderColor: "#00ff41",
-                    boxShadow: "0 0 8px rgba(0, 255, 65, 0.3)",
+                    borderColor: theme.primary,
+                    boxShadow: `0 0 8px rgba(${theme.primaryRGB}, 0.3)`,
                   },
                 },
                 "& .MuiInputBase-input::placeholder": {
-                  color: "rgba(0, 255, 65, 0.6)",
+                  color: `rgba(${theme.primaryRGB}, 0.6)`,
                   opacity: 1,
                 },
               }}
@@ -265,11 +266,11 @@ const GroundStationPopover: React.FC = () => {
             {/* My Ground Stations Section */}
             {filteredManagedGS.length > 0 && (
               <Box sx={{ marginBottom: "16px" }}>
-                <Box sx={{ display: "flex", alignItems: "center", marginBottom: "8px", position: "sticky", top: 0, backgroundColor: "rgba(13, 13, 13, 0.95)", paddingY: "4px", zIndex: 1 }}>
+                <Box sx={{ display: "flex", alignItems: "center", marginBottom: "8px", position: "sticky", top: 0, backgroundColor: theme.backgroundDark, paddingY: "4px", zIndex: 1 }}>
                   <Typography 
                     variant="caption" 
                     sx={{ 
-                      color: "#00ff41", 
+                      color: theme.primary, 
                       fontWeight: "bold", 
                       letterSpacing: "1px",
                       textTransform: "uppercase",
@@ -290,15 +291,15 @@ const GroundStationPopover: React.FC = () => {
                         setOpenPopover(false);
                       }}
                       sx={{
-                        color: "#00ff41",
-                        backgroundColor: "rgba(20, 20, 20, 0.6)",
-                        border: "1px solid rgba(0, 255, 65, 0.2)",
+                        color: theme.primary,
+                        backgroundColor: theme.backgroundSecondary,
+                        border: `1px solid rgba(${theme.primaryRGB}, 0.2)`,
                         borderRadius: "6px",
                         padding: "8px 12px",
                         transition: "all 0.2s ease-in-out",
                         "&:hover": {
-                          backgroundColor: "rgba(0, 255, 65, 0.1)",
-                          borderColor: "rgba(0, 255, 65, 0.4)",
+                          backgroundColor: `rgba(${theme.primaryRGB}, 0.1)`,
+                          borderColor: `rgba(${theme.primaryRGB}, 0.4)`,
                           transform: "translateX(2px)",
                         },
                       }}
@@ -311,7 +312,7 @@ const GroundStationPopover: React.FC = () => {
                           <Typography 
                             variant="body2" 
                             sx={{ 
-                              color: "#00ff41", 
+                              color: theme.primary, 
                               fontWeight: "bold",
                               fontFamily: "'Courier New', Courier, monospace",
                               fontSize: "0.85rem",
@@ -325,7 +326,7 @@ const GroundStationPopover: React.FC = () => {
                           <Typography 
                             variant="caption" 
                             sx={{ 
-                              color: "rgba(0, 255, 65, 0.7)", 
+                              color: `rgba(${theme.primaryRGB}, 0.7)`, 
                               fontFamily: "'Courier New', Courier, monospace",
                               fontSize: "0.7rem",
                               display: "block",
@@ -339,8 +340,8 @@ const GroundStationPopover: React.FC = () => {
                             label="MANAGED" 
                             size="small" 
                             sx={{ 
-                              backgroundColor: "rgba(0, 255, 65, 0.2)",
-                              color: "#00ff41",
+                              backgroundColor: `rgba(${theme.primaryRGB}, 0.2)`,
+                              color: theme.primary,
                               fontSize: "0.6rem",
                               fontFamily: "'Courier New', Courier, monospace",
                               fontWeight: "bold",
@@ -358,11 +359,11 @@ const GroundStationPopover: React.FC = () => {
             {/* Discoverable Ground Stations Section */}
             {filteredDiscoverableGS.length > 0 && (
               <Box>
-                <Box sx={{ display: "flex", alignItems: "center", marginBottom: "8px", position: "sticky", top: 0, backgroundColor: "rgba(13, 13, 13, 0.95)", paddingY: "4px", zIndex: 1 }}>
+                <Box sx={{ display: "flex", alignItems: "center", marginBottom: "8px", position: "sticky", top: 0, backgroundColor: theme.backgroundDark, paddingY: "4px", zIndex: 1 }}>
                   <Typography 
                     variant="caption" 
                     sx={{ 
-                      color: "rgba(0, 255, 65, 0.8)", 
+                      color: `rgba(${theme.primaryRGB}, 0.8)`, 
                       fontWeight: "bold", 
                       letterSpacing: "1px",
                       textTransform: "uppercase",
@@ -385,16 +386,16 @@ const GroundStationPopover: React.FC = () => {
                         setOpenPopover(false);
                       }}
                       sx={{
-                        color: "rgba(0, 255, 65, 0.8)",
-                        backgroundColor: "rgba(15, 15, 15, 0.4)",
-                        border: "1px solid rgba(0, 255, 65, 0.15)",
+                        color: `rgba(${theme.primaryRGB}, 0.8)`,
+                        backgroundColor: theme.backgroundDark,
+                        border: `1px solid rgba(${theme.primaryRGB}, 0.15)`,
                         borderRadius: "6px",
                         padding: "8px 12px",
                         transition: "all 0.2s ease-in-out",
                         "&:hover": {
-                          backgroundColor: "rgba(0, 255, 65, 0.08)",
-                          borderColor: "rgba(0, 255, 65, 0.3)",
-                          color: "#00ff41",
+                          backgroundColor: `rgba(${theme.primaryRGB}, 0.08)`,
+                          borderColor: `rgba(${theme.primaryRGB}, 0.3)`,
+                          color: theme.primary,
                         },
                       }}
                     >
@@ -419,7 +420,7 @@ const GroundStationPopover: React.FC = () => {
                           <Typography 
                             variant="caption" 
                             sx={{ 
-                              color: "rgba(0, 255, 65, 0.6)", 
+                              color: `rgba(${theme.primaryRGB}, 0.6)`, 
                               fontFamily: "'Courier New', Courier, monospace",
                               fontSize: "0.7rem",
                               display: "block",
@@ -433,8 +434,8 @@ const GroundStationPopover: React.FC = () => {
                             label="MAJOR"
                             size="small" 
                             sx={{ 
-                              backgroundColor: "rgba(0, 255, 65, 0.1)",
-                              color: "rgba(0, 255, 65, 0.8)",
+                              backgroundColor: `rgba(${theme.primaryRGB}, 0.1)`,
+                              color: `rgba(${theme.primaryRGB}, 0.8)`,
                               fontSize: "0.6rem",
                               fontFamily: "'Courier New', Courier, monospace",
                               fontWeight: "bold",
@@ -448,12 +449,12 @@ const GroundStationPopover: React.FC = () => {
                                 handleQuickAdd(gs);
                               }}
                               sx={{
-                                color: "rgba(0, 255, 65, 0.6)",
+                                color: `rgba(${theme.primaryRGB}, 0.6)`,
                                 padding: "2px",
                                 fontSize: "0.8rem",
                                 "&:hover": {
-                                  color: "#00ff41",
-                                  backgroundColor: "rgba(0, 255, 65, 0.1)",
+                                  color: theme.primary,
+                                  backgroundColor: `rgba(${theme.primaryRGB}, 0.1)`,
                                 },
                               }}
                             >
@@ -470,7 +471,7 @@ const GroundStationPopover: React.FC = () => {
 
             {/* No Results Message */}
             {filteredGroundStations.length === 0 && groundStationFilter && (
-              <Box sx={{ textAlign: "center", padding: "20px", color: "rgba(0, 255, 65, 0.6)" }}>
+              <Box sx={{ textAlign: "center", padding: "20px", color: `rgba(${theme.primaryRGB}, 0.6)` }}>
                 <Typography 
                   variant="body2" 
                   sx={{ 

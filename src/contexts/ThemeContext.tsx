@@ -5,6 +5,7 @@ export interface Theme {
   primary: string;
   primaryRGB: string;
   secondary: string;
+  secondaryRGB: string;
   accent: string;
   warning: string;
   success: string;
@@ -32,6 +33,7 @@ export const themes: Record<string, Theme> = {
     primary: "#00ff41",
     primaryRGB: "0, 255, 65",
     secondary: "#00aaff",
+    secondaryRGB: "0, 170, 255",
     accent: "#ffaa00",
     warning: "#ff6600",
     success: "#00ff41",
@@ -57,6 +59,7 @@ export const themes: Record<string, Theme> = {
     primary: "#00d4ff",
     primaryRGB: "0, 212, 255",
     secondary: "#ffffff",
+    secondaryRGB: "255, 255, 255",
     accent: "#b3e5fc",
     warning: "#ff9900",
     success: "#00ff88",

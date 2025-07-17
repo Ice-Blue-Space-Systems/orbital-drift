@@ -40,6 +40,7 @@ import {
   mergeGroundStationSources,
   getGroundStationStats 
 } from "./utils/groundStationDataUtils";
+import { useTheme } from "./contexts/ThemeContext";
 import "./GSPage.css"; // We'll create this for matrix styling
 
 // Country code mapping for flags
@@ -73,6 +74,7 @@ const countryCodeMap: Record<string, string> = {
 ModuleRegistry.registerModules([AllCommunityModule]);
 
 export default function GSPage() {
+  const theme = useTheme();
   const dispatch = useDispatch<AppDispatch>();
   // Get ground stations from Redux store
   const { groundStations: mongoGroundStations, status } = useSelector((state: RootState) => state.mongo);
@@ -98,6 +100,20 @@ export default function GSPage() {
     const predefinedStations = getPredefinedGroundStations();
     setPredefinedGroundStations(predefinedStations);
   }, [dispatch]);
+
+  // Update CSS custom properties when theme changes
+  useEffect(() => {
+    const rootElement = document.documentElement;
+    rootElement.style.setProperty('--theme-primary', theme.theme.primary);
+    rootElement.style.setProperty('--theme-secondary', theme.theme.secondary);
+    rootElement.style.setProperty('--theme-background-gradient', theme.theme.backgroundGradient);
+    rootElement.style.setProperty('--theme-background-dark', theme.theme.backgroundDark);
+    rootElement.style.setProperty('--theme-background-secondary', theme.theme.buttonBackground);
+    rootElement.style.setProperty('--theme-border-gradient', theme.theme.borderGradient);
+    rootElement.style.setProperty('--theme-glow-color', theme.theme.glowColor);
+    rootElement.style.setProperty('--theme-button-background', theme.theme.buttonBackground);
+    rootElement.style.setProperty('--theme-secondary-glow', `rgba(${theme.theme.primaryRGB}, 0.5)`);
+  }, [theme]);
 
   // Convert API ground stations to our display format
   const apiGroundStations: DisplayGroundStation[] = mongoGroundStations.map(convertApiGroundStationToDisplay);

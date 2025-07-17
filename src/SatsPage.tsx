@@ -40,6 +40,7 @@ import {
   mergeSatelliteSources,
   getSatelliteStats 
 } from "./utils/satelliteDataUtils";
+import { useTheme } from "./contexts/ThemeContext";
 import "./SatsPage.css"; // We'll create this for matrix styling
 
 // Country code mapping for flags
@@ -73,6 +74,7 @@ const countryCodeMap: Record<string, string> = {
 ModuleRegistry.registerModules([AllCommunityModule]);
 
 export default function SatsPage() {
+  const theme = useTheme();
   const dispatch = useDispatch<AppDispatch>();
   // Get satellites from Redux store
   const { satellites: mongoSatellites, status } = useSelector((state: RootState) => state.mongo);
@@ -100,6 +102,20 @@ export default function SatsPage() {
     
     fetchCelestrakData();
   }, [dispatch]);
+
+  // Update CSS custom properties when theme changes
+  useEffect(() => {
+    const rootElement = document.documentElement;
+    rootElement.style.setProperty('--theme-primary', theme.theme.primary);
+    rootElement.style.setProperty('--theme-secondary', theme.theme.secondary);
+    rootElement.style.setProperty('--theme-background-gradient', theme.theme.backgroundGradient);
+    rootElement.style.setProperty('--theme-background-dark', theme.theme.backgroundDark);
+    rootElement.style.setProperty('--theme-background-secondary', theme.theme.buttonBackground);
+    rootElement.style.setProperty('--theme-border-gradient', theme.theme.borderGradient);
+    rootElement.style.setProperty('--theme-glow-color', theme.theme.glowColor);
+    rootElement.style.setProperty('--theme-button-background', theme.theme.buttonBackground);
+    rootElement.style.setProperty('--theme-secondary-glow', `rgba(${theme.theme.primaryRGB}, 0.5)`);
+  }, [theme]);
 
   // Convert API satellites to our display format
   const apiSatellites: DisplaySatellite[] = mongoSatellites.map(convertApiSatelliteToDisplay);

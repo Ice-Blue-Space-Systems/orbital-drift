@@ -130,7 +130,7 @@ const SatellitePopover: React.FC = () => {
             width: "420px",
             maxHeight: "70vh", // Limit to 70% of viewport height
             zIndex: 1001,
-            boxShadow: "0 8px 32px rgba(0, 255, 65, 0.15)",
+            boxShadow: `0 8px 32px rgba(${theme.primaryRGB}, 0.15)`,
             backdropFilter: "blur(10px)",
             display: "flex",
             flexDirection: "column",
@@ -147,8 +147,8 @@ const SatellitePopover: React.FC = () => {
               height: "0",
               borderLeft: "9px solid transparent",
               borderRight: "9px solid transparent",
-              borderBottom: "9px solid rgba(0, 255, 65, 0.4)",
-              filter: "drop-shadow(0 -2px 4px rgba(0, 255, 65, 0.2))",
+              borderBottom: `9px solid rgba(${theme.primaryRGB}, 0.4)`,
+              filter: `drop-shadow(0 -2px 4px rgba(${theme.primaryRGB}, 0.2))`,
             }}
           ></div>
 
@@ -206,23 +206,23 @@ const SatellitePopover: React.FC = () => {
               sx={{
                 marginBottom: "12px",
                 "& .MuiOutlinedInput-root": {
-                  backgroundColor: "rgba(30, 30, 30, 0.8)",
-                  color: "#00ff41",
+                  backgroundColor: theme.inputBackground,
+                  color: theme.primary,
                   fontFamily: "'Courier New', Courier, monospace",
                   fontSize: "0.9rem",
                   "& fieldset": {
-                    borderColor: "rgba(0, 255, 65, 0.3)",
+                    borderColor: `rgba(${theme.primaryRGB}, 0.3)`,
                   },
                   "&:hover fieldset": {
-                    borderColor: "rgba(0, 255, 65, 0.5)",
+                    borderColor: `rgba(${theme.primaryRGB}, 0.5)`,
                   },
                   "&.Mui-focused fieldset": {
-                    borderColor: "#00ff41",
-                    boxShadow: "0 0 8px rgba(0, 255, 65, 0.3)",
+                    borderColor: theme.primary,
+                    boxShadow: `0 0 8px rgba(${theme.primaryRGB}, 0.3)`,
                   },
                 },
                 "& .MuiInputBase-input::placeholder": {
-                  color: "rgba(0, 255, 65, 0.6)",
+                  color: `rgba(${theme.primaryRGB}, 0.6)`,
                   opacity: 1,
                 },
               }}
@@ -243,11 +243,11 @@ const SatellitePopover: React.FC = () => {
             {/* My Satellites Section */}
             {filteredManagedSats.length > 0 && (
               <Box sx={{ marginBottom: "16px" }}>
-                <Box sx={{ display: "flex", alignItems: "center", marginBottom: "8px", position: "sticky", top: 0, backgroundColor: "rgba(13, 13, 13, 0.95)", paddingY: "4px", zIndex: 1 }}>
+                <Box sx={{ display: "flex", alignItems: "center", marginBottom: "8px", position: "sticky", top: 0, backgroundColor: theme.backgroundDark, paddingY: "4px", zIndex: 1 }}>
                   <Typography 
                     variant="caption" 
                     sx={{ 
-                      color: "#00ff41", 
+                      color: theme.primary, 
                       fontWeight: "bold", 
                       letterSpacing: "1px",
                       textTransform: "uppercase",
@@ -261,8 +261,8 @@ const SatellitePopover: React.FC = () => {
                     size="small" 
                     sx={{ 
                       marginLeft: "8px", 
-                      backgroundColor: "rgba(0, 255, 65, 0.2)", 
-                      color: "#00ff41",
+                      backgroundColor: `rgba(${theme.primaryRGB}, 0.2)`, 
+                      color: theme.primary,
                       fontFamily: "'Courier New', Courier, monospace",
                       height: "20px"
                     }} 
@@ -278,14 +278,14 @@ const SatellitePopover: React.FC = () => {
                             setOpenPopover(false);
                           }}
                           sx={{
-                            color: "#00ff41",
-                            backgroundColor: selectedSatId === sat._id ? "rgba(0, 255, 65, 0.15)" : "transparent",
+                            color: theme.primary,
+                            backgroundColor: selectedSatId === sat._id ? `rgba(${theme.primaryRGB}, 0.15)` : "transparent",
                             transition: "all 0.2s ease-in-out",
                             borderRadius: "6px",
                             marginBottom: "2px",
                             padding: "8px 12px",
                             "&:hover": {
-                              backgroundColor: "rgba(0, 255, 65, 0.1)",
+                              backgroundColor: `rgba(${theme.primaryRGB}, 0.1)`,
                               transform: "translateX(2px)"
                             }
                           }}
@@ -304,8 +304,8 @@ const SatellitePopover: React.FC = () => {
                             label="MANAGED" 
                             size="small" 
                             sx={{ 
-                              backgroundColor: "rgba(0, 255, 65, 0.3)", 
-                              color: "#000",
+                              backgroundColor: `rgba(${theme.primaryRGB}, 0.3)`, 
+                              color: theme.backgroundDark,
                               fontFamily: "'Courier New', Courier, monospace",
                               fontSize: "0.6rem",
                               height: "18px",
@@ -323,22 +323,22 @@ const SatellitePopover: React.FC = () => {
             {/* Divider between sections */}
             {filteredManagedSats.length > 0 && filteredDiscoverableSats.length > 0 && (
               <Box sx={{ display: "flex", alignItems: "center", margin: "16px 0", gap: "12px" }}>
-                <Box sx={{ flex: 1, height: "1px", background: "linear-gradient(to right, transparent, rgba(0, 255, 65, 0.3), transparent)" }} />
-                <Typography variant="caption" sx={{ color: "rgba(0, 255, 65, 0.6)", fontFamily: "'Courier New', Courier, monospace", fontSize: "0.7rem" }}>
+                <Box sx={{ flex: 1, height: "1px", background: `linear-gradient(to right, transparent, rgba(${theme.primaryRGB}, 0.3), transparent)` }} />
+                <Typography variant="caption" sx={{ color: `rgba(${theme.primaryRGB}, 0.6)`, fontFamily: "'Courier New', Courier, monospace", fontSize: "0.7rem" }}>
                   DISCOVER
                 </Typography>
-                <Box sx={{ flex: 1, height: "1px", background: "linear-gradient(to left, transparent, rgba(0, 255, 65, 0.3), transparent)" }} />
+                <Box sx={{ flex: 1, height: "1px", background: `linear-gradient(to left, transparent, rgba(${theme.primaryRGB}, 0.3), transparent)` }} />
               </Box>
             )}
 
             {/* Discover Satellites Section */}
             {filteredDiscoverableSats.length > 0 && (
               <Box>
-                <Box sx={{ display: "flex", alignItems: "center", marginBottom: "8px", position: "sticky", top: 0, backgroundColor: "rgba(13, 13, 13, 0.95)", paddingY: "4px", zIndex: 1 }}>
+                <Box sx={{ display: "flex", alignItems: "center", marginBottom: "8px", position: "sticky", top: 0, backgroundColor: theme.backgroundDark, paddingY: "4px", zIndex: 1 }}>
                   <Typography 
                     variant="caption" 
                     sx={{ 
-                      color: "#00aaff", 
+                      color: theme.secondary, 
                       fontWeight: "bold", 
                       letterSpacing: "1px",
                       textTransform: "uppercase",
@@ -352,8 +352,8 @@ const SatellitePopover: React.FC = () => {
                     size="small" 
                     sx={{ 
                       marginLeft: "8px", 
-                      backgroundColor: "rgba(0, 170, 255, 0.2)", 
-                      color: "#00aaff",
+                      backgroundColor: `rgba(${theme.secondaryRGB}, 0.2)`, 
+                      color: theme.secondary,
                       fontFamily: "'Courier New', Courier, monospace",
                       height: "20px"
                     }} 
@@ -371,7 +371,7 @@ const SatellitePopover: React.FC = () => {
                             marginBottom: "2px",
                             padding: "8px 12px",
                             "&:hover": {
-                              backgroundColor: "rgba(0, 170, 255, 0.1)",
+                              backgroundColor: `rgba(${theme.secondaryRGB}, 0.1)`,
                               transform: "translateX(2px)"
                             }
                           }}
@@ -414,12 +414,12 @@ const SatellitePopover: React.FC = () => {
                                       handleQuickAdd(sat);
                                     }}
                                     sx={{
-                                      color: "#00aaff",
+                                      color: theme.secondary,
                                       padding: "4px",
                                       width: "24px",
                                       height: "24px",
                                       "&:hover": {
-                                        backgroundColor: "rgba(0, 170, 255, 0.2)",
+                                        backgroundColor: `rgba(${theme.secondaryRGB}, 0.2)`,
                                         transform: "scale(1.1)"
                                       }
                                     }}

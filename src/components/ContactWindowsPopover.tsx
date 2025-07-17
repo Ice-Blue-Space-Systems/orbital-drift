@@ -144,11 +144,11 @@ const ContactWindowsPopover: React.FC<ContactWindowsPopoverProps> = ({
           sx: {
             width: '520px',
             maxHeight: '600px',
-            backgroundColor: 'rgba(10, 10, 10, 0.95)',
+            backgroundColor: theme.backgroundDark,
             backdropFilter: 'blur(10px)',
-            border: '1px solid #00ff41',
+            border: `1px solid ${theme.primary}`,
             borderRadius: '12px',
-            boxShadow: '0 8px 32px rgba(0, 255, 65, 0.2)',
+            boxShadow: `0 8px 32px rgba(${theme.primaryRGB}, 0.2)`,
             fontFamily: "'Courier New', Courier, monospace",
           }
         }}
@@ -158,7 +158,7 @@ const ContactWindowsPopover: React.FC<ContactWindowsPopoverProps> = ({
           sx={{ 
             backgroundColor: 'transparent',
             padding: 0,
-            color: '#00ff41'
+            color: theme.primary
           }}
         >
           {showPlaceholder ? (
@@ -193,14 +193,14 @@ const ContactWindowsPopover: React.FC<ContactWindowsPopoverProps> = ({
               <Box sx={{ 
                 mt: 2, 
                 padding: 2, 
-                backgroundColor: 'rgba(0, 255, 65, 0.05)',
-                border: '1px solid rgba(0, 255, 65, 0.2)',
+                backgroundColor: `rgba(${theme.primaryRGB}, 0.05)`,
+                border: `1px solid rgba(${theme.primaryRGB}, 0.2)`,
                 borderRadius: '8px',
                 width: '100%',
                 maxWidth: '300px'
               }}>
                 <Typography variant="caption" sx={{ 
-                  color: '#00ff41', 
+                  color: theme.primary, 
                   fontFamily: 'inherit',
                   display: 'block',
                   textAlign: 'center'
@@ -216,14 +216,14 @@ const ContactWindowsPopover: React.FC<ContactWindowsPopoverProps> = ({
               {/* Header */}
               <Box sx={{ 
                 padding: 2, 
-                borderBottom: '1px solid rgba(0, 255, 65, 0.3)',
-                background: 'linear-gradient(135deg, rgba(0, 255, 65, 0.1) 0%, rgba(0, 255, 65, 0.05) 100%)'
+                borderBottom: `1px solid rgba(${theme.primaryRGB}, 0.3)`,
+                background: `linear-gradient(135deg, rgba(${theme.primaryRGB}, 0.1) 0%, rgba(${theme.primaryRGB}, 0.05) 100%)`
               }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
                   <Typography 
                     variant="h6" 
                     sx={{ 
-                      color: '#00ff41', 
+                      color: theme.primary, 
                       fontFamily: 'inherit',
                       fontWeight: 'bold',
                       display: 'flex',
@@ -240,8 +240,8 @@ const ContactWindowsPopover: React.FC<ContactWindowsPopoverProps> = ({
                         label="LIVE" 
                         size="small"
                         sx={{
-                          backgroundColor: '#00ff41',
-                          color: '#000',
+                          backgroundColor: theme.success,
+                          color: theme.backgroundDark,
                           fontWeight: 'bold',
                           animation: 'pulse 2s infinite',
                         }}
@@ -252,8 +252,8 @@ const ContactWindowsPopover: React.FC<ContactWindowsPopoverProps> = ({
                         label="LOADING" 
                         size="small"
                         sx={{
-                          backgroundColor: '#ffaa00',
-                          color: '#000',
+                          backgroundColor: theme.warning,
+                          color: theme.backgroundDark,
                           fontWeight: 'bold',
                         }}
                       />
@@ -274,25 +274,25 @@ const ContactWindowsPopover: React.FC<ContactWindowsPopoverProps> = ({
               {/* Status Bar */}
               <Box sx={{ 
                 padding: 1.5, 
-                borderBottom: '1px solid rgba(0, 255, 65, 0.2)',
-                backgroundColor: 'rgba(0, 0, 0, 0.3)'
+                borderBottom: `1px solid rgba(${theme.primaryRGB}, 0.2)`,
+                backgroundColor: theme.backgroundSecondary
               }}>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <Box sx={{ display: 'flex', gap: 2 }}>
                     <Box>
-                      <Typography variant="caption" sx={{ color: '#666', fontFamily: 'inherit' }}>
+                      <Typography variant="caption" sx={{ color: theme.textSecondary, fontFamily: 'inherit' }}>
                         UPCOMING
                       </Typography>
-                      <Typography variant="h6" sx={{ color: '#00ff41', fontFamily: 'inherit', lineHeight: 1 }}>
+                      <Typography variant="h6" sx={{ color: theme.primary, fontFamily: 'inherit', lineHeight: 1 }}>
                         {upcomingWindows}
                       </Typography>
                     </Box>
-                    <Divider orientation="vertical" flexItem sx={{ borderColor: '#333' }} />
+                    <Divider orientation="vertical" flexItem sx={{ borderColor: theme.textSecondary }} />
                     <Box>
-                      <Typography variant="caption" sx={{ color: '#666', fontFamily: 'inherit' }}>
+                      <Typography variant="caption" sx={{ color: theme.textSecondary, fontFamily: 'inherit' }}>
                         TOTAL TODAY
                       </Typography>
-                      <Typography variant="h6" sx={{ color: '#00ff41', fontFamily: 'inherit', lineHeight: 1 }}>
+                      <Typography variant="h6" sx={{ color: theme.primary, fontFamily: 'inherit', lineHeight: 1 }}>
                         {contactWindows.filter((w: any) => {
                           const windowDate = new Date(w.scheduledAOS).toDateString();
                           const today = new Date().toDateString();
@@ -300,13 +300,13 @@ const ContactWindowsPopover: React.FC<ContactWindowsPopoverProps> = ({
                         }).length}
                       </Typography>
                     </Box>
-                    <Divider orientation="vertical" flexItem sx={{ borderColor: '#333' }} />
+                    <Divider orientation="vertical" flexItem sx={{ borderColor: theme.textSecondary }} />
                     <Box>
-                      <Typography variant="caption" sx={{ color: '#666', fontFamily: 'inherit' }}>
+                      <Typography variant="caption" sx={{ color: theme.textSecondary, fontFamily: 'inherit' }}>
                         STATUS
                       </Typography>
                       <Typography variant="body2" sx={{ 
-                        color: activeWindow ? '#00ff41' : '#666', 
+                        color: activeWindow ? theme.primary : theme.textSecondary, 
                         fontFamily: 'inherit', 
                         lineHeight: 1,
                         fontWeight: 'bold'
@@ -316,7 +316,7 @@ const ContactWindowsPopover: React.FC<ContactWindowsPopoverProps> = ({
                     </Box>
                   </Box>
                   
-                  <Typography variant="caption" sx={{ color: '#666', fontFamily: 'inherit' }}>
+                  <Typography variant="caption" sx={{ color: theme.textSecondary, fontFamily: 'inherit' }}>
                     {new Date().toLocaleTimeString()}
                   </Typography>
                 </Box>
