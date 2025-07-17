@@ -143,10 +143,10 @@ function GlobalAppBar() {
           <IconButton
             onClick={() => dispatch(setLiveMode(!liveMode))} // Toggle liveMode
             className="live-mode-button" // Add a class for styling
-            onMouseEnter={(e) => (e.currentTarget.style.color = "#FF00FF")} // Brighter purple on hover
+            onMouseEnter={(e) => (e.currentTarget.style.color = theme.accent)} // Brighter accent on hover
             onMouseLeave={(e) =>
               (e.currentTarget.style.color =
-                currentPath === "/gs" ? "#00ff00" : "#888888")
+                currentPath === "/gs" ? theme.primary : theme.textSecondary)
             }
           >
             <FontAwesomeIcon
@@ -154,7 +154,7 @@ function GlobalAppBar() {
               className="fa-bolt" // Add class for shimmer effect
               style={{
                 fontSize: "24px", // Adjust size
-                color: "#800080", // Default bright purple
+                color: theme.accent, // Default accent color
                 transition: "color 0.2s ease-in-out", // Smooth transition
               }}
             />
@@ -164,7 +164,7 @@ function GlobalAppBar() {
         {/* UTC Clock */}
         <div
           style={{
-            color: "#00ff00", // Green text
+            color: theme.primary, // Theme text
             fontFamily: "Courier New, Courier, monospace", // Console-style font
             fontSize: "16px", // Slightly larger text
             marginLeft: "16px", // Add spacing after the icons
@@ -175,7 +175,7 @@ function GlobalAppBar() {
         >
           <div>{utc}</div>
           {cesiumMultiplier !== 1 && (
-            <div style={{ fontSize: "12px", color: "#ffff00" }}>
+            <div style={{ fontSize: "12px", color: theme.warning }}>
               {cesiumMultiplier}x speed
             </div>
           )}
@@ -188,11 +188,11 @@ function GlobalAppBar() {
           <Tooltip title="Switch Theme" arrow>
             <IconButton
               style={{
-                color: "#888888",
+                color: theme.textSecondary,
                 transition: "color 0.2s ease-in-out",
               }}
-              onMouseEnter={(e) => (e.currentTarget.style.color = "#00ff00")}
-              onMouseLeave={(e) => (e.currentTarget.style.color = "#888888")}
+              onMouseEnter={(e) => (e.currentTarget.style.color = theme.primary)}
+              onMouseLeave={(e) => (e.currentTarget.style.color = theme.textSecondary)}
             >
               {/* <Brightness4Icon style={{ fontSize: "24px" }} /> */}
               <span>🎨</span>
@@ -200,86 +200,6 @@ function GlobalAppBar() {
           </Tooltip>
 
           {/* Theme popover disabled - using global theme from CesiumControlPanel */}
-          {false && (
-            <div
-              style={{
-                position: "absolute",
-                top: "48px",
-                right: "0",
-                backgroundColor: "rgba(13, 13, 13, 0.9)", // Console-style dark background
-                border: "1px solid #00ff00", // Green border
-                color: "#00ff00", // Green text
-                fontFamily: "Courier New, Courier, monospace", // Console-style font
-                borderRadius: "4px",
-                padding: "8px",
-                width: "200px",
-                zIndex: 1001,
-              }}
-            >
-              {/* Arrow */}
-              <div
-                style={{
-                  position: "absolute",
-                  top: "-8px",
-                  right: "16px",
-                  width: "0",
-                  height: "0",
-                  borderLeft: "8px solid transparent",
-                  borderRight: "8px solid transparent",
-                  borderBottom: "8px solid #00ff00", // Green arrow
-                }}
-              ></div>
-
-              {/* Theme Options */}
-              <div
-                style={{ display: "flex", flexDirection: "column", gap: "8px" }}
-              >
-                {/* Console Theme */}
-                <div
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "8px",
-                    cursor: "pointer",
-                  }}
-                  // onClick={() => setTheme("console")}
-                >
-                  <div
-                    style={{
-                      width: "16px",
-                      height: "16px",
-                      backgroundColor: "#00ff00", // Green swatch
-                      borderRadius: "50%",
-                      // border: currentTheme === "console" ? "2px solid #00ff00" : "2px solid transparent",
-                    }}
-                  ></div>
-                  <span style={{ fontSize: "14px" }}>Console Theme</span>
-                </div>
-
-                {/* Light Theme */}
-                <div
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "8px",
-                    cursor: "pointer",
-                  }}
-                  // onClick={() => setTheme("light")}
-                >
-                  <div
-                    style={{
-                      width: "16px",
-                      height: "16px",
-                      backgroundColor: "#ffffff", // White swatch
-                      borderRadius: "50%",
-                      // border: currentTheme === "light" ? "2px solid #00ff00" : "2px solid transparent",
-                    }}
-                  ></div>
-                  <span style={{ fontSize: "14px" }}>Light Theme</span>
-                </div>
-              </div>
-            </div>
-          )}
         </div>
 
         {/* Account Actions Button */}
@@ -294,8 +214,8 @@ function GlobalAppBar() {
                 color: "#888888",
                 transition: "color 0.2s ease-in-out",
               }}
-              onMouseEnter={(e) => (e.currentTarget.style.color = "#00ff00")}
-              onMouseLeave={(e) => (e.currentTarget.style.color = "#888888")}
+              onMouseEnter={(e) => (e.currentTarget.style.color = theme.primary)}
+              onMouseLeave={(e) => (e.currentTarget.style.color = theme.textSecondary)}
             >
               <FontAwesomeIcon
                 icon={faUserAstronaut}
@@ -311,9 +231,9 @@ function GlobalAppBar() {
                 position: "absolute",
                 top: "48px",
                 right: "0",
-                backgroundColor: "rgba(13, 13, 13, 0.9)", // Console-style dark background
-                border: "1px solid #00ff00", // Green border
-                color: "#00ff00", // Green text
+                backgroundColor: theme.backgroundDark, // Theme dark background
+                border: `1px solid ${theme.primary}`, // Theme border
+                color: theme.primary, // Theme text
                 fontFamily: "Courier New, Courier, monospace", // Console-style font
                 borderRadius: "4px",
                 padding: "8px",
@@ -331,7 +251,7 @@ function GlobalAppBar() {
                   height: "0",
                   borderLeft: "8px solid transparent",
                   borderRight: "8px solid transparent",
-                  borderBottom: "8px solid #00ff00", // Green arrow
+                  borderBottom: `8px solid ${theme.primary}`, // Theme arrow
                 }}
               ></div>
 

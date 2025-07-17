@@ -11,6 +11,7 @@ import {
 import { convertEcefToEnu } from "../utils/coordinateUtils";
 import { selectCesiumClockIso } from "../store/selectors/cesiumClockSelectors";
 import { getDisplayGroundStations, type DisplayGroundStation } from "../utils/groundStationDataUtils";
+import { useTheme } from "../contexts/ThemeContext";
 import "./DockableComponent.css"; // Import the CSS for styling
 
 interface SatelliteStatusTableProps {
@@ -25,6 +26,7 @@ const SatelliteStatusTable: React.FC<SatelliteStatusTableProps> = ({
   const [dopplerShift, setDopplerShift] = useState<number | null>(null);
   const [azimuth, setAzimuth] = useState<number | null>(null);
   const [elevation, setElevation] = useState<number | null>(null);
+  const { theme } = useTheme();
 
   const selectedSatId = useSelector(
     (state: RootState) => state.mongo.selectedSatId
@@ -75,7 +77,7 @@ const SatelliteStatusTable: React.FC<SatelliteStatusTableProps> = ({
         flex: 1, // Allow the table to expand and fill available space
         overflowY: "auto", // Add scrolling if content overflows
         padding: "10px", // Add padding for spacing
-        color: "#00ff00",
+        color: theme.primary,
         fontFamily: "Courier New, Courier, monospace",
       }}
     >

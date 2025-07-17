@@ -9,9 +9,11 @@ import { useSelector, useDispatch } from "react-redux";
 import { RootState } from "../store";
 import { setSelectedSatId, setShowHistory, setShowTle, setShowGroundTrack, setShowNadirLines } from "../store/mongoSlice";
 import { fetchCelesTrakSatellites, DisplaySatellite } from "../utils/satelliteDataUtils";
+import { useTheme } from "../contexts/ThemeContext";
 
 const SatellitePopover: React.FC = () => {
   const dispatch = useDispatch();
+  const { theme } = useTheme();
   const [openPopover, setOpenPopover] = useState<boolean>(false);
   const [satelliteFilter, setSatelliteFilter] = useState<string>("");
   const [celestrakSatellites, setCelestrakSatellites] = useState<DisplaySatellite[]>([]);
@@ -119,9 +121,9 @@ const SatellitePopover: React.FC = () => {
             position: "absolute",
             top: "46px",
             left: "0",
-            backgroundColor: "rgba(13, 13, 13, 0.95)",
-            border: "1px solid rgba(0, 255, 65, 0.4)",
-            color: "#00ff00",
+            backgroundColor: theme.cardBackground,
+            border: `1px solid ${theme.borderGradient}`,
+            color: theme.textPrimary,
             fontFamily: "Courier New, Courier, monospace",
             borderRadius: "8px",
             padding: "12px",

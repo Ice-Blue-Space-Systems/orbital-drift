@@ -7,7 +7,11 @@ export interface Theme {
   secondary: string;
   accent: string;
   warning: string;
+  success: string;
+  error: string;
   background: string;
+  backgroundDark: string;
+  backgroundSecondary: string;
   backgroundGradient: string;
   borderGradient: string;
   textShadow: string;
@@ -30,7 +34,11 @@ export const themes: Record<string, Theme> = {
     secondary: "#00aaff",
     accent: "#ffaa00",
     warning: "#ff6600",
+    success: "#00ff41",
+    error: "#ff4444",
     background: "linear-gradient(135deg, rgba(10, 10, 10, 0.95) 0%, rgba(20, 20, 20, 0.90) 100%)",
+    backgroundDark: "rgba(10, 10, 10, 0.95)",
+    backgroundSecondary: "rgba(0, 0, 0, 0.3)",
     backgroundGradient: "linear-gradient(135deg, rgba(0, 255, 65, 0.5), rgba(0, 170, 255, 0.3), rgba(255, 170, 0, 0.3))",
     borderGradient: "rgba(0, 255, 65, 0.3)",
     textShadow: "0 0 10px rgba(0, 255, 65, 0.5)",
@@ -51,7 +59,11 @@ export const themes: Record<string, Theme> = {
     secondary: "#ffffff",
     accent: "#b3e5fc",
     warning: "#ff9900",
+    success: "#00ff88",
+    error: "#ff4466",
     background: "linear-gradient(135deg, rgba(10, 20, 30, 0.95) 0%, rgba(20, 30, 40, 0.90) 100%)",
+    backgroundDark: "rgba(10, 20, 30, 0.95)",
+    backgroundSecondary: "rgba(0, 15, 30, 0.3)",
     backgroundGradient: "linear-gradient(135deg, rgba(0, 212, 255, 0.5), rgba(255, 255, 255, 0.3), rgba(179, 229, 252, 0.3))",
     borderGradient: "rgba(0, 212, 255, 0.3)",
     textShadow: "0 0 10px rgba(0, 212, 255, 0.5)",
