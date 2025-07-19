@@ -131,8 +131,6 @@ export default function SatsPage() {
   
   // Get statistics
   const stats = getSatelliteStats(allSatellites);
-  const myStats = getSatelliteStats(mySatellites);
-  const discoverStats = getSatelliteStats(discoverableSatellites);
 
   // Add a new custom satellite (save to DB)
   const addCustomSatellite = async () => {

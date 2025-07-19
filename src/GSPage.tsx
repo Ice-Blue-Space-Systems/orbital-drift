@@ -129,8 +129,6 @@ export default function GSPage() {
   
   // Get statistics
   const stats = getGroundStationStats(allGroundStations);
-  const myStats = getGroundStationStats(myGroundStations);
-  const discoverStats = getGroundStationStats(discoverableGroundStations);
 
   // Add a new custom ground station (save to DB)
   const addCustomGroundStation = async () => {
