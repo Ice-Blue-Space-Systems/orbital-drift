@@ -32,7 +32,7 @@ const TimelinePage: React.FC = () => {
   // State for timeline controls
   const timelineRef = useRef<HTMLDivElement>(null);
   const timelineInstance = useRef<Timeline | null>(null);
-  const [followMode, setFollowMode] = useState(false);
+  const [followMode, setFollowMode] = useState(true);
 
 
   // Get contact windows data from Redux
