@@ -48,7 +48,7 @@ export function useSatellitePosition(
     if (selectedSatId) {
       fetchPositions();
     }
-  }, [selectedSatId, satellites, dispatch, viewerRef.current?.cesiumElement]);
+  }, [selectedSatId, satellites, dispatch, viewerRef]);
 
   return { satPositionProperty, groundTrackPositionProperty };
 }

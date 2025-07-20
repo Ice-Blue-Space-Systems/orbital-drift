@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import { IconButton, Tooltip, TextField, List, ListItem, ListItemButton, ListItemText, Typography, Chip, Box, Divider } from "@mui/material";
+import { IconButton, Tooltip, TextField, List, ListItem, ListItemButton, ListItemText, Typography, Chip, Box } from "@mui/material";
 import SatelliteIcon from "@mui/icons-material/SatelliteAlt";
 import HistoryIcon from "@mui/icons-material/History";
 import PublicIcon from "@mui/icons-material/Public";
@@ -77,7 +77,7 @@ const SatellitePopover: React.FC = () => {
       });
 
       if (response.ok) {
-        const newSat = await response.json();
+        await response.json(); // Process response but don't store unused result
         // Refresh the satellites data from Redux
         // You might want to dispatch a refresh action here
         window.location.reload(); // Simple refresh for now

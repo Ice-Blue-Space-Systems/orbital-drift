@@ -1,5 +1,5 @@
 import React from "react";
-import { IconButton, Tooltip, Divider } from "@mui/material";
+import { IconButton, Tooltip } from "@mui/material";
 import SkipNextIcon from "@mui/icons-material/SkipNext";
 import SkipPreviousIcon from "@mui/icons-material/SkipPrevious";
 import ZoomInIcon from "@mui/icons-material/ZoomIn";

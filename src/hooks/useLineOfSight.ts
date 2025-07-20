@@ -39,5 +39,5 @@ export function useLineOfSight(
 
     const cleanup = setupLineOfSight();
     return cleanup;
-  }, [satPositionProperty, groundStationPos, viewerRef.current?.cesiumElement, lineOfSightPositionsRef]);
+  }, [satPositionProperty, groundStationPos, viewerRef, lineOfSightPositionsRef]);
 }

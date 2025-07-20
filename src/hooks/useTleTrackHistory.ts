@@ -46,7 +46,7 @@ export function useTleTrackHistory(
 
     const cleanup = setupTleTracking();
     return cleanup;
-  }, [showTle, showHistory, satPositionProperty, viewerRef.current?.cesiumElement]);
+  }, [showTle, showHistory, satPositionProperty, viewerRef]);
 
   return tleHistoryRef;
 }

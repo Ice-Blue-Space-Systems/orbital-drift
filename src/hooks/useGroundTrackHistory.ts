@@ -47,7 +47,7 @@ export function useGroundTrackHistory(
 
     const cleanup = setupGroundTrackTracking();
     return cleanup;
-  }, [showGroundTrack, showHistory, groundTrackPositionProperty, viewerRef.current?.cesiumElement]);
+  }, [showGroundTrack, showHistory, groundTrackPositionProperty, viewerRef]);
 
   return groundTrackHistoryRef;
 }

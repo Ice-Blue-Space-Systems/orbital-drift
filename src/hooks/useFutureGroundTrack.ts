@@ -32,5 +32,5 @@ export function useFutureGroundTrack(
       }
       return futurePositions;
     }, false);
-  }, [showGroundTrack, groundTrackPositionProperty, viewerRef.current?.cesiumElement]);
+  }, [showGroundTrack, groundTrackPositionProperty, viewerRef]);
 }

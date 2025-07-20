@@ -47,10 +47,7 @@ const CesiumViewer: React.FC<CesiumViewerProps> = ({
   const showCesiumOptions = useSelector(
     (state: RootState) => state.mongo.showCesiumOptions
   );
-  const showNadirLines = useSelector(
-    (state: RootState) => state.mongo.showNadirLines
-  );
-
+  
   return (
     <div style={{ position: "relative", height: "100%" }}>
       {/* Cesium Viewer */}

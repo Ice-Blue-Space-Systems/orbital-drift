@@ -28,5 +28,5 @@ export function useTleTrackFuture(
       }
       return positions;
     }, false);
-  }, [showTle, satPositionProperty, viewerRef.current?.cesiumElement]);
+  }, [showTle, satPositionProperty, viewerRef]);
 }
