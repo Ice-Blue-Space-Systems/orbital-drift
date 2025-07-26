@@ -10,7 +10,7 @@ import TimelineTools from "./components/TimelineTools";
 import { AppDispatch } from "./store";
 import "./components/TimelineTools.css";
 import { fetchMongoData } from "./store/mongoSlice";
-import { GroundStation, Satellite } from "./types";
+import { GroundStation, Satellite, ContactWindow } from "./types";
 import { transformContactWindowsToTimelineItems } from "./utils/timelineUtils";
 import { useTheme } from "./contexts/ThemeContext";
 
@@ -34,9 +34,12 @@ const TimelinePage: React.FC = () => {
   const timelineInstance = useRef<Timeline | null>(null);
   const [followMode, setFollowMode] = useState(true);
 
-
   // Get contact windows data from Redux
   const contactWindows = useSelector(selectContactWindows);
+  
+  // State for timeline filtering
+  const [showAllPairs, setShowAllPairs] = useState(true);
+  const [filteredContactWindows, setFilteredContactWindows] = useState(contactWindows);
   
   // Get Cesium clock time and multiplier (single source of truth)
   const cesiumClockTime = useSelector(selectCesiumClockUtc);
@@ -66,19 +69,19 @@ const TimelinePage: React.FC = () => {
   // Calculate the next contact window
   const nextContactWindow = useMemo(() => {
     const now = new Date();
-    const futureWindows = contactWindows.filter(
-      (win: { scheduledAOS: string | number | Date; scheduledLOS: string | number | Date }) =>
-        new Date(win.scheduledAOS) > now
+    const windowsToCheck = showAllPairs ? contactWindows : filteredContactWindows;
+    const futureWindows = windowsToCheck.filter(
+      (win: ContactWindow) => new Date(win.scheduledAOS) > now
     );
 
     if (futureWindows.length === 0) return null;
 
     // Sort by AOS and return the first one
     return futureWindows.sort(
-      (a: any, b: any) =>
+      (a: ContactWindow, b: ContactWindow) =>
         new Date(a.scheduledAOS).getTime() - new Date(b.scheduledAOS).getTime()
     )[0];
-  }, [contactWindows]);
+  }, [contactWindows, filteredContactWindows, showAllPairs]);
 
   // Initialize the timeline
   useEffect(() => {
@@ -86,6 +89,7 @@ const TimelinePage: React.FC = () => {
 
     const container = timelineRef.current;
     const items = new DataSet([]);
+    const groups = new DataSet([]);
     const options = {
       start: new Date(),
       end: new Date(Date.now() + 3600 * 1000),
@@ -97,6 +101,8 @@ const TimelinePage: React.FC = () => {
       selectable: true,
       multiselect: false,
       height: '100%',
+      groupOrder: 'id',
+      stack: false,
       margin: {
         item: {
           horizontal: 10,
@@ -138,7 +144,7 @@ const TimelinePage: React.FC = () => {
       }
     };
 
-    timelineInstance.current = new Timeline(container, items, options);
+    timelineInstance.current = new Timeline(container, items, groups, options);
 
     // Enhanced dragging for the current time bar with better visual feedback
     const handleDrag = (event: MouseEvent) => {
@@ -190,12 +196,19 @@ const TimelinePage: React.FC = () => {
   useEffect(() => {
     if (!timelineInstance.current) return;
 
-    // Transform contact windows into timeline items using the utility function
-    const items = transformContactWindowsToTimelineItems(contactWindows);
+    // Transform filtered contact windows into timeline items and groups using the utility function
+    const { items, groups } = transformContactWindowsToTimelineItems(
+      filteredContactWindows, 
+      satellites, 
+      groundStations
+    );
 
-    const dataSet = new DataSet(items);
-    timelineInstance.current.setItems(dataSet as any);
-  }, [contactWindows]);
+    const itemsDataSet = new DataSet(items);
+    const groupsDataSet = new DataSet(groups);
+    
+    timelineInstance.current.setItems(itemsDataSet as any);
+    timelineInstance.current.setGroups(groupsDataSet as any);
+  }, [filteredContactWindows, satellites, groundStations]);
 
   // Sync timeline current time with Cesium clock time (single source of truth)
   useEffect(() => {
@@ -233,6 +246,21 @@ const TimelinePage: React.FC = () => {
     }
   }, [cesiumClockTime, cesiumMultiplier, followMode]); // Include followMode in dependencies
 
+  // Filter contact windows based on selection
+  useEffect(() => {
+    if (showAllPairs) {
+      setFilteredContactWindows(contactWindows);
+    } else {
+      // Only show contact windows for selected satellite and/or ground station
+      const filtered = contactWindows.filter((win: ContactWindow) => {
+        const satMatch = !selectedSatelliteId || win.satelliteId === selectedSatelliteId;
+        const gsMatch = !selectedGroundStationId || win.groundStationId === selectedGroundStationId;
+        return satMatch && gsMatch;
+      });
+      setFilteredContactWindows(filtered);
+    }
+  }, [contactWindows, selectedSatelliteId, selectedGroundStationId, showAllPairs]);
+
   // Timeline control functions
   const jumpToNextContactWindow = () => {
     if (!timelineInstance.current || !nextContactWindow) return;
@@ -251,9 +279,12 @@ const TimelinePage: React.FC = () => {
   const jumpToStart = () => {
     if (!timelineInstance.current) return;
 
+    const windowsToCheck = showAllPairs ? contactWindows : filteredContactWindows;
+    const firstWindow = windowsToCheck[0];
+    
     timelineInstance.current.setWindow(
-      new Date(contactWindows[0]?.scheduledAOS || Date.now()),
-      new Date(contactWindows[0]?.scheduledLOS || Date.now() + 3600 * 1000),
+      new Date(firstWindow?.scheduledAOS || Date.now()),
+      new Date(firstWindow?.scheduledLOS || Date.now() + 3600 * 1000),
       { animation: true }
     );
   };
@@ -299,6 +330,10 @@ const TimelinePage: React.FC = () => {
     timelineInstance.current.fit({ animation: true });
   };
 
+  const toggleShowAllPairs = () => {
+    setShowAllPairs(!showAllPairs);
+  };
+
   return (
     <div
       style={{
@@ -320,7 +355,9 @@ const TimelinePage: React.FC = () => {
             onZoomOut={zoomOut}
             onFitAll={fitAllWindows}
             onToggleFollow={toggleFollowMode}
+            onToggleShowAll={toggleShowAllPairs}
             followMode={followMode}
+            showAllPairs={showAllPairs}
             debugInfo={timelineInstance.current} // Pass timeline instance as debugInfo
             nextContactWindow={nextContactWindow}
           />
@@ -347,24 +384,161 @@ const TimelinePage: React.FC = () => {
             <strong>Simulation Speed:</strong> {cesiumMultiplier}x
             {cesiumMultiplier !== 1 && " (Synced with Cesium)"}
           </div>
+          {!showAllPairs && (
+            <div style={{ marginTop: "4px", fontSize: "11px", color: "#ff8800" }}>
+              <strong>Filter:</strong> Showing selected pairs only
+            </div>
+          )}
         </div>
       </div>
 
-      {/* Timeline container */}
+      {/* Main timeline container */}
       <div
-        ref={timelineRef}
         style={{
           flex: 1,
           marginTop: "16px",
           height: "80vh",
+          display: "flex",
           background: "linear-gradient(135deg, rgba(0, 20, 0, 0.95), rgba(0, 40, 0, 0.85))",
           border: "2px solid #00ff00",
           borderRadius: "8px",
           boxShadow: "0 0 20px rgba(0, 255, 0, 0.3), inset 0 0 10px rgba(0, 255, 0, 0.1)",
           overflow: "hidden",
-          position: "relative"
         }}
-      />
+      >
+        {/* External left sidebar for satellite/ground station selection */}
+        <div
+          style={{
+            width: "250px",
+            borderRight: "2px solid #00ff00",
+            background: "rgba(0, 30, 0, 0.95)",
+            display: "flex",
+            flexDirection: "column",
+            overflow: "auto",
+          }}
+        >
+          {/* Satellites section */}
+          <div style={{ 
+            borderBottom: "1px solid #00ff00", 
+            padding: "8px",
+            background: "rgba(0, 40, 0, 0.8)"
+          }}>
+            <h3 style={{
+              margin: 0,
+              color: "#00ff00",
+              fontFamily: "Courier New, Courier, monospace",
+              fontSize: "12px",
+              textAlign: "center",
+              textShadow: "0 0 3px #00ff00"
+            }}>
+              SATELLITES
+            </h3>
+          </div>
+          <div style={{ flex: 1, maxHeight: "45%" }}>
+            {satellites.map((satellite: Satellite) => (
+              <div
+                key={satellite._id}
+                style={{
+                  padding: "6px 10px",
+                  borderBottom: "1px solid rgba(0, 255, 0, 0.2)",
+                  color: selectedSatelliteId === satellite._id ? "#ffff00" : "#00ff00",
+                  fontFamily: "Courier New, Courier, monospace",
+                  fontSize: "11px",
+                  cursor: "pointer",
+                  background: selectedSatelliteId === satellite._id 
+                    ? "rgba(255, 255, 0, 0.1)" 
+                    : "transparent",
+                  transition: "all 0.2s ease",
+                }}
+                onClick={() => dispatch({ type: 'mongo/setSelectedSatId', payload: satellite._id })}
+                onMouseEnter={(e) => {
+                  if (selectedSatelliteId !== satellite._id) {
+                    e.currentTarget.style.background = "rgba(0, 255, 0, 0.1)";
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (selectedSatelliteId !== satellite._id) {
+                    e.currentTarget.style.background = "transparent";
+                  }
+                }}
+              >
+                <div style={{ fontWeight: "bold", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                  {satellite.name}
+                </div>
+                <div style={{ fontSize: "9px", opacity: 0.8 }}>
+                  {satellite.type === "live" ? `NORAD: ${satellite.noradId}` : "SIM"}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Ground Stations section */}
+          <div style={{ 
+            borderTop: "1px solid #00ff00",
+            borderBottom: "1px solid #00ff00", 
+            padding: "8px",
+            background: "rgba(0, 40, 0, 0.8)"
+          }}>
+            <h3 style={{
+              margin: 0,
+              color: "#00ff00",
+              fontFamily: "Courier New, Courier, monospace",
+              fontSize: "12px",
+              textAlign: "center",
+              textShadow: "0 0 3px #00ff00"
+            }}>
+              GROUND STATIONS
+            </h3>
+          </div>
+          <div style={{ flex: 1, maxHeight: "45%" }}>
+            {groundStations.map((groundStation: GroundStation) => (
+              <div
+                key={groundStation._id}
+                style={{
+                  padding: "6px 10px",
+                  borderBottom: "1px solid rgba(0, 255, 0, 0.2)",
+                  color: selectedGroundStationId === groundStation._id ? "#ffff00" : "#00ff00",
+                  fontFamily: "Courier New, Courier, monospace",
+                  fontSize: "11px",
+                  cursor: "pointer",
+                  background: selectedGroundStationId === groundStation._id 
+                    ? "rgba(255, 255, 0, 0.1)" 
+                    : "transparent",
+                  transition: "all 0.2s ease",
+                }}
+                onClick={() => dispatch({ type: 'mongo/setSelectedGroundStationId', payload: groundStation._id })}
+                onMouseEnter={(e) => {
+                  if (selectedGroundStationId !== groundStation._id) {
+                    e.currentTarget.style.background = "rgba(0, 255, 0, 0.1)";
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (selectedGroundStationId !== groundStation._id) {
+                    e.currentTarget.style.background = "transparent";
+                  }
+                }}
+              >
+                <div style={{ fontWeight: "bold", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                  {groundStation.name}
+                </div>
+                <div style={{ fontSize: "9px", opacity: 0.8 }}>
+                  {groundStation.country && `${groundStation.country}`}
+                  {groundStation.bandType && ` • ${groundStation.bandType}`}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Timeline container with built-in group labels */}
+        <div
+          ref={timelineRef}
+          style={{
+            flex: 1,
+            position: "relative"
+          }}
+        />
+      </div>
     </div>
   );
 };

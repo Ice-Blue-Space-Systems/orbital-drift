@@ -8,6 +8,8 @@ import FitScreenIcon from "@mui/icons-material/FitScreen";
 import AccessTimeIcon from "@mui/icons-material/AccessTime";
 import MyLocationIcon from "@mui/icons-material/MyLocation";
 import LocationDisabledIcon from "@mui/icons-material/LocationDisabled";
+import FilterListIcon from "@mui/icons-material/FilterList";
+import FilterListOffIcon from "@mui/icons-material/FilterListOff";
 import SatellitePopover from "./SatellitePopover"; // Import SatellitePopover
 import GroundStationPopover from "./GroundStationPopover"; // Import GroundStationPopover
 import ContactWindowsPopover from "./ContactWindowsPopover"; // Import ContactWindowsPopover
@@ -24,7 +26,9 @@ export interface TimelineToolsProps {
   onZoomOut: () => void;
   onFitAll: () => void;
   onToggleFollow: () => void;
+  onToggleShowAll?: () => void;
   followMode: boolean;
+  showAllPairs?: boolean;
   debugInfo?: any;
   nextContactWindow: any;
 }
@@ -37,7 +41,9 @@ const TimelineTools: React.FC<TimelineToolsProps> = ({
   onZoomOut,
   onFitAll,
   onToggleFollow,
+  onToggleShowAll,
   followMode,
+  showAllPairs = true,
   debugInfo,
   nextContactWindow,
 }) => {
@@ -96,6 +102,16 @@ const TimelineTools: React.FC<TimelineToolsProps> = ({
               <FitScreenIcon />
             </IconButton>
           </Tooltip>
+          {onToggleShowAll && (
+            <Tooltip title={showAllPairs ? "Show Selected Only" : "Show All Pairs"} arrow>
+              <IconButton 
+                onClick={onToggleShowAll} 
+                className={`icon-button ${!showAllPairs ? 'active' : ''}`}
+              >
+                {showAllPairs ? <FilterListOffIcon /> : <FilterListIcon />}
+              </IconButton>
+            </Tooltip>
+          )}
         </div>
 
         <div className="timeline-tools-divider"></div>

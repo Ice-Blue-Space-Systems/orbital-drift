@@ -140,6 +140,85 @@
   text-shadow: 0 0 3px #00ff00 !important;
 }
 
+/* Timeline groups (satellite-ground station pairs) */
+.vis-timeline .vis-labelset .vis-label {
+  background: rgba(0, 30, 0, 0.9) !important;
+  border-right: 2px solid #00ff00 !important;
+  color: #00ff00 !important;
+  font-family: 'Courier New', Courier, monospace !important;
+  font-weight: bold !important;
+  font-size: 12px !important;
+  text-shadow: 0 0 3px #00ff00 !important;
+  padding: 8px !important;
+  min-height: 40px !important;
+  display: flex !important;
+  align-items: center !important;
+  border-bottom: 1px solid rgba(0, 255, 0, 0.3) !important;
+}
+
+.vis-timeline .vis-labelset .vis-label:hover {
+  background: rgba(0, 40, 0, 0.9) !important;
+}
+
+.vis-timeline .vis-labelset .vis-label .vis-inner {
+  color: #00ff00 !important;
+  text-overflow: ellipsis !important;
+  overflow: hidden !important;
+  white-space: nowrap !important;
+}
+
+/* Timeline group background alternating colors */
+.vis-timeline .vis-panel.vis-background .vis-group:nth-child(even) {
+  background: rgba(0, 25, 0, 0.4) !important;
+}
+
+.vis-timeline .vis-panel.vis-background .vis-group:nth-child(odd) {
+  background: rgba(0, 15, 0, 0.4) !important;
+}
+
+/* Group border lines */
+.vis-timeline .vis-panel.vis-background .vis-group {
+  border-bottom: 1px solid rgba(0, 255, 0, 0.2) !important;
+}
+
+/* Custom class for timeline groups */
+.timeline-group {
+  color: #00ff00 !important;
+  font-family: 'Courier New', Courier, monospace !important;
+  font-weight: bold !important;
+  text-shadow: 0 0 2px #00ff00 !important;
+}
+
+/* Enhanced contact window styling for grouped timeline */
+.vis-timeline .vis-item.future-window {
+  background: linear-gradient(135deg, rgba(0, 255, 0, 0.2), rgba(0, 200, 0, 0.3)) !important;
+  border: 2px solid #00ff00 !important;
+  border-radius: 4px !important;
+  color: #ffffff !important;
+  font-family: 'Courier New', Courier, monospace !important;
+  font-weight: bold !important;
+  text-shadow: 0 0 2px #000000 !important;
+  box-shadow: 0 2px 8px rgba(0, 255, 0, 0.2) !important;
+}
+
+.vis-timeline .vis-item.active-window {
+  background: linear-gradient(135deg, rgba(255, 255, 0, 0.3), rgba(255, 200, 0, 0.4)) !important;
+  border: 2px solid #ffff00 !important;
+  border-radius: 4px !important;
+  color: #000000 !important;
+  font-family: 'Courier New', Courier, monospace !important;
+  font-weight: bold !important;
+  text-shadow: 0 0 2px #ffffff !important;
+  box-shadow: 0 2px 8px rgba(255, 255, 0, 0.4) !important;
+  animation: timeline-glow-active 2s ease-in-out infinite !important;
+}
+
+@keyframes timeline-glow-active {
+  0% { box-shadow: 0 0 5px rgba(255, 255, 0, 0.5); }
+  50% { box-shadow: 0 0 15px rgba(255, 255, 0, 0.8); }
+  100% { box-shadow: 0 0 5px rgba(255, 255, 0, 0.5); }
+}
+
 /* Scrollbar styling */
 .vis-timeline::-webkit-scrollbar {
   width: 12px !important;
