@@ -3,7 +3,7 @@ import { useSelector, useDispatch } from "react-redux";
 import { DataSet } from "vis-data";
 import { Timeline } from "vis-timeline/standalone";
 import "vis-timeline/styles/vis-timeline-graph2d.min.css";
-import "./components/TimelineStyles.css"; // Custom timeline styling
+import "./components/TimelineStyles.css";
 import { selectContactWindows } from "./store/contactWindowsSlice";
 import { selectCesiumClockUtc } from "./store/selectors/cesiumClockSelectors";
 import TimelineTools from "./components/TimelineTools";
