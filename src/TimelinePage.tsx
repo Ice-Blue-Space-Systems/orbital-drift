@@ -138,13 +138,46 @@ const TimelinePage: React.FC = () => {
         }
       },
       tooltip: {
-        followMouse: true,
+        followMouse: false,
         overflowMethod: 'cap' as const,
-        delay: 300
+        delay: 100,
+        template: (item: any) => {
+          // Custom tooltip template to prevent sliding issues
+          return item.title || item.content;
+        }
+      },
+      // Prevent item movement on hover
+      editable: {
+        add: false,
+        updateTime: false,
+        updateGroup: false,
+        remove: false,
+        overrideItems: false
       }
     };
 
     timelineInstance.current = new Timeline(container, items, groups, options);
+
+    // Add event listeners for better interaction
+    timelineInstance.current.on('itemover', (properties) => {
+      // Prevent any sliding or movement when hovering over items
+      if (properties.item !== null) {
+        // Ensure the item stays in place
+        container.style.cursor = 'pointer';
+      }
+    });
+
+    timelineInstance.current.on('itemout', (properties) => {
+      container.style.cursor = 'default';
+    });
+
+    // Prevent item dragging/moving
+    timelineInstance.current.on('click', (properties) => {
+      if (properties.item !== null) {
+        // Optional: Add click behavior for contact windows
+        console.log('Contact window clicked:', properties.item);
+      }
+    });
 
     // Enhanced dragging for the current time bar with better visual feedback
     const handleDrag = (event: MouseEvent) => {

@@ -52,17 +52,34 @@ export function transformContactWindowsToTimelineItems(
     const satellite = satellites.find(sat => sat._id === win.satelliteId);
     const groundStation = groundStations.find(gs => gs._id === win.groundStationId);
     
-    const duration = new Date(win.scheduledLOS).getTime() - new Date(win.scheduledAOS).getTime();
+    const startTime = new Date(win.scheduledAOS);
+    const endTime = new Date(win.scheduledLOS);
+    const duration = endTime.getTime() - startTime.getTime();
     const durationMinutes = Math.round(duration / (1000 * 60));
+    
+    // Create detailed tooltip content
+    const tooltipContent = [
+      `🛰️  ${satellite?.name || 'Unknown Satellite'}`,
+      `📡  ${groundStation?.name || 'Unknown Ground Station'}`,
+      ``,
+      `📅  ${startTime.toLocaleDateString()}`,
+      `🕐  AOS: ${startTime.toLocaleTimeString()}`,
+      `🕐  LOS: ${endTime.toLocaleTimeString()}`,
+      `⏱️   Duration: ${durationMinutes} minutes`,
+      ``,
+      `${groundStation?.country ? `🌍  ${groundStation.country}` : ''}`,
+      `${groundStation?.bandType ? `📶  ${groundStation.bandType}-Band` : ''}`,
+      `${satellite?.type === 'live' ? `🔴  Live (NORAD: ${satellite.noradId})` : '🟡  Simulated'}`
+    ].filter(line => line !== '').join('\n');
     
     return {
       id: index,
       content: `${durationMinutes}m`,
-      start: new Date(win.scheduledAOS),
-      end: new Date(win.scheduledLOS),
+      start: startTime,
+      end: endTime,
       group: groupId,
       className: isActive(win) ? "active-window" : "future-window",
-      title: `Contact Window\nSatellite: ${satellite?.name || 'Unknown'}\nGround Station: ${groundStation?.name || 'Unknown'}\nAOS: ${new Date(win.scheduledAOS).toLocaleString()}\nLOS: ${new Date(win.scheduledLOS).toLocaleString()}\nDuration: ${durationMinutes} minutes`,
+      title: tooltipContent,
     };
   });
 

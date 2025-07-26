@@ -47,13 +47,17 @@
   font-weight: bold !important;
   text-shadow: 0 0 2px #000000 !important;
   box-shadow: 0 2px 8px rgba(0, 255, 0, 0.2) !important;
-  transition: all 0.2s ease !important;
+  transition: box-shadow 0.2s ease, border-color 0.2s ease !important;
+  pointer-events: auto !important;
+  position: relative !important;
 }
 
 .vis-timeline .vis-item:hover {
   background: linear-gradient(135deg, rgba(0, 255, 0, 0.4), rgba(0, 200, 0, 0.5)) !important;
   box-shadow: 0 4px 16px rgba(0, 255, 0, 0.4) !important;
-  transform: translateY(-1px) !important;
+  transform: none !important;
+  z-index: 10 !important;
+  border-color: #00ff88 !important;
 }
 
 .vis-timeline .vis-item.vis-selected {
@@ -256,6 +260,11 @@
   font-weight: bold !important;
   box-shadow: 0 4px 16px rgba(0, 255, 0, 0.3) !important;
   text-shadow: 0 0 3px #00ff00 !important;
+  position: fixed !important;
+  z-index: 1000 !important;
+  max-width: 300px !important;
+  white-space: pre-line !important;
+  word-wrap: break-word !important;
 }
 
 /* Animation for active elements */
