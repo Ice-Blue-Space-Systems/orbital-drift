@@ -1,3 +1,10 @@
+/* Loading animation for contact windows status */
+@keyframes pulse {
+  0% { opacity: 1; }
+  50% { opacity: 0.5; }
+  100% { opacity: 1; }
+}
+
 /* Enhanced Timeline Styling */
 
 /* Override vis-timeline default styles */
@@ -287,4 +294,5 @@
   font-family: 'Courier New', Courier, monospace !important;
   border: 2px solid #00ff00 !important;
   border-radius: 6px !important;
+  animation: pulse 1.5s infinite !important;
 }

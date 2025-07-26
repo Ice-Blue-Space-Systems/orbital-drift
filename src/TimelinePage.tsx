@@ -4,7 +4,7 @@ import { DataSet } from "vis-data";
 import { Timeline } from "vis-timeline/standalone";
 import "vis-timeline/styles/vis-timeline-graph2d.min.css";
 import "./components/TimelineStyles.css";
-import { selectContactWindows } from "./store/contactWindowsSlice";
+import { selectContactWindows, fetchContactWindows } from "./store/contactWindowsSlice";
 import { selectCesiumClockUtc } from "./store/selectors/cesiumClockSelectors";
 import TimelineTools from "./components/TimelineTools";
 import { AppDispatch } from "./store";
@@ -44,6 +44,10 @@ const TimelinePage: React.FC = () => {
   // Get Cesium clock time and multiplier (single source of truth)
   const cesiumClockTime = useSelector(selectCesiumClockUtc);
   const cesiumMultiplier = useSelector((state: any) => state.cesiumClock.multiplier);
+
+  // State for tracking contact windows loading
+  const contactWindowsStatus = useSelector((state: any) => state.contactWindows.status);
+  const contactWindowsError = useSelector((state: any) => state.contactWindows.error);
 
   // Fetch initial data once
   useEffect(() => {
@@ -299,73 +303,109 @@ const TimelinePage: React.FC = () => {
     }
   }, [contactWindows, selectedSatelliteId, selectedGroundStationId, showAllPairs]);
 
+  // Auto-fetch contact windows when selections change
+  useEffect(() => {
+    if (selectedSatelliteId && selectedGroundStationId) {
+      console.log('TimelinePage: Auto-fetching contact windows for:', {
+        satelliteId: selectedSatelliteId,
+        groundStationId: selectedGroundStationId
+      });
+      dispatch(fetchContactWindows({ 
+        satelliteId: selectedSatelliteId, 
+        groundStationId: selectedGroundStationId 
+      }));
+    }
+  }, [selectedSatelliteId, selectedGroundStationId, dispatch]);
+
   // Timeline control functions
   const jumpToNextContactWindow = () => {
     if (!timelineInstance.current || !nextContactWindow) return;
-
-    // Focus on the next contact window
+    
+    const startTime = new Date(nextContactWindow.scheduledAOS);
+    const endTime = new Date(nextContactWindow.scheduledLOS);
+    const duration = endTime.getTime() - startTime.getTime();
+    const buffer = duration * 0.2; // 20% buffer
+    
     timelineInstance.current.setWindow(
-      new Date(nextContactWindow.scheduledAOS),
-      new Date(nextContactWindow.scheduledLOS),
-      { animation: true }
+      new Date(startTime.getTime() - buffer),
+      new Date(endTime.getTime() + buffer)
     );
-
-    // Center the timeline on the next contact window
-    timelineInstance.current.moveTo(new Date(nextContactWindow.scheduledAOS), { animation: true });
   };
 
   const jumpToStart = () => {
-    if (!timelineInstance.current) return;
-
-    const windowsToCheck = showAllPairs ? contactWindows : filteredContactWindows;
-    const firstWindow = windowsToCheck[0];
+    if (!timelineInstance.current || filteredContactWindows.length === 0) return;
+    
+    const earliestWindow = filteredContactWindows.reduce((earliest: ContactWindow, current: ContactWindow) => 
+      new Date(current.scheduledAOS) < new Date(earliest.scheduledAOS) ? current : earliest
+    );
+    
+    const startTime = new Date(earliestWindow.scheduledAOS);
+    const buffer = 2 * 60 * 60 * 1000; // 2 hours buffer
     
     timelineInstance.current.setWindow(
-      new Date(firstWindow?.scheduledAOS || Date.now()),
-      new Date(firstWindow?.scheduledLOS || Date.now() + 3600 * 1000),
-      { animation: true }
+      new Date(startTime.getTime() - buffer),
+      new Date(startTime.getTime() + buffer)
     );
   };
 
   const jumpToNow = () => {
     if (!timelineInstance.current) return;
-
-    const currentTime = new Date();
     
-    // Enable follow mode and center on current time
-    setFollowMode(true);
-    
-    // Center the timeline around current time with a reasonable window
-    const windowDuration = 2 * 60 * 60 * 1000; // 2 hours total window
-    const halfWindow = windowDuration / 2;
+    const now = new Date();
+    const buffer = 2 * 60 * 60 * 1000; // 2 hours buffer
     
     timelineInstance.current.setWindow(
-      new Date(currentTime.getTime() - halfWindow),
-      new Date(currentTime.getTime() + halfWindow),
-      { animation: true }
+      new Date(now.getTime() - buffer),
+      new Date(now.getTime() + buffer)
     );
-    
-    // Move to current time
-    timelineInstance.current.moveTo(currentTime, { animation: true });
-  };
-
-  const toggleFollowMode = () => {
-    setFollowMode(!followMode);
   };
 
   const zoomIn = () => {
     if (!timelineInstance.current) return;
-    timelineInstance.current.zoomIn(0.5);
+    const window = timelineInstance.current.getWindow();
+    const center = new Date((window.start.getTime() + window.end.getTime()) / 2);
+    const duration = window.end.getTime() - window.start.getTime();
+    const newDuration = duration * 0.5; // Zoom in by 50%
+    
+    timelineInstance.current.setWindow(
+      new Date(center.getTime() - newDuration / 2),
+      new Date(center.getTime() + newDuration / 2)
+    );
   };
 
   const zoomOut = () => {
     if (!timelineInstance.current) return;
-    timelineInstance.current.zoomOut(0.5);
+    const window = timelineInstance.current.getWindow();
+    const center = new Date((window.start.getTime() + window.end.getTime()) / 2);
+    const duration = window.end.getTime() - window.start.getTime();
+    const newDuration = duration * 2; // Zoom out by 200%
+    
+    timelineInstance.current.setWindow(
+      new Date(center.getTime() - newDuration / 2),
+      new Date(center.getTime() + newDuration / 2)
+    );
   };
 
   const fitAllWindows = () => {
-    if (!timelineInstance.current) return;
-    timelineInstance.current.fit({ animation: true });
+    if (!timelineInstance.current || filteredContactWindows.length === 0) return;
+    
+    const allTimes = filteredContactWindows.flatMap((win: ContactWindow) => [
+      new Date(win.scheduledAOS),
+      new Date(win.scheduledLOS)
+    ]);
+    
+    const minTime = new Date(Math.min(...allTimes.map((t: Date) => t.getTime())));
+    const maxTime = new Date(Math.max(...allTimes.map((t: Date) => t.getTime())));
+    const buffer = (maxTime.getTime() - minTime.getTime()) * 0.05; // 5% buffer
+    
+    timelineInstance.current.setWindow(
+      new Date(minTime.getTime() - buffer),
+      new Date(maxTime.getTime() + buffer)
+    );
+  };
+
+  const toggleFollowMode = () => {
+    setFollowMode(!followMode);
   };
 
   const toggleShowAllPairs = () => {
@@ -425,6 +465,43 @@ const TimelinePage: React.FC = () => {
           {!showAllPairs && (
             <div style={{ marginTop: "4px", fontSize: "11px", color: "#ff8800" }}>
               <strong>Filter:</strong> Showing selected pairs only
+            </div>
+          )}
+          {/* Contact Windows Status */}
+          {selectedSatelliteId && selectedGroundStationId && (
+            <div style={{ marginTop: "8px", fontSize: "11px" }}>
+              {contactWindowsStatus === "loading" && (
+                <div style={{ color: "#00ffff", animation: "pulse 1s infinite" }}>
+                  🔄 Loading contact windows...
+                </div>
+              )}
+              {contactWindowsStatus === "succeeded" && contactWindows.length > 0 && (
+                <div style={{ color: "#00ff00" }}>
+                  ✅ {contactWindows.length} contact windows loaded
+                </div>
+              )}
+              {contactWindowsStatus === "succeeded" && contactWindows.length === 0 && (
+                <div style={{ color: "#ffaa00" }}>
+                  ⚠️ No contact windows found for this pair
+                </div>
+              )}
+              {contactWindowsStatus === "failed" && (
+                <div style={{ color: "#ff0000" }}>
+                  ❌ Failed to load contact windows
+                  {contactWindowsError && `: ${contactWindowsError}`}
+                </div>
+              )}
+            </div>
+          )}
+          {/* Instruction message when no selections */}
+          {(!selectedSatelliteId || !selectedGroundStationId) && (
+            <div style={{ 
+              marginTop: "8px", 
+              fontSize: "11px", 
+              color: "#aaaaaa",
+              fontStyle: "italic" 
+            }}>
+              💡 Select both a satellite and ground station from the left panel to view contact windows
             </div>
           )}
         </div>
