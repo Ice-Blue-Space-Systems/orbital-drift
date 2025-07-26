@@ -2,11 +2,12 @@
 
 /* Override vis-timeline default styles */
 .vis-timeline {
-  background: linear-gradient(135deg, rgba(0, 20, 0, 0.95), rgba(0, 40, 0, 0.85)) !important;
-  border: 2px solid #00ff00 !important;
-  border-radius: 8px !important;
-  box-shadow: 0 0 20px rgba(0, 255, 0, 0.3) !important;
+  background: transparent !important;
+  border: none !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
   font-family: 'Courier New', Courier, monospace !important;
+  height: 100% !important;
 }
 
 /* Timeline panel styling */
@@ -15,12 +16,13 @@
   border: none !important;
 }
 
-/* Timeline background */
+/* Timeline background with seamless integration */
 .vis-timeline .vis-panel.vis-background {
   background: linear-gradient(to bottom, 
     rgba(0, 30, 0, 0.8) 0%, 
     rgba(0, 15, 0, 0.9) 50%, 
     rgba(0, 20, 0, 0.8) 100%) !important;
+  border: none !important;
 }
 
 /* Time axis styling */

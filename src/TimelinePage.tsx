@@ -573,7 +573,9 @@ const TimelinePage: React.FC = () => {
           ref={timelineRef}
           style={{
             flex: 1,
-            position: "relative"
+            position: "relative",
+            background: "linear-gradient(to bottom, rgba(0, 30, 0, 0.8) 0%, rgba(0, 15, 0, 0.9) 50%, rgba(0, 20, 0, 0.8) 100%)",
+            borderRadius: "0 6px 6px 0", // Only round the right corners to match the container
           }}
         />
       </div>
