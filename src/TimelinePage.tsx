@@ -228,6 +228,11 @@ const TimelinePage: React.FC = () => {
   // Update the timeline when contact windows change
   useEffect(() => {
     if (!timelineInstance.current) return;
+    
+    // Only proceed if we have the necessary data
+    if (!satellites.length || !groundStations.length || !filteredContactWindows.length) {
+      return;
+    }
 
     // Transform filtered contact windows into timeline items and groups using the utility function
     const { items, groups } = transformContactWindowsToTimelineItems(

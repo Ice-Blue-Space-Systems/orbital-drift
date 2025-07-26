@@ -53,6 +53,13 @@ const TimelineTools: React.FC<TimelineToolsProps> = ({
   const selectedGroundStationId = useSelector(
     (state: RootState) => state.mongo.selectedGroundStationId
   );
+  
+  // Get satellites and ground stations data to find names
+  const { satellites, groundStations } = useSelector((state: RootState) => state.mongo);
+  
+  // Find the selected satellite and ground station names
+  const selectedSatellite = satellites.find((sat: any) => sat._id === selectedSatId);
+  const selectedGroundStation = groundStations.find((gs: any) => gs._id === selectedGroundStationId);
     
   return (
     <div className="timeline-tools">
@@ -123,10 +130,13 @@ const TimelineTools: React.FC<TimelineToolsProps> = ({
         <GroundStationPopover />
 
         {/* Contact Windows Popover */}
-        {selectedSatId && selectedGroundStationId && (
+        {selectedSatId && selectedGroundStationId && satellites.length > 0 && groundStations.length > 0 && (
           <ContactWindowsPopover
+            key={`${selectedSatId}-${selectedGroundStationId}-${selectedSatellite?.name || 'unknown'}`}
             satelliteId={selectedSatId}
             groundStationId={selectedGroundStationId}
+            satelliteName={selectedSatellite?.name || "Unknown Satellite"}
+            groundStationName={selectedGroundStation?.name || "Unknown Ground Station"}
           />
         )}
 

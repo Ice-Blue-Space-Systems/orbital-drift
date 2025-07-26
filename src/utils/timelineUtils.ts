@@ -33,8 +33,18 @@ export function transformContactWindowsToTimelineItems(
   windows.forEach(win => {
     const groupId = `${win.satelliteId}-${win.groundStationId}`;
     if (!groupMap.has(groupId)) {
-      const satellite = satellites.find(sat => sat._id === win.satelliteId);
-      const groundStation = groundStations.find(gs => gs._id === win.groundStationId);
+      // Try exact match first
+      let satellite = satellites.find(sat => sat._id === win.satelliteId);
+      let groundStation = groundStations.find(gs => gs._id === win.groundStationId);
+      
+      // If exact match fails, try string comparison (in case of ObjectId vs string issues)
+      if (!satellite) {
+        satellite = satellites.find(sat => String(sat._id) === String(win.satelliteId));
+      }
+      if (!groundStation) {
+        groundStation = groundStations.find(gs => String(gs._id) === String(win.groundStationId));
+      }
+      
       if (satellite && groundStation) {
         groupMap.set(groupId, { satellite, groundStation });
       }
@@ -49,8 +59,17 @@ export function transformContactWindowsToTimelineItems(
 
   const items = windows.map((win, index) => {
     const groupId = `${win.satelliteId}-${win.groundStationId}`;
-    const satellite = satellites.find(sat => sat._id === win.satelliteId);
-    const groundStation = groundStations.find(gs => gs._id === win.groundStationId);
+    
+    // Try exact match first, then string comparison as fallback
+    let satellite = satellites.find(sat => sat._id === win.satelliteId);
+    let groundStation = groundStations.find(gs => gs._id === win.groundStationId);
+    
+    if (!satellite) {
+      satellite = satellites.find(sat => String(sat._id) === String(win.satelliteId));
+    }
+    if (!groundStation) {
+      groundStation = groundStations.find(gs => String(gs._id) === String(win.groundStationId));
+    }
     
     const startTime = new Date(win.scheduledAOS);
     const endTime = new Date(win.scheduledLOS);

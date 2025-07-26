@@ -31,6 +31,13 @@ const GlobeTools: React.FC<GlobeToolsProps> = ({
     (state: RootState) => state.mongo.selectedGroundStationId
   ); // Retrieve selected ground station ID
 
+  // Get satellites and ground stations data to find names
+  const { satellites, groundStations } = useSelector((state: RootState) => state.mongo);
+  
+  // Find the selected satellite and ground station names
+  const selectedSatellite = satellites.find((sat: any) => sat._id === selectedSatelliteId);
+  const selectedGroundStation = groundStations.find((gs: any) => gs._id === selectedGroundStationId);
+
   // Retrieve contact windows from Redux
   const contactWindows = useSelector(selectContactWindows);
 
@@ -134,11 +141,22 @@ const GlobeTools: React.FC<GlobeToolsProps> = ({
           <GroundStationPopover />
 
           {/* Contact Windows Popover */}
-          <ContactWindowsPopover
-            satelliteId={selectedSatelliteId || ''}
-            groundStationId={selectedGroundStationId || ''}
-            showPlaceholder={!selectedSatelliteId || !selectedGroundStationId}
-          />
+          {selectedSatelliteId && selectedGroundStationId && satellites.length > 0 && groundStations.length > 0 && (
+            <ContactWindowsPopover
+              key={`${selectedSatelliteId}-${selectedGroundStationId}-${selectedSatellite?.name || 'unknown'}`}
+              satelliteId={selectedSatelliteId}
+              groundStationId={selectedGroundStationId}
+              satelliteName={selectedSatellite?.name || "Unknown Satellite"}
+              groundStationName={selectedGroundStation?.name || "Unknown Ground Station"}
+            />
+          )}
+          {(!selectedSatelliteId || !selectedGroundStationId) && (
+            <ContactWindowsPopover
+              satelliteId={selectedSatelliteId || ''}
+              groundStationId={selectedGroundStationId || ''}
+              showPlaceholder={true}
+            />
+          )}
         </div>
 
         <div className="globe-tools-divider"></div>
