@@ -210,33 +210,229 @@ function GlobalAppBar() {
                 position: "absolute",
                 top: "48px",
                 right: "0",
-                backgroundColor: theme.backgroundDark, // Theme dark background
-                border: `1px solid ${theme.primary}`, // Theme border
-                color: theme.primary, // Theme text
-                fontFamily: "Courier New, Courier, monospace", // Console-style font
-                borderRadius: "4px",
-                padding: "8px",
-                width: "200px",
-                zIndex: 1001,
+                background: "linear-gradient(135deg, rgba(0, 0, 0, 0.7), rgba(0, 40, 0, 0.6))",
+                backdropFilter: "blur(20px)",
+                WebkitBackdropFilter: "blur(20px)", // Safari support
+                border: `1px solid rgba(${theme.primary.replace('#', '').match(/.{2}/g)?.map(hex => parseInt(hex, 16)).join(', ')}, 0.3)`,
+                borderRadius: "12px",
+                boxShadow: `
+                  0 8px 32px rgba(0, 0, 0, 0.4),
+                  0 0 20px rgba(${theme.primary.replace('#', '').match(/.{2}/g)?.map(hex => parseInt(hex, 16)).join(', ')}, 0.2),
+                  inset 0 1px 0 rgba(255, 255, 255, 0.1)
+                `,
+                color: theme.primary,
+                fontFamily: "Courier New, Courier, monospace",
+                padding: "0",
+                width: "280px",
+                zIndex: 9999, // Highest z-index to appear above everything
+                overflow: "hidden",
               }}
             >
-              {/* Arrow */}
+              {/* Glassmorphic arrow */}
               <div
                 style={{
                   position: "absolute",
-                  top: "-8px",
-                  right: "16px",
-                  width: "0",
-                  height: "0",
-                  borderLeft: "8px solid transparent",
-                  borderRight: "8px solid transparent",
-                  borderBottom: `8px solid ${theme.primary}`, // Theme arrow
+                  top: "-6px",
+                  right: "20px",
+                  width: "12px",
+                  height: "12px",
+                  background: "linear-gradient(135deg, rgba(0, 0, 0, 0.7), rgba(0, 40, 0, 0.6))",
+                  backdropFilter: "blur(20px)",
+                  border: `1px solid rgba(${theme.primary.replace('#', '').match(/.{2}/g)?.map(hex => parseInt(hex, 16)).join(', ')}, 0.3)`,
+                  transform: "rotate(45deg)",
+                  borderBottom: "none",
+                  borderRight: "none",
                 }}
               ></div>
 
-              {/* Empty Box for Now */}
-              <div style={{ textAlign: "center", padding: "16px" }}>
-                Account Actions Placeholder
+              {/* Header */}
+              <div
+                style={{
+                  padding: "16px 20px",
+                  borderBottom: `1px solid rgba(${theme.primary.replace('#', '').match(/.{2}/g)?.map(hex => parseInt(hex, 16)).join(', ')}, 0.2)`,
+                  background: "linear-gradient(135deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.02))",
+                }}
+              >
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "12px",
+                    fontSize: "14px",
+                    fontWeight: "bold",
+                    color: theme.primary,
+                    textShadow: `0 0 10px ${theme.primary}`,
+                  }}
+                >
+                  <FontAwesomeIcon icon={faUserAstronaut} style={{ fontSize: "18px" }} />
+                  <span>Mission Control</span>
+                </div>
+              </div>
+
+              {/* Menu Items */}
+              <div style={{ padding: "8px 0" }}>
+                {/* Sign In / Sign Up */}
+                <div
+                  style={{
+                    padding: "12px 20px",
+                    cursor: "pointer",
+                    transition: "all 0.2s ease",
+                    borderBottom: `1px solid rgba(${theme.primary.replace('#', '').match(/.{2}/g)?.map(hex => parseInt(hex, 16)).join(', ')}, 0.1)`,
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = "rgba(255, 255, 255, 0.05)";
+                    e.currentTarget.style.transform = "translateX(4px)";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = "transparent";
+                    e.currentTarget.style.transform = "translateX(0)";
+                  }}
+                >
+                  <div style={{ display: "flex", alignItems: "center", gap: "12px", fontSize: "13px" }}>
+                    <span style={{ fontSize: "16px" }}>🚀</span>
+                    <div>
+                      <div style={{ fontWeight: "bold" }}>Sign In / Register</div>
+                      <div style={{ fontSize: "11px", opacity: 0.7, marginTop: "2px" }}>
+                        Access mission profiles
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Profile Management */}
+                <div
+                  style={{
+                    padding: "12px 20px",
+                    cursor: "pointer",
+                    transition: "all 0.2s ease",
+                    borderBottom: `1px solid rgba(${theme.primary.replace('#', '').match(/.{2}/g)?.map(hex => parseInt(hex, 16)).join(', ')}, 0.1)`,
+                    opacity: 0.5, // Disabled for now
+                  }}
+                  onMouseEnter={(e) => {
+                    if (e.currentTarget.style.opacity !== "0.5") {
+                      e.currentTarget.style.background = "rgba(255, 255, 255, 0.05)";
+                      e.currentTarget.style.transform = "translateX(4px)";
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = "transparent";
+                    e.currentTarget.style.transform = "translateX(0)";
+                  }}
+                >
+                  <div style={{ display: "flex", alignItems: "center", gap: "12px", fontSize: "13px" }}>
+                    <span style={{ fontSize: "16px" }}>👤</span>
+                    <div>
+                      <div style={{ fontWeight: "bold" }}>Profile Settings</div>
+                      <div style={{ fontSize: "11px", opacity: 0.7, marginTop: "2px" }}>
+                        Manage astronaut profile
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Mission History */}
+                <div
+                  style={{
+                    padding: "12px 20px",
+                    cursor: "pointer",
+                    transition: "all 0.2s ease",
+                    borderBottom: `1px solid rgba(${theme.primary.replace('#', '').match(/.{2}/g)?.map(hex => parseInt(hex, 16)).join(', ')}, 0.1)`,
+                    opacity: 0.5, // Disabled for now
+                  }}
+                  onMouseEnter={(e) => {
+                    if (e.currentTarget.style.opacity !== "0.5") {
+                      e.currentTarget.style.background = "rgba(255, 255, 255, 0.05)";
+                      e.currentTarget.style.transform = "translateX(4px)";
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = "transparent";
+                    e.currentTarget.style.transform = "translateX(0)";
+                  }}
+                >
+                  <div style={{ display: "flex", alignItems: "center", gap: "12px", fontSize: "13px" }}>
+                    <span style={{ fontSize: "16px" }}>📊</span>
+                    <div>
+                      <div style={{ fontWeight: "bold" }}>Mission History</div>
+                      <div style={{ fontSize: "11px", opacity: 0.7, marginTop: "2px" }}>
+                        View past operations
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Preferences */}
+                <div
+                  style={{
+                    padding: "12px 20px",
+                    cursor: "pointer",
+                    transition: "all 0.2s ease",
+                    borderBottom: `1px solid rgba(${theme.primary.replace('#', '').match(/.{2}/g)?.map(hex => parseInt(hex, 16)).join(', ')}, 0.1)`,
+                    opacity: 0.5, // Disabled for now
+                  }}
+                  onMouseEnter={(e) => {
+                    if (e.currentTarget.style.opacity !== "0.5") {
+                      e.currentTarget.style.background = "rgba(255, 255, 255, 0.05)";
+                      e.currentTarget.style.transform = "translateX(4px)";
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = "transparent";
+                    e.currentTarget.style.transform = "translateX(0)";
+                  }}
+                >
+                  <div style={{ display: "flex", alignItems: "center", gap: "12px", fontSize: "13px" }}>
+                    <span style={{ fontSize: "16px" }}>⚙️</span>
+                    <div>
+                      <div style={{ fontWeight: "bold" }}>Preferences</div>
+                      <div style={{ fontSize: "11px", opacity: 0.7, marginTop: "2px" }}>
+                        System configuration
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Help & Support */}
+                <div
+                  style={{
+                    padding: "12px 20px",
+                    cursor: "pointer",
+                    transition: "all 0.2s ease",
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = "rgba(255, 255, 255, 0.05)";
+                    e.currentTarget.style.transform = "translateX(4px)";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = "transparent";
+                    e.currentTarget.style.transform = "translateX(0)";
+                  }}
+                >
+                  <div style={{ display: "flex", alignItems: "center", gap: "12px", fontSize: "13px" }}>
+                    <span style={{ fontSize: "16px" }}>🆘</span>
+                    <div>
+                      <div style={{ fontWeight: "bold" }}>Help & Support</div>
+                      <div style={{ fontSize: "11px", opacity: 0.7, marginTop: "2px" }}>
+                        Mission assistance
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Footer */}
+              <div
+                style={{
+                  padding: "12px 20px",
+                  borderTop: `1px solid rgba(${theme.primary.replace('#', '').match(/.{2}/g)?.map(hex => parseInt(hex, 16)).join(', ')}, 0.2)`,
+                  background: "linear-gradient(135deg, rgba(0, 0, 0, 0.3), rgba(0, 40, 0, 0.2))",
+                  fontSize: "10px",
+                  textAlign: "center",
+                  opacity: 0.8,
+                }}
+              >
+                <div>Orbital Drift Mission Control</div>
+                <div style={{ marginTop: "2px", opacity: 0.6 }}>v1.0.0 Beta</div>
               </div>
             </div>
           )}

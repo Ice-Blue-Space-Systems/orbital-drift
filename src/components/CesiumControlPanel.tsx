@@ -16,6 +16,7 @@ import {
   Tune as TuneIcon,
   Memory as MemoryIcon,
   Palette as PaletteIcon,
+  DragIndicator as DragIndicatorIcon,
 } from "@mui/icons-material";
 import { setCesiumClockMultiplier } from "../store/cesiumClockSlice";
 import { setShowCesiumOptions } from "../store/mongoSlice";
@@ -36,13 +37,17 @@ const CesiumControlPanel: React.FC<CesiumControlPanelProps> = ({
   
   const [isExpanded, setIsExpanded] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
+  const [isPanelDragging, setIsPanelDragging] = useState(false);
+  const [panelPosition, setPanelPosition] = useState({ x: 0, y: 0 });
   const [rotation, setRotation] = useState(0);
   const [speedMode, setSpeedMode] = useState<'dial' | 'slider'>('dial');
   const [currentTime, setCurrentTime] = useState(new Date());
   const [memoryUsage, setMemoryUsage] = useState(0);
   
   const dialRef = useRef<HTMLDivElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
   const centerRef = useRef({ x: 0, y: 0 });
+  const dragStartRef = useRef({ x: 0, y: 0, panelX: 0, panelY: 0 });
 
   const minSpeed = 0.1;
   const maxSpeed = 1000;
@@ -149,12 +154,81 @@ const CesiumControlPanel: React.FC<CesiumControlPanelProps> = ({
     dispatch(setCesiumClockMultiplier(newMultiplier));
   };
 
+  // Panel dragging handlers
+  const handlePanelMouseDown = (e: React.MouseEvent) => {
+    // Only start dragging if clicking on the header/title area, not controls
+    const target = e.target as HTMLElement;
+    if (target.closest('button') || target.closest('[role="button"]') || target.closest('.speed-dial')) {
+      return;
+    }
+
+    e.preventDefault();
+    setIsPanelDragging(true);
+    
+    dragStartRef.current = {
+      x: e.clientX,
+      y: e.clientY,
+      panelX: panelPosition.x,
+      panelY: panelPosition.y
+    };
+
+    const handlePanelMouseMove = (e: MouseEvent) => {
+      const deltaX = e.clientX - dragStartRef.current.x;
+      const deltaY = e.clientY - dragStartRef.current.y;
+      
+      setPanelPosition({
+        x: dragStartRef.current.panelX + deltaX,
+        y: dragStartRef.current.panelY + deltaY
+      });
+    };
+
+    const handlePanelMouseUp = () => {
+      setIsPanelDragging(false);
+      document.removeEventListener("mousemove", handlePanelMouseMove);
+      document.removeEventListener("mouseup", handlePanelMouseUp);
+    };
+
+    document.addEventListener("mousemove", handlePanelMouseMove);
+    document.addEventListener("mouseup", handlePanelMouseUp);
+  };
+
   const getPositionStyles = () => {
     const baseStyles = {
       position: "fixed" as const,
       zIndex: 2000,
+      cursor: isPanelDragging ? 'grabbing' : 'grab',
+      transition: isPanelDragging ? 'none' : 'all 0.2s ease',
     };
 
+    // If panel has been dragged, use custom position with transform
+    if (panelPosition.x !== 0 || panelPosition.y !== 0) {
+      // Get the initial position and apply the drag offset
+      let initialStyles;
+      switch (position) {
+        case "top-left":
+          initialStyles = { top: "80px", left: "20px" };
+          break;
+        case "top-right":
+          initialStyles = { top: "80px", right: "20px" };
+          break;
+        case "bottom-left":
+          initialStyles = { bottom: "20px", left: "20px" };
+          break;
+        case "bottom-right":
+          initialStyles = { bottom: "20px", right: "20px" };
+          break;
+        default:
+          initialStyles = { top: "80px", right: "20px" };
+      }
+      
+      return {
+        ...baseStyles,
+        ...initialStyles,
+        transform: `translate(${panelPosition.x}px, ${panelPosition.y}px)`,
+      };
+    }
+
+    // Otherwise use default position based on position prop
     switch (position) {
       case "top-left":
         return { ...baseStyles, top: "80px", left: "20px" };
@@ -182,9 +256,10 @@ const CesiumControlPanel: React.FC<CesiumControlPanelProps> = ({
   const presetSpeeds = [0.1, 0.5, 1, 2, 5, 10, 50, 100, 500, 1000];
 
   return (
-    <Box sx={{ ...getPositionStyles() }}>
+    <Box sx={{ ...getPositionStyles() }} ref={panelRef}>
       {/* Main Control Panel */}
       <Box
+        onMouseDown={handlePanelMouseDown}
         sx={{
           background: theme.background,
           backdropFilter: 'blur(20px)',
@@ -229,6 +304,18 @@ const CesiumControlPanel: React.FC<CesiumControlPanelProps> = ({
           padding: '8px 4px'
         }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <DragIndicatorIcon 
+              sx={{ 
+                color: theme.textSecondary, 
+                fontSize: 16,
+                cursor: 'grab',
+                opacity: 0.7,
+                '&:hover': {
+                  opacity: 1,
+                  color: theme.primary,
+                }
+              }} 
+            />
             <TuneIcon sx={{ color: theme.primary, fontSize: 20 }} />
             <Typography 
               variant="body2" 
