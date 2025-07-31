@@ -287,11 +287,6 @@ const CesiumControlPanel: React.FC<CesiumControlPanelProps> = ({
             maskComposite: 'exclude',
             opacity: isExpanded ? 1 : 0,
             transition: 'opacity 0.4s ease',
-            animation: isExpanded ? 'border-flow 4s linear infinite' : 'none',
-            '@keyframes border-flow': {
-              '0%': { transform: 'rotate(0deg)' },
-              '100%': { transform: 'rotate(360deg)' },
-            },
           },
         }}
       >
