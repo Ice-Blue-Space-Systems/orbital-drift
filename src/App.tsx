@@ -7,7 +7,7 @@ import {
   Navigate,
   useNavigate,
 } from "react-router-dom";
-import { AppBar, Toolbar, IconButton, Tooltip, Box } from "@mui/material";
+import { AppBar, Toolbar, IconButton, Tooltip, Box, styled } from "@mui/material";
 import PublicIcon from "@mui/icons-material/Public";
 import TimelineIcon from "@mui/icons-material/Timeline";
 import SatelliteIcon from "@mui/icons-material/SatelliteAlt";
@@ -28,6 +28,59 @@ import "./App.css";
 import { selectCesiumClockUtc } from "./store/selectors/cesiumClockSelectors";
 import { useGlobalClock } from "./hooks/useGlobalClock";
 import { ThemeProvider, useTheme } from "./contexts/ThemeContext";
+
+// Custom Glassmorphic Tooltip Component
+const GlassmorphicTooltip: React.FC<{ title: string; children: React.ReactElement }> = ({ 
+  title, 
+  children 
+}) => {
+  const { theme } = useTheme();
+  
+  const StyledTooltip = styled(({ className, ...props }: any) => (
+    <Tooltip {...props} classes={{ popper: className }} />
+  ))(() => ({
+    [`& .MuiTooltip-tooltip`]: {
+      backgroundColor: 'transparent',
+      background: theme.background,
+      backdropFilter: 'blur(20px)',
+      WebkitBackdropFilter: 'blur(20px)',
+      border: `1px solid rgba(${theme.primary.replace('#', '').match(/.{2}/g)?.map(hex => parseInt(hex, 16)).join(', ')}, 0.3)`,
+      borderRadius: '8px',
+      boxShadow: `
+        0 8px 32px rgba(0, 0, 0, 0.4),
+        0 0 20px rgba(${theme.primary.replace('#', '').match(/.{2}/g)?.map(hex => parseInt(hex, 16)).join(', ')}, 0.2),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1)
+      `,
+      color: theme.primary,
+      fontFamily: '"Courier New", Courier, monospace',
+      fontSize: '12px',
+      fontWeight: 'bold',
+      textShadow: `0 0 10px ${theme.primary}`,
+      maxWidth: 220,
+      padding: '8px 12px',
+    },
+    [`& .MuiTooltip-arrow`]: {
+      color: 'transparent',
+      '&::before': {
+        backgroundColor: 'transparent',
+        background: theme.background,
+        backdropFilter: 'blur(20px)',
+        WebkitBackdropFilter: 'blur(20px)',
+        border: `1px solid rgba(${theme.primary.replace('#', '').match(/.{2}/g)?.map(hex => parseInt(hex, 16)).join(', ')}, 0.3)`,
+        boxShadow: `
+          0 4px 16px rgba(0, 0, 0, 0.3),
+          0 0 10px rgba(${theme.primary.replace('#', '').match(/.{2}/g)?.map(hex => parseInt(hex, 16)).join(', ')}, 0.2)
+        `,
+      },
+    },
+  }));
+
+  return (
+    <StyledTooltip title={title} arrow>
+      {children}
+    </StyledTooltip>
+  );
+};
 
 /** A simple top nav with the four route icons. */
 function GlobalAppBar() {
@@ -67,7 +120,7 @@ function GlobalAppBar() {
         }}
       >
         {/* Globe Icon */}
-        <Tooltip title="Globe" arrow>
+        <GlassmorphicTooltip title="Globe">
           <IconButton
             onClick={() => navigate("/globe")}
             style={{
@@ -82,10 +135,10 @@ function GlobalAppBar() {
           >
             <PublicIcon style={{ fontSize: "24px" }} />
           </IconButton>
-        </Tooltip>
+        </GlassmorphicTooltip>
 
         {/* Timeline Icon */}
-        <Tooltip title="Timeline" arrow>
+        <GlassmorphicTooltip title="Timeline">
           <IconButton
             onClick={() => navigate("/timeline")}
             style={{
@@ -100,10 +153,10 @@ function GlobalAppBar() {
           >
             <TimelineIcon style={{ fontSize: "24px" }} />
           </IconButton>
-        </Tooltip>
+        </GlassmorphicTooltip>
 
         {/* Satellites Icon */}
-        <Tooltip title="Satellites" arrow>
+        <GlassmorphicTooltip title="Satellites">
           <IconButton
             onClick={() => navigate("/sats")}
             style={{
@@ -118,10 +171,10 @@ function GlobalAppBar() {
           >
             <SatelliteIcon style={{ fontSize: "24px" }} />
           </IconButton>
-        </Tooltip>
+        </GlassmorphicTooltip>
 
         {/* Ground Stations Icon */}
-        <Tooltip title="Ground Stations" arrow>
+        <GlassmorphicTooltip title="Ground Stations">
           <IconButton
             onClick={() => navigate("/gs")}
             style={{
@@ -136,10 +189,10 @@ function GlobalAppBar() {
           >
             <RadarIcon style={{ fontSize: "24px" }} />
           </IconButton>
-        </Tooltip>
+        </GlassmorphicTooltip>
 
         {/* Live Mode Toggle */}
-        <Tooltip title="Live Mode" arrow>
+        <GlassmorphicTooltip title="Live Mode">
           <IconButton
             onClick={() => dispatch(setLiveMode(!liveMode))} // Toggle liveMode
             className="live-mode-button" // Add a class for styling
@@ -159,7 +212,7 @@ function GlobalAppBar() {
               }}
             />
           </IconButton>
-        </Tooltip>
+        </GlassmorphicTooltip>
 
         {/* UTC Clock */}
         <div
@@ -187,7 +240,7 @@ function GlobalAppBar() {
           onMouseEnter={handleAccountPopoverOpen}
           onMouseLeave={handleAccountPopoverClose}
         >
-          <Tooltip title="Account Actions" arrow>
+          <GlassmorphicTooltip title="Account Actions">
             <IconButton
               style={{
                 color: "#888888",
@@ -201,7 +254,7 @@ function GlobalAppBar() {
                 style={{ fontSize: "24px" }}
               />
             </IconButton>
-          </Tooltip>
+          </GlassmorphicTooltip>
 
           {/* Account Actions Popover */}
           {accountPopoverOpen && (

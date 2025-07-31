@@ -129,6 +129,13 @@ const GlobeTools: React.FC<GlobeToolsProps> = ({
         borderRadius: 0,
         boxShadow: `0 4px 20px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(${theme.primaryRGB}, 0.2)`,
         transition: 'all 0.3s ease-in-out',
+        // CSS Custom Properties for the CSS file to use
+        '--theme-primary': theme.primary,
+        '--theme-primary-rgb': theme.primaryRGB,
+        '--theme-background': theme.background,
+        '--theme-card-background': theme.cardBackground,
+        '--theme-glow-color': theme.glowColor,
+        '--theme-text-shadow': theme.textShadow,
       }}
     >
       {/* Globe Tools Button Container */}
