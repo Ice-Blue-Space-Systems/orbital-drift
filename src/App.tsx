@@ -181,30 +181,9 @@ function GlobalAppBar() {
           )}
         </div>
 
-        {/* Theme Switcher */}
-        <div
-          style={{ position: "relative", marginLeft: "auto" }}
-        >
-          <Tooltip title="Switch Theme" arrow>
-            <IconButton
-              style={{
-                color: theme.textSecondary,
-                transition: "color 0.2s ease-in-out",
-              }}
-              onMouseEnter={(e) => (e.currentTarget.style.color = theme.primary)}
-              onMouseLeave={(e) => (e.currentTarget.style.color = theme.textSecondary)}
-            >
-              {/* <Brightness4Icon style={{ fontSize: "24px" }} /> */}
-              <span>🎨</span>
-            </IconButton>
-          </Tooltip>
-
-          {/* Theme popover disabled - using global theme from CesiumControlPanel */}
-        </div>
-
         {/* Account Actions Button */}
         <div
-          style={{ position: "relative", marginLeft: "16px" }}
+          style={{ position: "relative", marginLeft: "auto" }}
           onMouseEnter={handleAccountPopoverOpen}
           onMouseLeave={handleAccountPopoverClose}
         >
