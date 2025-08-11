@@ -525,10 +525,17 @@ const TimelinePage: React.FC = () => {
           marginTop: "16px",
           height: "80vh",
           display: "flex",
-          background: `linear-gradient(135deg, ${theme.theme.cardBackground}, rgba(0, 40, 0, 0.85))`,
-          border: `2px solid ${theme.theme.primary}`,
-          borderRadius: "8px",
-          boxShadow: `0 0 20px rgba(${theme.theme.primaryRGB}, 0.3), inset 0 0 10px rgba(${theme.theme.primaryRGB}, 0.1)`,
+          background: theme.theme.background,
+          backdropFilter: "blur(20px)",
+          WebkitBackdropFilter: "blur(20px)",
+          border: `1px solid rgba(${theme.theme.primaryRGB}, 0.3)`,
+          borderRadius: "12px",
+          boxShadow: `
+            0 8px 32px rgba(0, 0, 0, 0.4),
+            0 0 40px rgba(${theme.theme.primaryRGB}, 0.2),
+            inset 0 1px 0 rgba(255, 255, 255, 0.1),
+            inset 0 0 20px rgba(${theme.theme.primaryRGB}, 0.05)
+          `,
           overflow: "hidden",
         }}
       >
@@ -536,8 +543,10 @@ const TimelinePage: React.FC = () => {
         <div
           style={{
             width: "250px",
-            borderRight: `2px solid ${theme.theme.primary}`,
+            borderRight: `1px solid rgba(${theme.theme.primaryRGB}, 0.3)`,
             background: theme.theme.cardBackground,
+            backdropFilter: "blur(10px)",
+            WebkitBackdropFilter: "blur(10px)",
             display: "flex",
             flexDirection: "column",
             overflow: "auto",
