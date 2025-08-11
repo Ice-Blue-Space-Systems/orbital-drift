@@ -9,21 +9,21 @@
     rgba(0, 0, 0, 0.7) 50%,
     transparent 100%
   );
-  border-top: 3px solid #00ff00;
+  border-top: 3px solid var(--theme-primary);
   border-left: none;
   border-right: none;
   border-bottom: none;
   border-radius: 0;
   box-shadow: 
     0 4px 20px rgba(0, 0, 0, 0.3),
-    inset 0 1px 0 rgba(0, 255, 0, 0.2);
+    inset 0 1px 0 rgba(var(--theme-primary-rgb), 0.2);
   transition: all 0.3s ease-in-out;
   z-index: 1000;
   width: auto;
   min-width: fit-content;
 }
 
-/* Green Arrow Connector pointing UP to Timeline icon */
+/* Arrow Connector pointing UP to Timeline icon */
 .timeline-tools::before {
   content: "";
   position: absolute;
@@ -34,23 +34,23 @@
   height: 0;
   border-left: 10px solid transparent;
   border-right: 10px solid transparent;
-  border-bottom: 8px solid #00ff00;
+  border-bottom: 8px solid var(--theme-primary);
   filter: drop-shadow(0 -2px 4px rgba(0, 0, 0, 0.3));
   z-index: 1001;
   pointer-events: none;
 }
 
 .timeline-tools:hover {
-  border-top-color: #00ff00;
+  border-top-color: var(--theme-primary);
   box-shadow: 
     0 6px 25px rgba(0, 0, 0, 0.4),
-    inset 0 1px 0 rgba(0, 255, 0, 0.3),
-    0 0 15px rgba(0, 255, 0, 0.2);
+    inset 0 1px 0 rgba(var(--theme-primary-rgb), 0.3),
+    0 0 15px rgba(var(--theme-primary-rgb), 0.2);
 }
 
 .timeline-tools:hover::before {
-  border-bottom-color: #00ff00;
-  filter: drop-shadow(0 -2px 4px rgba(0, 0, 0, 0.4)) drop-shadow(0 0 5px rgba(0, 255, 0, 0.3));
+  border-bottom-color: var(--theme-primary);
+  filter: drop-shadow(0 -2px 4px rgba(0, 0, 0, 0.4)) drop-shadow(0 0 5px rgba(var(--theme-primary-rgb), 0.3));
 }
 
 /* Timeline Tools Button Container */
@@ -72,15 +72,15 @@
   padding: 4px;
   border-radius: 4px;
   background: rgba(0, 0, 0, 0.3);
-  border: 1px solid rgba(0, 255, 0, 0.1);
+  border: 1px solid rgba(var(--theme-primary-rgb), 0.1);
   transition: all 0.2s ease;
   flex-shrink: 0;
 }
 
 .timeline-tools-group:hover {
   background: rgba(0, 0, 0, 0.4);
-  border-color: rgba(0, 255, 0, 0.3);
-  box-shadow: 0 0 8px rgba(0, 255, 0, 0.1);
+  border-color: rgba(var(--theme-primary-rgb), 0.3);
+  box-shadow: 0 0 8px rgba(var(--theme-primary-rgb), 0.1);
 }
 
 /* Icon Button Styling - Clean Console Style */
@@ -97,23 +97,23 @@
 }
 
 .timeline-tools .icon-button:hover {
-  color: #00ff00;
-  background: rgba(0, 255, 0, 0.1);
-  border-color: rgba(0, 255, 0, 0.2);
-  box-shadow: 0 0 8px rgba(0, 255, 0, 0.2);
+  color: var(--theme-primary);
+  background: rgba(var(--theme-primary-rgb), 0.1);
+  border-color: rgba(var(--theme-primary-rgb), 0.2);
+  box-shadow: 0 0 8px rgba(var(--theme-primary-rgb), 0.2);
 }
 
 .timeline-tools .icon-button:active {
   transform: translateY(1px);
-  box-shadow: 0 0 4px rgba(0, 255, 0, 0.1);
+  box-shadow: 0 0 4px rgba(var(--theme-primary-rgb), 0.1);
 }
 
 /* Active/Selected Button State */
 .timeline-tools .icon-button.active {
-  color: #00ff00 !important;
-  background: rgba(0, 255, 0, 0.15) !important;
-  border-color: rgba(0, 255, 0, 0.4) !important;
-  box-shadow: 0 0 12px rgba(0, 255, 0, 0.3) !important;
+  color: var(--theme-primary) !important;
+  background: rgba(var(--theme-primary-rgb), 0.15) !important;
+  border-color: rgba(var(--theme-primary-rgb), 0.4) !important;
+  box-shadow: 0 0 12px rgba(var(--theme-primary-rgb), 0.3) !important;
 }
 
 /* Divider Styling */
@@ -123,8 +123,8 @@
   background: linear-gradient(
     to bottom,
     transparent,
-    rgba(0, 255, 0, 0.3) 20%,
-    rgba(0, 255, 0, 0.3) 80%,
+    rgba(var(--theme-primary-rgb), 0.3) 20%,
+    rgba(var(--theme-primary-rgb), 0.3) 80%,
     transparent
   );
   margin: 0 8px;
@@ -140,9 +140,9 @@
   transform: translate(-50%, -50%);
   width: 3px;
   height: 3px;
-  background: #00ff00;
+  background: var(--theme-primary);
   border-radius: 50%;
-  box-shadow: 0 0 6px rgba(0, 255, 0, 0.6);
+  box-shadow: 0 0 6px rgba(var(--theme-primary-rgb), 0.6);
 }
 
 /* Responsive Design */
@@ -203,7 +203,7 @@
 
 /* Style the current time bar */
 .vis-current-time {
-  background-color: #00ff00; /* Bright green color */
+  background-color: var(--theme-primary); /* Theme primary color */
   width: 4px; /* Make it thicker */
   border-radius: 2px; /* Add rounded edges */
 }
@@ -214,7 +214,7 @@
   display: block;
   width: 12px;
   height: 12px;
-  background-color: #00ff00; /* Bright green handle */
+  background-color: var(--theme-primary); /* Theme primary handle */
   border: 2px solid black; /* Add a black border for contrast */
   border-radius: 50%; /* Make it circular */
   position: absolute;

@@ -457,7 +457,7 @@ const TimelinePage: React.FC = () => {
           style={{
             marginTop: "85px", // Push the label below the toolbar
             textAlign: "center",
-            color: "#00ff00",
+            color: theme.theme.primary,
             fontFamily: "Courier New, Courier, monospace",
           }}
         >
@@ -469,12 +469,12 @@ const TimelinePage: React.FC = () => {
             <strong>Selected Ground Station:</strong>{" "}
             {selectedGroundStation ? selectedGroundStation.name : "None"}
           </div>
-          <div style={{ marginTop: "8px", fontSize: "12px", color: "#ffff00" }}>
+          <div style={{ marginTop: "8px", fontSize: "12px", color: theme.theme.accent }}>
             <strong>Simulation Speed:</strong> {cesiumMultiplier}x
             {cesiumMultiplier !== 1 && " (Synced with Cesium)"}
           </div>
           {!showAllPairs && (
-            <div style={{ marginTop: "4px", fontSize: "11px", color: "#ff8800" }}>
+            <div style={{ marginTop: "4px", fontSize: "11px", color: theme.theme.warning }}>
               <strong>Filter:</strong> Showing selected pairs only
             </div>
           )}
@@ -482,22 +482,22 @@ const TimelinePage: React.FC = () => {
           {selectedSatelliteId && selectedGroundStationId && (
             <div style={{ marginTop: "8px", fontSize: "11px" }}>
               {contactWindowsStatus === "loading" && (
-                <div style={{ color: "#00ffff", animation: "pulse 1s infinite" }}>
+                <div style={{ color: theme.theme.accent, animation: "pulse 1s infinite" }}>
                   🔄 Loading contact windows...
                 </div>
               )}
               {contactWindowsStatus === "succeeded" && contactWindows.length > 0 && (
-                <div style={{ color: "#00ff00" }}>
+                <div style={{ color: theme.theme.primary }}>
                   ✅ {contactWindows.length} contact windows loaded
                 </div>
               )}
               {contactWindowsStatus === "succeeded" && contactWindows.length === 0 && (
-                <div style={{ color: "#ffaa00" }}>
+                <div style={{ color: theme.theme.warning }}>
                   ⚠️ No contact windows found for this pair
                 </div>
               )}
               {contactWindowsStatus === "failed" && (
-                <div style={{ color: "#ff0000" }}>
+                <div style={{ color: theme.theme.error }}>
                   ❌ Failed to load contact windows
                   {contactWindowsError && `: ${contactWindowsError}`}
                 </div>
@@ -509,7 +509,7 @@ const TimelinePage: React.FC = () => {
             <div style={{ 
               marginTop: "8px", 
               fontSize: "11px", 
-              color: "#aaaaaa",
+              color: theme.theme.textSecondary,
               fontStyle: "italic" 
             }}>
               💡 Select both a satellite and ground station from the left panel to view contact windows
@@ -525,10 +525,10 @@ const TimelinePage: React.FC = () => {
           marginTop: "16px",
           height: "80vh",
           display: "flex",
-          background: "linear-gradient(135deg, rgba(0, 20, 0, 0.95), rgba(0, 40, 0, 0.85))",
-          border: "2px solid #00ff00",
+          background: `linear-gradient(135deg, ${theme.theme.cardBackground}, rgba(0, 40, 0, 0.85))`,
+          border: `2px solid ${theme.theme.primary}`,
           borderRadius: "8px",
-          boxShadow: "0 0 20px rgba(0, 255, 0, 0.3), inset 0 0 10px rgba(0, 255, 0, 0.1)",
+          boxShadow: `0 0 20px rgba(${theme.theme.primaryRGB}, 0.3), inset 0 0 10px rgba(${theme.theme.primaryRGB}, 0.1)`,
           overflow: "hidden",
         }}
       >
@@ -536,8 +536,8 @@ const TimelinePage: React.FC = () => {
         <div
           style={{
             width: "250px",
-            borderRight: "2px solid #00ff00",
-            background: "rgba(0, 30, 0, 0.95)",
+            borderRight: `2px solid ${theme.theme.primary}`,
+            background: theme.theme.cardBackground,
             display: "flex",
             flexDirection: "column",
             overflow: "auto",
@@ -545,17 +545,17 @@ const TimelinePage: React.FC = () => {
         >
           {/* Satellites section */}
           <div style={{ 
-            borderBottom: "1px solid #00ff00", 
+            borderBottom: `1px solid ${theme.theme.primary}`, 
             padding: "8px",
-            background: "rgba(0, 40, 0, 0.8)"
+            background: theme.theme.backgroundSecondary
           }}>
             <h3 style={{
               margin: 0,
-              color: "#00ff00",
+              color: theme.theme.primary,
               fontFamily: "Courier New, Courier, monospace",
               fontSize: "12px",
               textAlign: "center",
-              textShadow: "0 0 3px #00ff00"
+              textShadow: `0 0 3px ${theme.theme.primary}`
             }}>
               SATELLITES
             </h3>
@@ -566,13 +566,13 @@ const TimelinePage: React.FC = () => {
                 key={satellite._id}
                 style={{
                   padding: "6px 10px",
-                  borderBottom: "1px solid rgba(0, 255, 0, 0.2)",
-                  color: selectedSatelliteId === satellite._id ? "#ffff00" : "#00ff00",
+                  borderBottom: `1px solid rgba(${theme.theme.primaryRGB}, 0.2)`,
+                  color: selectedSatelliteId === satellite._id ? theme.theme.warning : theme.theme.primary,
                   fontFamily: "Courier New, Courier, monospace",
                   fontSize: "11px",
                   cursor: "pointer",
                   background: selectedSatelliteId === satellite._id 
-                    ? "rgba(255, 255, 0, 0.1)" 
+                    ? `rgba(${theme.theme.warning.replace('#', '').match(/.{2}/g)?.map(hex => parseInt(hex, 16)).join(', ')}, 0.1)` 
                     : "transparent",
                   transition: "all 0.2s ease",
                 }}
@@ -600,18 +600,18 @@ const TimelinePage: React.FC = () => {
 
           {/* Ground Stations section */}
           <div style={{ 
-            borderTop: "1px solid #00ff00",
-            borderBottom: "1px solid #00ff00", 
+            borderTop: `1px solid ${theme.theme.primary}`,
+            borderBottom: `1px solid ${theme.theme.primary}`, 
             padding: "8px",
-            background: "rgba(0, 40, 0, 0.8)"
+            background: theme.theme.backgroundSecondary
           }}>
             <h3 style={{
               margin: 0,
-              color: "#00ff00",
+              color: theme.theme.primary,
               fontFamily: "Courier New, Courier, monospace",
               fontSize: "12px",
               textAlign: "center",
-              textShadow: "0 0 3px #00ff00"
+              textShadow: `0 0 3px ${theme.theme.primary}`
             }}>
               GROUND STATIONS
             </h3>
@@ -622,20 +622,20 @@ const TimelinePage: React.FC = () => {
                 key={groundStation._id}
                 style={{
                   padding: "6px 10px",
-                  borderBottom: "1px solid rgba(0, 255, 0, 0.2)",
-                  color: selectedGroundStationId === groundStation._id ? "#ffff00" : "#00ff00",
+                  borderBottom: `1px solid rgba(${theme.theme.primaryRGB}, 0.2)`,
+                  color: selectedGroundStationId === groundStation._id ? theme.theme.warning : theme.theme.primary,
                   fontFamily: "Courier New, Courier, monospace",
                   fontSize: "11px",
                   cursor: "pointer",
                   background: selectedGroundStationId === groundStation._id 
-                    ? "rgba(255, 255, 0, 0.1)" 
+                    ? `rgba(${theme.theme.warning.replace('#', '').match(/.{2}/g)?.map(hex => parseInt(hex, 16)).join(', ')}, 0.1)` 
                     : "transparent",
                   transition: "all 0.2s ease",
                 }}
                 onClick={() => dispatch({ type: 'mongo/setSelectedGroundStationId', payload: groundStation._id })}
                 onMouseEnter={(e) => {
                   if (selectedGroundStationId !== groundStation._id) {
-                    e.currentTarget.style.background = "rgba(0, 255, 0, 0.1)";
+                    e.currentTarget.style.background = `rgba(${theme.theme.primaryRGB}, 0.1)`;
                   }
                 }}
                 onMouseLeave={(e) => {
@@ -662,7 +662,7 @@ const TimelinePage: React.FC = () => {
           style={{
             flex: 1,
             position: "relative",
-            background: "linear-gradient(to bottom, rgba(0, 30, 0, 0.8) 0%, rgba(0, 15, 0, 0.9) 50%, rgba(0, 20, 0, 0.8) 100%)",
+            background: theme.theme.backgroundGradient,
             borderRadius: "0 6px 6px 0", // Only round the right corners to match the container
           }}
         />

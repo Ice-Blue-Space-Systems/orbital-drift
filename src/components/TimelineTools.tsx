@@ -17,6 +17,7 @@ import ConsolePopover from "./ConsolePopover"; // Import ConsolePopover
 import "./TimelineTools.css"; // Import the CSS file
 import { useSelector } from "react-redux";
 import { RootState } from "../store";
+import { useTheme } from "../contexts/ThemeContext";
 
 export interface TimelineToolsProps {
   onJumpToNext: () => void;
@@ -47,6 +48,7 @@ const TimelineTools: React.FC<TimelineToolsProps> = ({
   debugInfo,
   nextContactWindow,
 }) => {
+  const { theme } = useTheme();
   const selectedSatId = useSelector(
     (state: RootState) => state.mongo.selectedSatId
   );
@@ -62,7 +64,14 @@ const TimelineTools: React.FC<TimelineToolsProps> = ({
   const selectedGroundStation = groundStations.find((gs: any) => gs._id === selectedGroundStationId);
     
   return (
-    <div className="timeline-tools">
+    <div 
+      className="timeline-tools"
+      style={{
+        // CSS Custom Properties for the CSS file to use
+        '--theme-primary': theme.primary,
+        '--theme-primary-rgb': theme.primaryRGB,
+      } as React.CSSProperties}
+    >
       {/* Timeline Buttons Container */}
       <div className="timeline-tools-buttons">
         <div className="timeline-tools-group">
