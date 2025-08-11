@@ -9,7 +9,43 @@
   overflow-x: auto;
 }
 
+/* Enhanced Glassmorphic Arrow Connector pointing UP to Ground Stations icon */
 .gs-page::before {
+  content: "";
+  position: fixed;
+  top: 64px;
+  left: 198px; /* Position to align with Ground Stations icon: 16px + 16px + 24px + 16px + 24px + 16px + 24px + 16px + 24px + 16px + (24px/2) */
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: 12px solid transparent;
+  border-right: 12px solid transparent;
+  border-bottom: 10px solid var(--theme-primary, #00ff41);
+  filter: 
+    drop-shadow(0 2px 4px rgba(0, 0, 0, 0.4))
+    drop-shadow(0 0 8px rgba(var(--theme-primary-rgb, 0, 255, 65), 0.3))
+    drop-shadow(0 0 15px rgba(var(--theme-primary-rgb, 0, 255, 65), 0.2));
+  z-index: 1001;
+  pointer-events: none;
+  animation: gs-arrow-glow 2s ease-in-out infinite alternate;
+}
+
+@keyframes gs-arrow-glow {
+  0% {
+    filter: 
+      drop-shadow(0 2px 4px rgba(0, 0, 0, 0.4))
+      drop-shadow(0 0 8px rgba(var(--theme-primary-rgb, 0, 255, 65), 0.3))
+      drop-shadow(0 0 15px rgba(var(--theme-primary-rgb, 0, 255, 65), 0.2));
+  }
+  100% {
+    filter: 
+      drop-shadow(0 2px 6px rgba(0, 0, 0, 0.5))
+      drop-shadow(0 0 12px rgba(var(--theme-primary-rgb, 0, 255, 65), 0.5))
+      drop-shadow(0 0 25px rgba(var(--theme-primary-rgb, 0, 255, 65), 0.3));
+  }
+}
+
+.gs-page::after {
   content: '';
   position: fixed;
   top: 0;

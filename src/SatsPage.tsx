@@ -498,7 +498,21 @@ export default function SatsPage() {
   ];
 
   return (
-    <div className="sats-page">
+    <div 
+      className="sats-page"
+      style={{
+        // CSS Custom Properties for the CSS file to use
+        '--theme-primary': theme.theme.primary,
+        '--theme-primary-rgb': theme.theme.primaryRGB,
+        '--theme-background': theme.theme.background,
+        '--theme-card-background': theme.theme.cardBackground,
+        '--theme-glow-color': theme.theme.glowColor,
+        '--theme-text-shadow': theme.theme.textShadow,
+        '--theme-background-gradient': theme.theme.backgroundGradient,
+        '--theme-background-dark': theme.theme.backgroundDark,
+        '--theme-border-gradient': theme.theme.borderGradient,
+      } as React.CSSProperties}
+    >
       {/* Header Section */}
       <Box className="sats-header">
         <Typography variant="h4" className="sats-title">

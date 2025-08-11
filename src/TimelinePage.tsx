@@ -414,12 +414,23 @@ const TimelinePage: React.FC = () => {
 
   return (
     <div
+      className="timeline-page"
       style={{
         height: "100vh",
         backgroundColor: "black", // Set the entire page background to black
         display: "flex",
         flexDirection: "column",
-      }}
+        // CSS Custom Properties for the CSS file to use
+        '--theme-primary': theme.theme.primary,
+        '--theme-primary-rgb': theme.theme.primaryRGB,
+        '--theme-background': theme.theme.background,
+        '--theme-card-background': theme.theme.cardBackground,
+        '--theme-glow-color': theme.theme.glowColor,
+        '--theme-text-shadow': theme.theme.textShadow,
+        '--theme-background-gradient': theme.theme.backgroundGradient,
+        '--theme-background-dark': theme.theme.backgroundDark,
+        '--theme-border-gradient': theme.theme.borderGradient,
+      } as React.CSSProperties}
     >
       {/* Container for TimelineTools and Label */}
       <div style={{ position: "relative" }}>

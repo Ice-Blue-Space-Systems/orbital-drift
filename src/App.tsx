@@ -263,7 +263,7 @@ function GlobalAppBar() {
                 position: "absolute",
                 top: "48px",
                 right: "0",
-                background: "linear-gradient(135deg, rgba(0, 0, 0, 0.7), rgba(0, 40, 0, 0.6))",
+                background: theme.background,
                 backdropFilter: "blur(20px)",
                 WebkitBackdropFilter: "blur(20px)", // Safari support
                 border: `1px solid rgba(${theme.primary.replace('#', '').match(/.{2}/g)?.map(hex => parseInt(hex, 16)).join(', ')}, 0.3)`,
@@ -289,7 +289,7 @@ function GlobalAppBar() {
                   right: "20px",
                   width: "12px",
                   height: "12px",
-                  background: "linear-gradient(135deg, rgba(0, 0, 0, 0.7), rgba(0, 40, 0, 0.6))",
+                  background: theme.background,
                   backdropFilter: "blur(20px)",
                   border: `1px solid rgba(${theme.primary.replace('#', '').match(/.{2}/g)?.map(hex => parseInt(hex, 16)).join(', ')}, 0.3)`,
                   transform: "rotate(45deg)",
@@ -478,7 +478,7 @@ function GlobalAppBar() {
                 style={{
                   padding: "12px 20px",
                   borderTop: `1px solid rgba(${theme.primary.replace('#', '').match(/.{2}/g)?.map(hex => parseInt(hex, 16)).join(', ')}, 0.2)`,
-                  background: "linear-gradient(135deg, rgba(0, 0, 0, 0.3), rgba(0, 40, 0, 0.2))",
+                  background: theme.backgroundSecondary,
                   fontSize: "10px",
                   textAlign: "center",
                   opacity: 0.8,

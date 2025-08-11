@@ -496,7 +496,21 @@ export default function GSPage() {
   ];
 
   return (
-    <div className="gs-page">
+    <div 
+      className="gs-page"
+      style={{
+        // CSS Custom Properties for the CSS file to use
+        '--theme-primary': theme.theme.primary,
+        '--theme-primary-rgb': theme.theme.primaryRGB,
+        '--theme-background': theme.theme.background,
+        '--theme-card-background': theme.theme.cardBackground,
+        '--theme-glow-color': theme.theme.glowColor,
+        '--theme-text-shadow': theme.theme.textShadow,
+        '--theme-background-gradient': theme.theme.backgroundGradient,
+        '--theme-background-dark': theme.theme.backgroundDark,
+        '--theme-border-gradient': theme.theme.borderGradient,
+      } as React.CSSProperties}
+    >
       {/* Header Section */}
       <Box className="gs-header">
         <Typography variant="h4" className="gs-title">
