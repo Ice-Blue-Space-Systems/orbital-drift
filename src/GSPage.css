@@ -125,7 +125,7 @@
 
 /* Grid Container */
 .gs-grid-container {
-  background: transparent;
+  background: #0a0a0a;
   border: none;
   border-radius: 0;
   padding: 0;
@@ -160,10 +160,21 @@
 
 .matrix-grid.ag-theme-alpine-dark .ag-root-wrapper {
   border: none !important;
+  background-color: #0a0a0a !important;
 }
 
 .matrix-grid.ag-theme-alpine-dark .ag-root {
   border: none !important;
+  background-color: #0a0a0a !important;
+}
+
+/* Ensure the entire grid viewport stays dark */
+.matrix-grid .ag-center-cols-viewport,
+.matrix-grid .ag-center-cols-container,
+.matrix-grid .ag-body-viewport,
+.matrix-grid .ag-body-horizontal-scroll-viewport,
+.matrix-grid .ag-body-vertical-scroll-viewport {
+  background-color: #0a0a0a !important;
 }
 
 .matrix-grid .ag-header {
@@ -440,4 +451,43 @@
 
 .matrix-grid ::-webkit-scrollbar-thumb:hover {
   background: rgba(0, 255, 65, 0.5);
+}
+
+/* Loading Overlay */
+.gs-grid-loading-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(10, 10, 10, 0.95);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  font-family: 'Courier New', Courier, monospace;
+}
+
+.gs-grid-loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid rgba(var(--theme-primary-rgb, 0, 255, 65), 0.3);
+  border-top: 3px solid var(--theme-primary, #00ff41);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 16px;
+}
+
+.gs-grid-loading-text {
+  color: var(--theme-primary, #00ff41);
+  font-size: 14px;
+  font-weight: 400;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }

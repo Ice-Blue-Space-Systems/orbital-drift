@@ -669,9 +669,18 @@ export default function GSPage() {
             className="ag-theme-alpine-dark matrix-grid" 
             style={{ 
               height: '600px',
-              width: '100%'
+              width: '100%',
+              position: 'relative'
             }}
           >
+            {(loading || status === "loading") && (
+              <div className="gs-grid-loading-overlay">
+                <div className="gs-grid-loading-spinner" />
+                <div className="gs-grid-loading-text">
+                  Loading Ground Stations...
+                </div>
+              </div>
+            )}
             <AgGridReact
               ref={activeTab === 0 ? myGridRef : discoverGridRef}
               rowData={activeTab === 0 ? myGroundStations : discoverableGroundStations}

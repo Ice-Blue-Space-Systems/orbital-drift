@@ -686,9 +686,18 @@ export default function SatsPage() {
             className="ag-theme-alpine-dark matrix-grid" 
             style={{ 
               height: '600px',
-              width: '100%'
+              width: '100%',
+              position: 'relative'
             }}
           >
+            {(loading || status === "loading") && (
+              <div className="sats-grid-loading-overlay">
+                <div className="sats-grid-loading-spinner" />
+                <div className="sats-grid-loading-text">
+                  Loading Satellites...
+                </div>
+              </div>
+            )}
             <AgGridReact
               ref={activeTab === 0 ? myGridRef : discoverGridRef}
               rowData={activeTab === 0 ? mySatellites : discoverableSatellites}
