@@ -83,6 +83,7 @@ export default function GSPage() {
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [predefinedGroundStations, setPredefinedGroundStations] = useState<DisplayGroundStation[]>([]);
   const [activeTab, setActiveTab] = useState(0); // 0 = My Ground Stations, 1 = Discover More
+  const [activeFilters, setActiveFilters] = useState<Set<string>>(new Set()); // Track active filters
   const [newGroundStation, setNewGroundStation] = useState<Partial<DisplayGroundStation>>({
     source: "custom",
     status: "Active",
@@ -129,8 +130,98 @@ export default function GSPage() {
   // Merge all ground station sources for overall stats
   const allGroundStations = mergeGroundStationSources(apiGroundStations, predefinedGroundStations);
   
+  // Apply filters to ground stations
+  const applyFilters = (stations: DisplayGroundStation[]) => {
+    if (activeFilters.size === 0) return stations;
+    
+    return stations.filter(station => {
+      // Check if station matches any of the active filters
+      return Array.from(activeFilters).some(filter => {
+        switch (filter) {
+          case 'api': return station.source === 'api';
+          case 'predefined': return station.source === 'predefined';
+          case 'active': return station.status === 'Active';
+          case 'inactive': return station.status === 'Inactive';
+          case 'maintenance': return station.status === 'Maintenance';
+          case 'decommissioned': return station.status === 'Decommissioned';
+          case 'sBand': return station.bandType === 'S';
+          case 'xBand': return station.bandType === 'X';
+          case 'kaBand': return station.bandType === 'Ka';
+          case 'kuBand': return station.bandType === 'Ku';
+          case 'lBand': return station.bandType === 'L';
+          case 'cBand': return station.bandType === 'C';
+          default: return false;
+        }
+      });
+    });
+  };
+  
+  // Filtered ground stations for display
+  const filteredMyGroundStations = applyFilters(myGroundStations);
+  const filteredDiscoverableGroundStations = applyFilters(discoverableGroundStations);
+  
   // Get statistics
   const stats = getGroundStationStats(allGroundStations);
+
+  // Toggle filter function
+  const toggleFilter = (filterKey: string) => {
+    setActiveFilters(prev => {
+      const newFilters = new Set(prev);
+      if (newFilters.has(filterKey)) {
+        newFilters.delete(filterKey);
+      } else {
+        newFilters.add(filterKey);
+      }
+      return newFilters;
+    });
+  };
+
+  // Clear all filters
+  const clearAllFilters = () => {
+    setActiveFilters(new Set());
+  };
+
+  // Clickable stat item component
+  const StatItem = ({ count, label, filterKey, tooltip }: { 
+    count: number; 
+    label: string; 
+    filterKey?: string; 
+    tooltip?: string;
+  }) => {
+    const isActive = filterKey ? activeFilters.has(filterKey) : false;
+    const isClickable = !!filterKey;
+    
+    return (
+      <Tooltip title={tooltip || (isClickable ? `Filter by ${label}` : label)}>
+        <Box 
+          className={`stat-item ${isClickable ? 'clickable' : ''} ${isActive ? 'active' : ''}`}
+          onClick={isClickable ? () => toggleFilter(filterKey) : undefined}
+          sx={{
+            cursor: isClickable ? 'pointer' : 'default',
+            opacity: activeFilters.size > 0 && !isActive && isClickable ? 0.6 : 1,
+            transition: 'all 0.2s ease',
+            '&:hover': isClickable ? {
+              backgroundColor: `rgba(${theme.theme.primaryRGB}, 0.1)`,
+              transform: 'translateY(-1px)'
+            } : {},
+            ...(isActive && {
+              backgroundColor: `rgba(${theme.theme.primaryRGB}, 0.2)`,
+              border: `1px solid ${theme.theme.primary}`,
+              boxShadow: `0 0 10px rgba(${theme.theme.primaryRGB}, 0.3)`
+            })
+          }}
+        >
+          <Typography variant="h6" className="stat-number">{count}</Typography>
+          <Typography variant="caption" className="stat-label">{label}</Typography>
+          {isActive && (
+            <Typography variant="caption" sx={{ color: theme.theme.primary, fontSize: '8px' }}>
+              FILTERED
+            </Typography>
+          )}
+        </Box>
+      </Tooltip>
+    );
+  };
 
   // Add a new custom ground station (save to DB)
   const addCustomGroundStation = async () => {
@@ -546,39 +637,51 @@ export default function GSPage() {
 
         {/* Enhanced Stats */}
         <Box className="gs-stats">
-          <Box className="stat-item">
-            <Typography variant="h6" className="stat-number">{stats.api}</Typography>
-            <Typography variant="caption" className="stat-label">API</Typography>
-          </Box>
-          <Box className="stat-item">
-            <Typography variant="h6" className="stat-number">{stats.predefined}</Typography>
-            <Typography variant="caption" className="stat-label">PREDEFINED</Typography>
-          </Box>
-          <Box className="stat-item">
-            <Typography variant="h6" className="stat-number">{stats.active}</Typography>
-            <Typography variant="caption" className="stat-label">ACTIVE</Typography>
-          </Box>
-          <Box className="stat-item">
-            <Typography variant="h6" className="stat-number">{stats.maintenance}</Typography>
-            <Typography variant="caption" className="stat-label">MAINT</Typography>
-          </Box>
-          <Box className="stat-item">
-            <Typography variant="h6" className="stat-number">{stats.xBand}</Typography>
-            <Typography variant="caption" className="stat-label">X-BAND</Typography>
-          </Box>
-          <Box className="stat-item">
-            <Typography variant="h6" className="stat-number">{stats.sBand}</Typography>
-            <Typography variant="caption" className="stat-label">S-BAND</Typography>
-          </Box>
-          <Box className="stat-item">
-            <Typography variant="h6" className="stat-number">{stats.countries}</Typography>
-            <Typography variant="caption" className="stat-label">COUNTRIES</Typography>
-          </Box>
-          <Box className="stat-item">
-            <Typography variant="h6" className="stat-number">{stats.total}</Typography>
-            <Typography variant="caption" className="stat-label">TOTAL</Typography>
-          </Box>
+          <StatItem count={stats.api} label="API" filterKey="api" tooltip="Ground stations from your MongoDB API" />
+          <StatItem count={stats.predefined} label="PREDEFINED" filterKey="predefined" tooltip="Built-in ground stations database" />
+          <StatItem count={stats.active} label="ACTIVE" filterKey="active" tooltip="Active ground stations" />
+          <StatItem count={stats.maintenance} label="MAINT" filterKey="maintenance" tooltip="Stations under maintenance" />
+          <StatItem count={stats.xBand} label="X-BAND" filterKey="xBand" tooltip="X-Band frequency stations" />
+          <StatItem count={stats.sBand} label="S-BAND" filterKey="sBand" tooltip="S-Band frequency stations" />
+          <StatItem count={stats.countries} label="COUNTRIES" tooltip="Number of countries with stations" />
+          <StatItem count={stats.total} label="TOTAL" tooltip="Total number of ground stations" />
         </Box>
+
+        {/* Filter Controls */}
+        {activeFilters.size > 0 && (
+          <Box className="filter-controls" sx={{ 
+            display: 'flex', 
+            alignItems: 'center', 
+            gap: 2, 
+            marginTop: 1,
+            padding: 1,
+            backgroundColor: `rgba(${theme.theme.primaryRGB}, 0.1)`,
+            borderRadius: 1,
+            border: `1px solid rgba(${theme.theme.primaryRGB}, 0.2)`
+          }}>
+            <Typography variant="caption" sx={{ color: theme.theme.primary, fontWeight: 'bold' }}>
+              ACTIVE FILTERS: {Array.from(activeFilters).join(', ').toUpperCase()}
+            </Typography>
+            <Button 
+              size="small" 
+              variant="outlined" 
+              onClick={clearAllFilters}
+              sx={{ 
+                minWidth: 'auto',
+                fontSize: '10px',
+                padding: '2px 8px',
+                borderColor: theme.theme.secondary,
+                color: theme.theme.secondary,
+                '&:hover': {
+                  borderColor: theme.theme.primary,
+                  color: theme.theme.primary
+                }
+              }}
+            >
+              CLEAR ALL
+            </Button>
+          </Box>
+        )}
 
         {/* Console Status Bar */}
         <Box className="console-status-bar">
@@ -643,18 +746,18 @@ export default function GSPage() {
             <Tab 
               icon={<ManageSearchIcon />} 
               iconPosition="start"
-              label={`My Ground Stations (${myGroundStations.length})`} 
+              label={`My Ground Stations (${filteredMyGroundStations.length})`} 
             />
             <Tab 
               icon={<ExploreIcon />} 
               iconPosition="start"
-              label={`Discover More (${discoverableGroundStations.length})`} 
+              label={`Discover More (${filteredDiscoverableGroundStations.length})`} 
             />
           </Tabs>
         </Box>
 
         {/* Grid Content */}
-        {(activeTab === 0 ? myGroundStations : discoverableGroundStations).length === 0 ? (
+        {(activeTab === 0 ? filteredMyGroundStations : filteredDiscoverableGroundStations).length === 0 ? (
           <Box sx={{ padding: 4, textAlign: 'center', color: '#888' }}>
             <Typography variant="h6">
               {activeTab === 0 
@@ -688,7 +791,7 @@ export default function GSPage() {
             )}
             <AgGridReact
               ref={activeTab === 0 ? myGridRef : discoverGridRef}
-              rowData={activeTab === 0 ? myGroundStations : discoverableGroundStations}
+              rowData={activeTab === 0 ? filteredMyGroundStations : filteredDiscoverableGroundStations}
               columnDefs={activeTab === 0 ? myColumnDefs : discoverColumnDefs}
               defaultColDef={{
                 sortable: true,

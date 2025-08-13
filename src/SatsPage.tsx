@@ -83,6 +83,7 @@ export default function SatsPage() {
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [celestrakSatellites, setCelestrakSatellites] = useState<DisplaySatellite[]>([]);
   const [activeTab, setActiveTab] = useState(0); // 0 = My Satellites, 1 = Discover More
+  const [activeFilters, setActiveFilters] = useState<Set<string>>(new Set()); // Track active filters
   const [newSatellite, setNewSatellite] = useState<Partial<DisplaySatellite>>({
     source: "custom",
     status: "Active",
@@ -132,8 +133,99 @@ export default function SatsPage() {
   // All satellites for overall stats
   const allSatellites = mergeSatelliteSources(apiSatellites, celestrakSatellites);
   
+  // Apply filters to satellites
+  const applyFilters = (satellites: DisplaySatellite[]) => {
+    if (activeFilters.size === 0) return satellites;
+    
+    return satellites.filter(sat => {
+      // Check if satellite matches any of the active filters
+      return Array.from(activeFilters).some(filter => {
+        switch (filter) {
+          case 'api': return sat.source === 'api';
+          case 'celestrak': return sat.source === 'celestrak';
+          case 'starlink': return sat.constellation === 'Starlink';
+          case 'communication': return sat.category === 'Communication';
+          case 'navigation': return sat.category === 'Navigation';
+          case 'earthObservation': return sat.category === 'Earth Observation';
+          case 'leo': return sat.orbitType === 'LEO';
+          case 'geo': return sat.orbitType === 'GEO';
+          case 'meo': return sat.orbitType === 'MEO';
+          case 'active': return sat.status === 'Active';
+          case 'inactive': return sat.status === 'Inactive';
+          case 'live': return sat.type === 'live';
+          case 'simulated': return sat.type === 'simulated';
+          default: return false;
+        }
+      });
+    });
+  };
+  
+  // Filtered satellites for display
+  const filteredMySatellites = applyFilters(mySatellites);
+  const filteredDiscoverableSatellites = applyFilters(discoverableSatellites);
+  
   // Get statistics
   const stats = getSatelliteStats(allSatellites);
+
+  // Toggle filter function
+  const toggleFilter = (filterKey: string) => {
+    setActiveFilters(prev => {
+      const newFilters = new Set(prev);
+      if (newFilters.has(filterKey)) {
+        newFilters.delete(filterKey);
+      } else {
+        newFilters.add(filterKey);
+      }
+      return newFilters;
+    });
+  };
+
+  // Clear all filters
+  const clearAllFilters = () => {
+    setActiveFilters(new Set());
+  };
+
+  // Clickable stat item component
+  const StatItem = ({ count, label, filterKey, tooltip }: { 
+    count: number; 
+    label: string; 
+    filterKey?: string; 
+    tooltip?: string;
+  }) => {
+    const isActive = filterKey ? activeFilters.has(filterKey) : false;
+    const isClickable = !!filterKey;
+    
+    return (
+      <Tooltip title={tooltip || (isClickable ? `Filter by ${label}` : label)}>
+        <Box 
+          className={`stat-item ${isClickable ? 'clickable' : ''} ${isActive ? 'active' : ''}`}
+          onClick={isClickable ? () => toggleFilter(filterKey) : undefined}
+          sx={{
+            cursor: isClickable ? 'pointer' : 'default',
+            opacity: activeFilters.size > 0 && !isActive && isClickable ? 0.6 : 1,
+            transition: 'all 0.2s ease',
+            '&:hover': isClickable ? {
+              backgroundColor: `rgba(${theme.theme.primaryRGB}, 0.1)`,
+              transform: 'translateY(-1px)'
+            } : {},
+            ...(isActive && {
+              backgroundColor: `rgba(${theme.theme.primaryRGB}, 0.2)`,
+              border: `1px solid ${theme.theme.primary}`,
+              boxShadow: `0 0 10px rgba(${theme.theme.primaryRGB}, 0.3)`
+            })
+          }}
+        >
+          <Typography variant="h6" className="stat-number">{count}</Typography>
+          <Typography variant="caption" className="stat-label">{label}</Typography>
+          {isActive && (
+            <Typography variant="caption" sx={{ color: theme.theme.primary, fontSize: '8px' }}>
+              FILTERED
+            </Typography>
+          )}
+        </Box>
+      </Tooltip>
+    );
+  };
 
   // Add a new custom satellite (save to DB)
   const addCustomSatellite = async () => {
@@ -631,47 +723,53 @@ export default function SatsPage() {
 
         {/* Enhanced Stats */}
         <Box className="sats-stats">
-          <Box className="stat-item">
-            <Typography variant="h6" className="stat-number">{stats.api}</Typography>
-            <Typography variant="caption" className="stat-label">API SATS</Typography>
-          </Box>
-          <Box className="stat-item">
-            <Typography variant="h6" className="stat-number">{stats.celestrak}</Typography>
-            <Typography variant="caption" className="stat-label">CELESTRAK</Typography>
-          </Box>
-          <Box className="stat-item">
-            <Typography variant="h6" className="stat-number">{stats.starlink}</Typography>
-            <Typography variant="caption" className="stat-label">STARLINK</Typography>
-          </Box>
-          <Box className="stat-item">
-            <Typography variant="h6" className="stat-number">{stats.communication}</Typography>
-            <Typography variant="caption" className="stat-label">COMM</Typography>
-          </Box>
-          <Box className="stat-item">
-            <Typography variant="h6" className="stat-number">{stats.navigation}</Typography>
-            <Typography variant="caption" className="stat-label">NAV</Typography>
-          </Box>
-          <Box className="stat-item">
-            <Typography variant="h6" className="stat-number">{stats.earthObservation}</Typography>
-            <Typography variant="caption" className="stat-label">EO</Typography>
-          </Box>
-          <Box className="stat-item">
-            <Typography variant="h6" className="stat-number">{stats.leo}</Typography>
-            <Typography variant="caption" className="stat-label">LEO</Typography>
-          </Box>
-          <Box className="stat-item">
-            <Typography variant="h6" className="stat-number">{stats.geo}</Typography>
-            <Typography variant="caption" className="stat-label">GEO</Typography>
-          </Box>
-          <Box className="stat-item">
-            <Typography variant="h6" className="stat-number">{stats.active}</Typography>
-            <Typography variant="caption" className="stat-label">ACTIVE</Typography>
-          </Box>
-          <Box className="stat-item">
-            <Typography variant="h6" className="stat-number">{stats.total}</Typography>
-            <Typography variant="caption" className="stat-label">TOTAL</Typography>
-          </Box>
+          <StatItem count={stats.api} label="API SATS" filterKey="api" tooltip="Satellites from your MongoDB API" />
+          <StatItem count={stats.celestrak} label="CELESTRAK" filterKey="celestrak" tooltip="Satellites from CelesTrak database" />
+          <StatItem count={stats.starlink} label="STARLINK" filterKey="starlink" tooltip="SpaceX Starlink constellation" />
+          <StatItem count={stats.communication} label="COMM" filterKey="communication" tooltip="Communication satellites" />
+          <StatItem count={stats.navigation} label="NAV" filterKey="navigation" tooltip="Navigation satellites (GPS, Galileo, etc.)" />
+          <StatItem count={stats.earthObservation} label="EO" filterKey="earthObservation" tooltip="Earth Observation satellites" />
+          <StatItem count={stats.leo} label="LEO" filterKey="leo" tooltip="Low Earth Orbit satellites" />
+          <StatItem count={stats.geo} label="GEO" filterKey="geo" tooltip="Geostationary orbit satellites" />
+          <StatItem count={stats.active} label="ACTIVE" filterKey="active" tooltip="Active satellites" />
+          <StatItem count={stats.total} label="TOTAL" tooltip="Total number of satellites" />
         </Box>
+
+        {/* Filter Controls */}
+        {activeFilters.size > 0 && (
+          <Box className="filter-controls" sx={{ 
+            display: 'flex', 
+            alignItems: 'center', 
+            gap: 2, 
+            marginTop: 1,
+            padding: 1,
+            backgroundColor: `rgba(${theme.theme.primaryRGB}, 0.1)`,
+            borderRadius: 1,
+            border: `1px solid rgba(${theme.theme.primaryRGB}, 0.2)`
+          }}>
+            <Typography variant="caption" sx={{ color: theme.theme.primary, fontWeight: 'bold' }}>
+              ACTIVE FILTERS: {Array.from(activeFilters).join(', ').toUpperCase()}
+            </Typography>
+            <Button 
+              size="small" 
+              variant="outlined" 
+              onClick={clearAllFilters}
+              sx={{ 
+                minWidth: 'auto',
+                fontSize: '10px',
+                padding: '2px 8px',
+                borderColor: theme.theme.secondary,
+                color: theme.theme.secondary,
+                '&:hover': {
+                  borderColor: theme.theme.primary,
+                  color: theme.theme.primary
+                }
+              }}
+            >
+              CLEAR ALL
+            </Button>
+          </Box>
+        )}
 
         {/* Console Status Bar */}
         <Box className="console-status-bar">
@@ -777,7 +875,7 @@ export default function SatsPage() {
             )}
             <AgGridReact
               ref={activeTab === 0 ? myGridRef : discoverGridRef}
-              rowData={activeTab === 0 ? mySatellites : discoverableSatellites}
+              rowData={activeTab === 0 ? filteredMySatellites : filteredDiscoverableSatellites}
               columnDefs={activeTab === 0 ? myColumnDefs : discoverColumnDefs}
               defaultColDef={{
                 sortable: true,
