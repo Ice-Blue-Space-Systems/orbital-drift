@@ -31,7 +31,7 @@
   border-radius: 0 !important;
   box-shadow: none !important;
   font-family: 'Courier New', Courier, monospace !important;
-  height: 100% !important;
+  height: 90% !important; /* Ensure time axis is visible at the bottom */
 }
 
 /* Timeline panel styling */
