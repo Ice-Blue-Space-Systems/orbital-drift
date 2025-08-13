@@ -40,27 +40,27 @@
   border: none !important;
 }
 
-/* Timeline background with seamless integration */
+/* Timeline background with seamless integration - theme aware */
 .vis-timeline .vis-panel.vis-background {
   background: linear-gradient(to bottom, 
-    rgba(0, 30, 0, 0.8) 0%, 
-    rgba(0, 15, 0, 0.9) 50%, 
-    rgba(0, 20, 0, 0.8) 100%) !important;
+    var(--timeline-bg-start, rgba(0, 30, 0, 0.8)) 0%, 
+    var(--timeline-bg-middle, rgba(0, 15, 0, 0.9)) 50%, 
+    var(--timeline-bg-end, rgba(0, 20, 0, 0.8)) 100%) !important;
   border: none !important;
 }
 
-/* Time axis styling */
+/* Time axis styling - theme aware */
 .vis-timeline .vis-time-axis {
-  background: rgba(0, 40, 0, 0.9) !important;
-  border-top: 1px solid #00ff00 !important;
-  color: #00ff00 !important;
+  background: var(--timeline-axis-bg, rgba(0, 40, 0, 0.9)) !important;
+  border-top: 1px solid var(--timeline-primary-color, #00ff00) !important;
+  color: var(--timeline-primary-color, #00ff00) !important;
   font-family: 'Courier New', Courier, monospace !important;
   font-weight: bold !important;
 }
 
 .vis-timeline .vis-time-axis .vis-text {
-  color: #00ff00 !important;
-  text-shadow: 0 0 3px #00ff00 !important;
+  color: var(--timeline-primary-color, #00ff00) !important;
+  text-shadow: 0 0 3px var(--timeline-primary-color, #00ff00) !important;
 }
 
 /* Timeline items (contact windows) */

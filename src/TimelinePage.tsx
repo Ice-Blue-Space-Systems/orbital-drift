@@ -68,6 +68,23 @@ const TimelinePage: React.FC = () => {
     rootElement.style.setProperty('--theme-glow-color', theme.theme.glowColor);
     rootElement.style.setProperty('--theme-button-background', theme.theme.buttonBackground);
     rootElement.style.setProperty('--theme-secondary-glow', `rgba(${theme.theme.primaryRGB}, 0.5)`);
+    
+    // Timeline-specific theme variables
+    if (theme.currentTheme === 'iceBlue') {
+      // Ice Blue theme - blue colors
+      rootElement.style.setProperty('--timeline-bg-start', 'rgba(10, 25, 40, 0.8)');
+      rootElement.style.setProperty('--timeline-bg-middle', 'rgba(15, 30, 45, 0.9)');
+      rootElement.style.setProperty('--timeline-bg-end', 'rgba(20, 35, 50, 0.8)');
+      rootElement.style.setProperty('--timeline-axis-bg', 'rgba(10, 30, 50, 0.9)');
+      rootElement.style.setProperty('--timeline-primary-color', theme.theme.primary);
+    } else {
+      // Matrix theme (default) - green colors
+      rootElement.style.setProperty('--timeline-bg-start', 'rgba(0, 30, 0, 0.8)');
+      rootElement.style.setProperty('--timeline-bg-middle', 'rgba(0, 15, 0, 0.9)');
+      rootElement.style.setProperty('--timeline-bg-end', 'rgba(0, 20, 0, 0.8)');
+      rootElement.style.setProperty('--timeline-axis-bg', 'rgba(0, 40, 0, 0.9)');
+      rootElement.style.setProperty('--timeline-primary-color', theme.theme.primary);
+    }
   }, [theme]);
 
   // Calculate the next contact window
