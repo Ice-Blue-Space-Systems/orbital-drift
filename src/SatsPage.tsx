@@ -87,6 +87,7 @@ export default function SatsPage() {
     source: "custom",
     status: "Active",
     orbitType: "LEO",
+    category: "Unknown",
   });
   const myGridRef = useRef<AgGridReact>(null);
   const discoverGridRef = useRef<AgGridReact>(null);
@@ -148,6 +149,8 @@ export default function SatsPage() {
           // Additional fields for custom satellites (if your API supports them)
           status: newSatellite.status,
           orbitType: newSatellite.orbitType,
+          category: newSatellite.category,
+          constellation: newSatellite.constellation,
           apogee: newSatellite.apogee,
           perigee: newSatellite.perigee,
           inclination: newSatellite.inclination,
@@ -160,7 +163,12 @@ export default function SatsPage() {
       
       if (response.ok) {
         setAddDialogOpen(false);
-        setNewSatellite({ source: "custom", status: "Active", orbitType: "LEO" });
+        setNewSatellite({ 
+          source: "custom", 
+          status: "Active", 
+          orbitType: "LEO",
+          category: "Unknown"
+        });
         await dispatch(fetchMongoData()); // Reload from DB
       } else {
         console.error("Failed to add satellite:", response.statusText);
@@ -186,6 +194,8 @@ export default function SatsPage() {
           launchDate: satellite.launchDate,
           orbitType: satellite.orbitType || 'Unknown',
           status: satellite.status,
+          category: satellite.category,
+          constellation: satellite.constellation,
           description: `Added from CelesTrak - ${satellite.description || 'Satellite from CelesTrak database'}`,
           source: "celestrak",
           type: "live"
@@ -353,6 +363,63 @@ export default function SatsPage() {
     );
   };
 
+  // Category cell renderer with colored chips
+  const CategoryCellRenderer = (params: any) => {
+    if (!params.value || params.value === "Unknown") {
+      return <span style={{ color: "#888" }}>N/A</span>;
+    }
+
+    const getCategoryColor = (category: string) => {
+      switch (category) {
+        case "Space Station": return "#ff6b35";
+        case "Navigation": return "#4ecdc4";
+        case "Communication": return "#45b7d1";
+        case "Weather": return "#96ceb4";
+        case "Earth Observation": return "#feca57";
+        case "CubeSat": return "#ff9ff3";
+        case "Commercial": return "#54a0ff";
+        case "Scientific": return "#5f27cd";
+        case "Military": return "#ee5a24";
+        default: return "#888888";
+      }
+    };
+
+    return (
+      <Chip
+        label={params.value}
+        size="small"
+        sx={{
+          backgroundColor: getCategoryColor(params.value),
+          color: "#000",
+          fontWeight: "bold",
+          fontSize: "10px",
+          maxWidth: "120px"
+        }}
+      />
+    );
+  };
+
+  // Constellation cell renderer
+  const ConstellationCellRenderer = (params: any) => {
+    if (!params.value) {
+      return <span style={{ color: "#888" }}>N/A</span>;
+    }
+
+    return (
+      <Chip
+        label={params.value}
+        size="small"
+        variant="outlined"
+        sx={{
+          borderColor: theme.theme.secondary,
+          color: theme.theme.secondary,
+          fontSize: "9px",
+          maxWidth: "110px"
+        }}
+      />
+    );
+  };
+
   // Base column definitions (shared between both tabs)
   const getBaseColumnDefs = (): ColDef<DisplaySatellite>[] => [
     { 
@@ -361,6 +428,20 @@ export default function SatsPage() {
       filter: "agTextColumnFilter",
       width: 180,
       cellStyle: { color: theme.theme.primary, fontWeight: "bold" }
+    },
+    { 
+      headerName: "CATEGORY", 
+      field: "category", 
+      filter: "agSetColumnFilter",
+      width: 130,
+      cellRenderer: CategoryCellRenderer,
+    },
+    { 
+      headerName: "CONSTELLATION", 
+      field: "constellation", 
+      filter: "agTextColumnFilter",
+      width: 120,
+      cellRenderer: ConstellationCellRenderer,
     },
     { 
       headerName: "SOURCE", 
@@ -468,9 +549,11 @@ export default function SatsPage() {
       ...col, 
       editable: col.field !== "source" && col.field !== "type",
       cellEditor: col.field === "status" ? "agSelectCellEditor" : 
-                  col.field === "orbitType" ? "agSelectCellEditor" : undefined,
+                  col.field === "orbitType" ? "agSelectCellEditor" :
+                  col.field === "category" ? "agSelectCellEditor" : undefined,
       cellEditorParams: col.field === "status" ? {values: ["Active", "Inactive", "Decayed", "Unknown"]} :
-                        col.field === "orbitType" ? {values: ["LEO", "MEO", "GEO", "HEO", "Unknown"]} : undefined
+                        col.field === "orbitType" ? {values: ["LEO", "MEO", "GEO", "HEO", "Unknown"]} :
+                        col.field === "category" ? {values: ["Space Station", "Navigation", "Communication", "Weather", "Earth Observation", "CubeSat", "Commercial", "Scientific", "Military", "Unknown"]} : undefined
     })),
     { 
       headerName: "ACTIONS", 
@@ -557,8 +640,20 @@ export default function SatsPage() {
             <Typography variant="caption" className="stat-label">CELESTRAK</Typography>
           </Box>
           <Box className="stat-item">
-            <Typography variant="h6" className="stat-number">{stats.active}</Typography>
-            <Typography variant="caption" className="stat-label">ACTIVE</Typography>
+            <Typography variant="h6" className="stat-number">{stats.starlink}</Typography>
+            <Typography variant="caption" className="stat-label">STARLINK</Typography>
+          </Box>
+          <Box className="stat-item">
+            <Typography variant="h6" className="stat-number">{stats.communication}</Typography>
+            <Typography variant="caption" className="stat-label">COMM</Typography>
+          </Box>
+          <Box className="stat-item">
+            <Typography variant="h6" className="stat-number">{stats.navigation}</Typography>
+            <Typography variant="caption" className="stat-label">NAV</Typography>
+          </Box>
+          <Box className="stat-item">
+            <Typography variant="h6" className="stat-number">{stats.earthObservation}</Typography>
+            <Typography variant="caption" className="stat-label">EO</Typography>
           </Box>
           <Box className="stat-item">
             <Typography variant="h6" className="stat-number">{stats.leo}</Typography>
@@ -569,12 +664,8 @@ export default function SatsPage() {
             <Typography variant="caption" className="stat-label">GEO</Typography>
           </Box>
           <Box className="stat-item">
-            <Typography variant="h6" className="stat-number">{stats.live}</Typography>
-            <Typography variant="caption" className="stat-label">LIVE</Typography>
-          </Box>
-          <Box className="stat-item">
-            <Typography variant="h6" className="stat-number">{stats.simulated}</Typography>
-            <Typography variant="caption" className="stat-label">SIM</Typography>
+            <Typography variant="h6" className="stat-number">{stats.active}</Typography>
+            <Typography variant="caption" className="stat-label">ACTIVE</Typography>
           </Box>
           <Box className="stat-item">
             <Typography variant="h6" className="stat-number">{stats.total}</Typography>
@@ -783,6 +874,35 @@ export default function SatsPage() {
               </Select>
             </FormControl>
 
+            <FormControl fullWidth className="matrix-select">
+              <InputLabel>Category</InputLabel>
+              <Select
+                value={newSatellite.category || "Unknown"}
+                onChange={(e) => setNewSatellite({...newSatellite, category: e.target.value as any})}
+                label="Category"
+              >
+                <MenuItem value="Space Station">Space Station</MenuItem>
+                <MenuItem value="Navigation">Navigation</MenuItem>
+                <MenuItem value="Communication">Communication</MenuItem>
+                <MenuItem value="Weather">Weather</MenuItem>
+                <MenuItem value="Earth Observation">Earth Observation</MenuItem>
+                <MenuItem value="CubeSat">CubeSat</MenuItem>
+                <MenuItem value="Commercial">Commercial</MenuItem>
+                <MenuItem value="Scientific">Scientific</MenuItem>
+                <MenuItem value="Military">Military</MenuItem>
+                <MenuItem value="Unknown">Unknown</MenuItem>
+              </Select>
+            </FormControl>
+
+            <TextField
+              label="Constellation (Optional)"
+              value={newSatellite.constellation || ""}
+              onChange={(e) => setNewSatellite({...newSatellite, constellation: e.target.value || undefined})}
+              fullWidth
+              className="matrix-input"
+              placeholder="e.g., Starlink, OneWeb, GPS..."
+            />
+
             <TextField
               label="Country"
               value={newSatellite.country || ""}
@@ -837,6 +957,18 @@ export default function SatsPage() {
               className="matrix-input"
             />
           </Box>
+          
+          <TextField
+            label="Description"
+            value={newSatellite.description || ""}
+            onChange={(e) => setNewSatellite({...newSatellite, description: e.target.value})}
+            fullWidth
+            multiline
+            rows={3}
+            className="matrix-input"
+            sx={{ mt: 2 }}
+            placeholder="Optional description or notes about this satellite..."
+          />
         </DialogContent>
         <DialogActions className="dialog-actions">
           <Button 

@@ -11,6 +11,8 @@ export interface DisplaySatellite {
   launchDate?: string;
   orbitType?: "LEO" | "MEO" | "GEO" | "HEO" | "Unknown";
   status: "Active" | "Inactive" | "Decayed" | "Unknown";
+  category?: "Space Station" | "Navigation" | "Communication" | "Weather" | "Earth Observation" | "CubeSat" | "Commercial" | "Scientific" | "Military" | "Unknown";
+  constellation?: string; // For grouped satellites like Starlink, OneWeb, etc.
   apogee?: number; // km
   perigee?: number; // km
   inclination?: number; // degrees
@@ -93,20 +95,26 @@ export const convertApiSatelliteToDisplay = (sat: ApiSatellite): DisplaySatellit
 });
 
 // Convert CelesTrak satellite to display format
-export const convertCelesTrakSatelliteToDisplay = (sat: CelesTrakSatellite): DisplaySatellite => ({
-  id: `celestrak-${sat.NORAD_CAT_ID}`,
-  name: sat.OBJECT_NAME,
-  source: "celestrak",
-  type: "live",
-  noradId: sat.NORAD_CAT_ID,
-  status: "Active", // Assume active if in current TLE data
-  orbitType: getOrbitType(sat.MEAN_MOTION, sat.INCLINATION),
-  inclination: sat.INCLINATION,
-  period: 1440 / sat.MEAN_MOTION, // Convert from mean motion to minutes
-  country: countryFromSatelliteName(sat.OBJECT_NAME),
-  lastUpdate: sat.EPOCH,
-  description: `TLE Data - Classification: ${sat.CLASSIFICATION_TYPE}`,
-});
+export const convertCelesTrakSatelliteToDisplay = (sat: CelesTrakSatellite & { _sourceGroup?: string }): DisplaySatellite => {
+  const classification = getSatelliteClassification(sat.OBJECT_NAME, sat._sourceGroup);
+  
+  return {
+    id: `celestrak-${sat.NORAD_CAT_ID}`,
+    name: sat.OBJECT_NAME,
+    source: "celestrak",
+    type: "live",
+    noradId: sat.NORAD_CAT_ID,
+    status: "Active", // Assume active if in current TLE data
+    orbitType: getOrbitType(sat.MEAN_MOTION, sat.INCLINATION),
+    category: classification.category,
+    constellation: classification.constellation,
+    inclination: sat.INCLINATION,
+    period: 1440 / sat.MEAN_MOTION, // Convert from mean motion to minutes
+    country: countryFromSatelliteName(sat.OBJECT_NAME),
+    lastUpdate: sat.EPOCH,
+    description: `TLE Data - Classification: ${sat.CLASSIFICATION_TYPE}`,
+  };
+};
 
 // Fetch satellites from MongoDB API
 export const fetchApiSatellites = async (): Promise<DisplaySatellite[]> => {
@@ -123,31 +131,80 @@ export const fetchApiSatellites = async (): Promise<DisplaySatellite[]> => {
   }
 };
 
+// Satellite category and constellation mapping
+const getSatelliteClassification = (name: string, sourceGroup?: string): { category: DisplaySatellite["category"], constellation?: string } => {
+  const nameUpper = name.toUpperCase();
+  
+  // Determine category based on source group first
+  if (sourceGroup) {
+    if (sourceGroup === "stations") return { category: "Space Station" };
+    if (sourceGroup === "gps-ops" || sourceGroup === "galileo" || 
+        sourceGroup === "glonass-ops" || sourceGroup === "beidou") return { category: "Navigation" };
+    if (sourceGroup === "weather" || sourceGroup === "goes") return { category: "Weather" };
+    if (sourceGroup === "resource") return { category: "Earth Observation" };
+    if (sourceGroup === "cubesat") return { category: "CubeSat" };
+    if (sourceGroup === "starlink") return { category: "Communication", constellation: "Starlink" };
+    if (sourceGroup === "oneweb") return { category: "Communication", constellation: "OneWeb" };
+    if (sourceGroup === "iridium-33") return { category: "Communication", constellation: "Iridium" };
+    if (sourceGroup === "globalstar") return { category: "Communication", constellation: "Globalstar" };
+    if (sourceGroup === "planet") return { category: "Earth Observation", constellation: "Planet Labs" };
+    if (sourceGroup === "spire") return { category: "Commercial", constellation: "Spire Global" };
+  }
+  
+  // Fallback to name-based classification
+  if (nameUpper.includes("ISS") || nameUpper.includes("SPACE STATION") || nameUpper.includes("TIANGONG")) {
+    return { category: "Space Station" };
+  }
+  if (nameUpper.includes("STARLINK")) return { category: "Communication", constellation: "Starlink" };
+  if (nameUpper.includes("ONEWEB")) return { category: "Communication", constellation: "OneWeb" };
+  if (nameUpper.includes("IRIDIUM")) return { category: "Communication", constellation: "Iridium" };
+  if (nameUpper.includes("GLOBALSTAR")) return { category: "Communication", constellation: "Globalstar" };
+  if (nameUpper.includes("GPS") || nameUpper.includes("NAVSTAR")) return { category: "Navigation", constellation: "GPS" };
+  if (nameUpper.includes("GALILEO")) return { category: "Navigation", constellation: "Galileo" };
+  if (nameUpper.includes("GLONASS")) return { category: "Navigation", constellation: "GLONASS" };
+  if (nameUpper.includes("BEIDOU") || nameUpper.includes("COMPASS")) return { category: "Navigation", constellation: "BeiDou" };
+  if (nameUpper.includes("GOES") || nameUpper.includes("WEATHER") || nameUpper.includes("METEOSAT") || 
+      nameUpper.includes("NOAA")) return { category: "Weather" };
+  if (nameUpper.includes("LANDSAT") || nameUpper.includes("TERRA") || nameUpper.includes("AQUA") || 
+      nameUpper.includes("SENTINEL") || nameUpper.includes("SPOT")) return { category: "Earth Observation" };
+  if (nameUpper.includes("PLANET") || nameUpper.includes("DOVE") || nameUpper.includes("SKYSAT")) {
+    return { category: "Earth Observation", constellation: "Planet Labs" };
+  }
+  if (nameUpper.includes("SPIRE")) return { category: "Commercial", constellation: "Spire Global" };
+  if (nameUpper.includes("COSMOS") || nameUpper.includes("MILITARY") || nameUpper.includes("CLASSIFIED")) return { category: "Military" };
+  if (nameUpper.includes("CUBESAT") || name.length < 10) return { category: "CubeSat" }; // Many CubeSats have short names
+  if (nameUpper.includes("HUBBLE") || nameUpper.includes("CHANDRA") || nameUpper.includes("SPITZER") || 
+      nameUpper.includes("KEPLER") || nameUpper.includes("TESS")) return { category: "Scientific" };
+  
+  return { category: "Unknown" };
+};
+
 // Fetch satellites from CelesTrak (comprehensive public satellite data)
 export const fetchCelesTrakSatellites = async (): Promise<DisplaySatellite[]> => {
   try {
     // Fetch from major satellite groups on CelesTrak for comprehensive coverage
-    const urls = [
-      "https://celestrak.org/NORAD/elements/gp.php?GROUP=stations&FORMAT=json", // Space stations (ISS, etc.)
-      "https://celestrak.org/NORAD/elements/gp.php?GROUP=starlink&FORMAT=json", // SpaceX Starlink constellation
-      "https://celestrak.org/NORAD/elements/gp.php?GROUP=galileo&FORMAT=json", // European navigation satellites
-      "https://celestrak.org/NORAD/elements/gp.php?GROUP=gps-ops&FORMAT=json", // GPS operational satellites
-      "https://celestrak.org/NORAD/elements/gp.php?GROUP=glonass-ops&FORMAT=json", // GLONASS operational satellites
-      "https://celestrak.org/NORAD/elements/gp.php?GROUP=beidou&FORMAT=json", // Chinese BeiDou navigation
-      "https://celestrak.org/NORAD/elements/gp.php?GROUP=iridium-33&FORMAT=json", // Iridium communication satellites
-      "https://celestrak.org/NORAD/elements/gp.php?GROUP=globalstar&FORMAT=json", // Globalstar communication satellites
-      "https://celestrak.org/NORAD/elements/gp.php?GROUP=oneweb&FORMAT=json", // OneWeb constellation
-      "https://celestrak.org/NORAD/elements/gp.php?GROUP=weather&FORMAT=json", // Weather satellites
-      "https://celestrak.org/NORAD/elements/gp.php?GROUP=goes&FORMAT=json", // GOES weather satellites
-      "https://celestrak.org/NORAD/elements/gp.php?GROUP=resource&FORMAT=json", // Earth observation satellites
-      "https://celestrak.org/NORAD/elements/gp.php?GROUP=cubesat&FORMAT=json", // CubeSats
-      "https://celestrak.org/NORAD/elements/gp.php?GROUP=planet&FORMAT=json", // Planet Labs satellites
-      "https://celestrak.org/NORAD/elements/gp.php?GROUP=spire&FORMAT=json", // Spire Global satellites
+    const urlsWithCategories = [
+      { url: "https://celestrak.org/NORAD/elements/gp.php?GROUP=stations&FORMAT=json", group: "stations" },
+      { url: "https://celestrak.org/NORAD/elements/gp.php?GROUP=starlink&FORMAT=json", group: "starlink" },
+      { url: "https://celestrak.org/NORAD/elements/gp.php?GROUP=galileo&FORMAT=json", group: "galileo" },
+      { url: "https://celestrak.org/NORAD/elements/gp.php?GROUP=gps-ops&FORMAT=json", group: "gps-ops" },
+      { url: "https://celestrak.org/NORAD/elements/gp.php?GROUP=glonass-ops&FORMAT=json", group: "glonass-ops" },
+      { url: "https://celestrak.org/NORAD/elements/gp.php?GROUP=beidou&FORMAT=json", group: "beidou" },
+      { url: "https://celestrak.org/NORAD/elements/gp.php?GROUP=iridium-33&FORMAT=json", group: "iridium-33" },
+      { url: "https://celestrak.org/NORAD/elements/gp.php?GROUP=globalstar&FORMAT=json", group: "globalstar" },
+      { url: "https://celestrak.org/NORAD/elements/gp.php?GROUP=oneweb&FORMAT=json", group: "oneweb" },
+      { url: "https://celestrak.org/NORAD/elements/gp.php?GROUP=weather&FORMAT=json", group: "weather" },
+      { url: "https://celestrak.org/NORAD/elements/gp.php?GROUP=goes&FORMAT=json", group: "goes" },
+      { url: "https://celestrak.org/NORAD/elements/gp.php?GROUP=resource&FORMAT=json", group: "resource" },
+      { url: "https://celestrak.org/NORAD/elements/gp.php?GROUP=cubesat&FORMAT=json", group: "cubesat" },
+      { url: "https://celestrak.org/NORAD/elements/gp.php?GROUP=planet&FORMAT=json", group: "planet" },
+      { url: "https://celestrak.org/NORAD/elements/gp.php?GROUP=spire&FORMAT=json", group: "spire" },
     ];
     
-    const promises = urls.map(url => 
+    const promises = urlsWithCategories.map(({ url, group }) => 
       fetch(url)
         .then(response => response.json())
+        .then(data => data.map((sat: CelesTrakSatellite) => ({ ...sat, _sourceGroup: group })))
         .catch(error => {
           console.warn(`Failed to fetch from ${url}:`, error);
           return [];
@@ -155,7 +212,7 @@ export const fetchCelesTrakSatellites = async (): Promise<DisplaySatellite[]> =>
     );
     
     const results = await Promise.all(promises);
-    const allSatellites: CelesTrakSatellite[] = results.flat();
+    const allSatellites: (CelesTrakSatellite & { _sourceGroup: string })[] = results.flat();
     
     // Filter out obviously inactive/decayed satellites and sort by name
     // Remove the artificial sampling limit to show all available public satellites
@@ -203,18 +260,47 @@ export const mergeSatelliteSources = (
 };
 
 // Get satellite statistics
-export const getSatelliteStats = (satellites: DisplaySatellite[]) => ({
-  total: satellites.length,
-  active: satellites.filter(s => s.status === "Active").length,
-  inactive: satellites.filter(s => s.status === "Inactive").length,
-  decayed: satellites.filter(s => s.status === "Decayed").length,
-  leo: satellites.filter(s => s.orbitType === "LEO").length,
-  meo: satellites.filter(s => s.orbitType === "MEO").length,
-  geo: satellites.filter(s => s.orbitType === "GEO").length,
-  heo: satellites.filter(s => s.orbitType === "HEO").length,
-  live: satellites.filter(s => s.type === "live").length,
-  simulated: satellites.filter(s => s.type === "simulated").length,
-  api: satellites.filter(s => s.source === "api").length,
-  celestrak: satellites.filter(s => s.source === "celestrak").length,
-  custom: satellites.filter(s => s.source === "custom").length,
-});
+export const getSatelliteStats = (satellites: DisplaySatellite[]) => {
+  const categories = satellites.reduce((acc, sat) => {
+    if (sat.category) {
+      acc[sat.category] = (acc[sat.category] || 0) + 1;
+    }
+    return acc;
+  }, {} as Record<string, number>);
+
+  const constellations = satellites.reduce((acc, sat) => {
+    if (sat.constellation) {
+      acc[sat.constellation] = (acc[sat.constellation] || 0) + 1;
+    }
+    return acc;
+  }, {} as Record<string, number>);
+
+  return {
+    total: satellites.length,
+    active: satellites.filter(s => s.status === "Active").length,
+    inactive: satellites.filter(s => s.status === "Inactive").length,
+    decayed: satellites.filter(s => s.status === "Decayed").length,
+    leo: satellites.filter(s => s.orbitType === "LEO").length,
+    meo: satellites.filter(s => s.orbitType === "MEO").length,
+    geo: satellites.filter(s => s.orbitType === "GEO").length,
+    heo: satellites.filter(s => s.orbitType === "HEO").length,
+    live: satellites.filter(s => s.type === "live").length,
+    simulated: satellites.filter(s => s.type === "simulated").length,
+    api: satellites.filter(s => s.source === "api").length,
+    celestrak: satellites.filter(s => s.source === "celestrak").length,
+    custom: satellites.filter(s => s.source === "custom").length,
+    categories,
+    constellations,
+    // Top categories
+    communication: satellites.filter(s => s.category === "Communication").length,
+    navigation: satellites.filter(s => s.category === "Navigation").length,
+    earthObservation: satellites.filter(s => s.category === "Earth Observation").length,
+    weather: satellites.filter(s => s.category === "Weather").length,
+    spaceStation: satellites.filter(s => s.category === "Space Station").length,
+    cubesat: satellites.filter(s => s.category === "CubeSat").length,
+    // Top constellations
+    starlink: satellites.filter(s => s.constellation === "Starlink").length,
+    oneWeb: satellites.filter(s => s.constellation === "OneWeb").length,
+    gps: satellites.filter(s => s.constellation === "GPS").length,
+  };
+};
