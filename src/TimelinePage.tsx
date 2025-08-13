@@ -109,6 +109,15 @@ const TimelinePage: React.FC = () => {
       stack: false,
       showGroupLabel: false, // Hide group labels
       groupLabelMinWidth: 0, // Set minimum width to 0
+      groupsWidth: 0, // Set the groups panel width to 0
+      groupsOnRight: false, // Ensure groups are not on the right
+      margin: {
+        item: {
+          horizontal: 10,
+          vertical: 8
+        },
+        axis: 0 // Remove axis margin that might affect the groups panel
+      },
       orientation: {
         axis: 'bottom' as const,
         item: 'top' as const
