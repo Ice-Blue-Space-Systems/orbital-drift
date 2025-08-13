@@ -544,25 +544,6 @@ export default function SatsPage() {
               REFRESH DATA
             </Button>
           </Tooltip>
-          
-          <Tooltip title="Force API Test">
-            <Button
-              variant="outlined" 
-              onClick={async () => {
-                console.log("Force testing API...");
-                try {
-                  const response = await fetch("/api/satellites");
-                  const data = await response.json();
-                  console.log("Direct API response:", data);
-                } catch (error) {
-                  console.error("Direct API error:", error);
-                }
-              }}
-              className="action-button"
-            >
-              TEST API
-            </Button>
-          </Tooltip>
         </Box>
 
         {/* Enhanced Stats */}
