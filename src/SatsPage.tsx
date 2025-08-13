@@ -494,150 +494,110 @@ export default function SatsPage() {
     );
   };
 
-  // Constellation cell renderer
-  const ConstellationCellRenderer = (params: any) => {
-    if (!params.value) {
-      return <span style={{ color: theme.theme.textSecondary }}>N/A</span>;
-    }
-
-    return (
-      <Chip
-        label={params.value}
-        size="small"
-        variant="outlined"
-        sx={{
-          borderColor: theme.theme.secondary,
-          color: theme.theme.secondary,
-          fontSize: "9px",
-          maxWidth: "110px"
-        }}
-      />
-    );
-  };
 
   // Base column definitions (shared between both tabs)
-  const getBaseColumnDefs = (): ColDef<DisplaySatellite>[] => [
-    { 
-      headerName: "NAME", 
-      field: "name", 
-      filter: "agTextColumnFilter",
-      width: 180,
-      cellStyle: { color: theme.theme.primary, fontWeight: "bold" }
-    },
-    { 
-      headerName: "CATEGORY", 
-      field: "category", 
-      filter: "agSetColumnFilter",
-      width: 130,
-      cellRenderer: CategoryCellRenderer,
-    },
-    { 
-      headerName: "CONSTELLATION", 
-      field: "constellation", 
-      filter: "agTextColumnFilter",
-      width: 120,
-      cellRenderer: ConstellationCellRenderer,
-    },
-    { 
-      headerName: "SOURCE", 
-      field: "source", 
-      filter: "agSetColumnFilter",
-      width: 90,
-      cellRenderer: SourceCellRenderer,
-    },
-    { 
-      headerName: "TYPE", 
-      field: "type", 
-      filter: "agSetColumnFilter",
-      width: 80,
-      cellStyle: { color: theme.theme.accent || theme.theme.secondary },
-      valueFormatter: (params) => params.value ? params.value.toUpperCase() : "N/A"
-    },
-    { 
-      headerName: "NORAD ID", 
-      field: "noradId", 
-      filter: "agNumberColumnFilter",
-      type: "numericColumn",
-      width: 90,
-      cellStyle: { color: theme.theme.warning || theme.theme.secondary, textAlign: "right" },
-      valueFormatter: (params) => params.value ? params.value.toString() : "N/A"
-    },
-    { 
-      headerName: "STATUS", 
-      field: "status", 
-      filter: "agSetColumnFilter",
-      width: 100,
-      cellRenderer: StatusCellRenderer,
-    },
-    { 
-      headerName: "ORBIT TYPE", 
-      field: "orbitType", 
-      filter: "agSetColumnFilter",
-      width: 100,
-      cellStyle: { color: theme.theme.primary },
-      valueFormatter: (params) => params.value || "N/A"
-    },
-    { 
-      headerName: "APOGEE (km)", 
-      field: "apogee", 
-      filter: "agNumberColumnFilter",
-      type: "numericColumn",
-      width: 110,
-      cellStyle: { color: theme.theme.accent || theme.theme.secondary, textAlign: "right" },
-      valueFormatter: (params) => params.value ? params.value.toLocaleString() : "N/A"
-    },
-    { 
-      headerName: "PERIGEE (km)", 
-      field: "perigee", 
-      filter: "agNumberColumnFilter", 
-      type: "numericColumn",
-      width: 110,
-      cellStyle: { color: theme.theme.accent || theme.theme.secondary, textAlign: "right" },
-      valueFormatter: (params) => params.value ? params.value.toLocaleString() : "N/A"
-    },
-    { 
-      headerName: "INCLINATION (°)", 
-      field: "inclination", 
-      filter: "agNumberColumnFilter",
-      type: "numericColumn", 
-      width: 130,
-      cellStyle: { color: theme.theme.warning || theme.theme.primary, textAlign: "right" },
-      valueFormatter: (params) => params.value ? `${params.value.toFixed(2)}°` : "N/A"
-    },
-    { 
-      headerName: "PERIOD (min)", 
-      field: "period", 
-      filter: "agNumberColumnFilter",
-      type: "numericColumn",
-      width: 110,
-      cellStyle: { color: theme.theme.primary, textAlign: "right" },
-      valueFormatter: (params) => params.value ? `${params.value.toFixed(1)} min` : "N/A"
-    },
-    { 
-      headerName: "COUNTRY", 
-      field: "country", 
-      filter: "agTextColumnFilter",
-      width: 160,
-      cellRenderer: CountryCellRenderer,
-      pinned: false, // Ensure it's not hidden
-    },
-    { 
-      headerName: "LAUNCH DATE", 
-      field: "launchDate", 
-      filter: "agDateColumnFilter",
-      width: 120,
-      cellStyle: { color: theme.theme.secondary },
-      valueFormatter: (params) => params.value ? new Date(params.value).toLocaleDateString() : "N/A"
-    },
-    { 
-      headerName: "DESCRIPTION", 
-      field: "description", 
-      filter: "agTextColumnFilter",
-      width: 150,
-      cellStyle: { color: theme.theme.textPrimary },
-      valueFormatter: (params) => params.value || "N/A"
-    },
-  ];
+  const getBaseColumnDefs = (): ColDef<DisplaySatellite>[] => {
+    const cols: ColDef<DisplaySatellite>[] = [
+      { 
+        headerName: "NAME", 
+        field: "name", 
+        filter: "agTextColumnFilter",
+        width: 180,
+        cellStyle: { color: theme.theme.primary, fontWeight: "bold" }
+      },
+      { 
+        headerName: "CATEGORY", 
+        field: "category", 
+        filter: "agSetColumnFilter",
+        width: 130,
+        cellRenderer: CategoryCellRenderer,
+      },
+      { 
+        headerName: "SOURCE", 
+        field: "source", 
+        filter: "agSetColumnFilter",
+        width: 90,
+        cellRenderer: SourceCellRenderer,
+      },
+      { 
+        headerName: "TYPE", 
+        field: "type", 
+        filter: "agSetColumnFilter",
+        width: 80,
+        cellStyle: { color: theme.theme.accent || theme.theme.secondary },
+        valueFormatter: (params: any) => params.value ? params.value.toUpperCase() : "N/A"
+      },
+      { 
+        headerName: "NORAD ID", 
+        field: "noradId", 
+        filter: "agNumberColumnFilter",
+        type: "numericColumn",
+        width: 90,
+        cellStyle: { color: theme.theme.warning || theme.theme.secondary, textAlign: "right" },
+        valueFormatter: (params: any) => params.value ? params.value.toString() : "N/A"
+      },
+      { 
+        headerName: "STATUS", 
+        field: "status", 
+        filter: "agSetColumnFilter",
+        width: 100,
+        cellRenderer: StatusCellRenderer,
+      },
+      { 
+        headerName: "ORBIT TYPE", 
+        field: "orbitType", 
+        filter: "agSetColumnFilter",
+        width: 100,
+        cellStyle: { color: theme.theme.primary },
+        valueFormatter: (params: any) => params.value || "N/A"
+      },
+      { 
+        headerName: "COUNTRY", 
+        field: "country", 
+        filter: "agTextColumnFilter",
+        width: 160,
+        cellRenderer: CountryCellRenderer,
+        pinned: false, // Ensure it's not hidden
+      },
+
+      { 
+        headerName: "INCLINATION (°)", 
+        field: "inclination", 
+        filter: "agNumberColumnFilter",
+        type: "numericColumn", 
+        width: 130,
+        cellStyle: { color: theme.theme.warning || theme.theme.primary, textAlign: "right" },
+        valueFormatter: (params: any) => params.value ? `${params.value.toFixed(2)}°` : "N/A"
+      },
+      { 
+        headerName: "PERIOD (min)", 
+        field: "period", 
+        filter: "agNumberColumnFilter",
+        type: "numericColumn",
+        width: 110,
+        cellStyle: { color: theme.theme.primary, textAlign: "right" },
+        valueFormatter: (params: any) => params.value ? `${params.value.toFixed(1)} min` : "N/A"
+      },
+      { 
+        headerName: "LAUNCH DATE", 
+        field: "launchDate", 
+        filter: "agDateColumnFilter",
+        width: 120,
+        cellStyle: { color: theme.theme.secondary },
+        valueFormatter: (params: any) => params.value ? new Date(params.value).toLocaleDateString() : "N/A"
+      },
+      { 
+        headerName: "DESCRIPTION", 
+        field: "description", 
+        filter: "agTextColumnFilter",
+        width: 150,
+        cellStyle: { color: theme.theme.textPrimary },
+        valueFormatter: (params: any) => params.value || "N/A"
+      },
+    ];
+    
+    return cols;
+  };
 
   // Column definitions for "My Satellites" tab (editable, with delete actions)
   const myColumnDefs: ColDef<DisplaySatellite>[] = [
@@ -886,7 +846,8 @@ export default function SatsPage() {
                 filter: true,
                 resizable: true,
                 editable: false,
-                minWidth: 100,
+                minWidth: 80,
+                suppressSizeToFit: false, // Allow column resizing
               }}
               animateRows={true}
               rowSelection="single"
@@ -895,8 +856,8 @@ export default function SatsPage() {
               rowHeight={40}
               headerHeight={45}
               onGridReady={(params) => {
-                params.api.sizeColumnsToFit();
-                console.log("Grid ready, row count:", params.api.getDisplayedRowCount());
+                // Don't auto-size columns to fit - let them use their defined widths
+                // This ensures all columns are visible via horizontal scrolling
               }}
               onCellValueChanged={(event: CellValueChangedEvent) => {
                 // Handle cell edits for managed satellites only (My Satellites tab)
@@ -906,10 +867,7 @@ export default function SatsPage() {
                 }
               }}
               onFirstDataRendered={() => {
-                const currentGrid = activeTab === 0 ? myGridRef.current : discoverGridRef.current;
-                if (currentGrid) {
-                  currentGrid.api.sizeColumnsToFit();
-                }
+                // Don't auto-fit columns - use their defined widths to show all columns
               }}
               pagination={true}
               paginationPageSize={50}
