@@ -719,13 +719,15 @@ export default function SatsPage() {
                 }
               }}
               pagination={true}
-              paginationPageSize={25}
+              paginationPageSize={50}
               suppressMenuHide={true}
               enableRangeSelection={true}
               suppressCellFocus={false}
               getRowId={(params) => params.data.id}
               loading={loading || status === "loading"}
               domLayout="normal"
+              suppressRowVirtualisation={false}
+              rowBuffer={10}
             />
           </div>
         )}

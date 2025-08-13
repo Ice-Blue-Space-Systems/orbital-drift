@@ -123,14 +123,26 @@ export const fetchApiSatellites = async (): Promise<DisplaySatellite[]> => {
   }
 };
 
-// Fetch satellites from CelesTrak (sample of active satellites)
+// Fetch satellites from CelesTrak (comprehensive public satellite data)
 export const fetchCelesTrakSatellites = async (): Promise<DisplaySatellite[]> => {
   try {
-    // Fetch a curated list of interesting satellites from CelesTrak
+    // Fetch from major satellite groups on CelesTrak for comprehensive coverage
     const urls = [
-      "https://celestrak.org/NORAD/elements/gp.php?GROUP=stations&FORMAT=json",
-      "https://celestrak.org/NORAD/elements/gp.php?GROUP=starlink&FORMAT=json",
-      "https://celestrak.org/NORAD/elements/gp.php?GROUP=galileo&FORMAT=json",
+      "https://celestrak.org/NORAD/elements/gp.php?GROUP=stations&FORMAT=json", // Space stations (ISS, etc.)
+      "https://celestrak.org/NORAD/elements/gp.php?GROUP=starlink&FORMAT=json", // SpaceX Starlink constellation
+      "https://celestrak.org/NORAD/elements/gp.php?GROUP=galileo&FORMAT=json", // European navigation satellites
+      "https://celestrak.org/NORAD/elements/gp.php?GROUP=gps-ops&FORMAT=json", // GPS operational satellites
+      "https://celestrak.org/NORAD/elements/gp.php?GROUP=glonass-ops&FORMAT=json", // GLONASS operational satellites
+      "https://celestrak.org/NORAD/elements/gp.php?GROUP=beidou&FORMAT=json", // Chinese BeiDou navigation
+      "https://celestrak.org/NORAD/elements/gp.php?GROUP=iridium-33&FORMAT=json", // Iridium communication satellites
+      "https://celestrak.org/NORAD/elements/gp.php?GROUP=globalstar&FORMAT=json", // Globalstar communication satellites
+      "https://celestrak.org/NORAD/elements/gp.php?GROUP=oneweb&FORMAT=json", // OneWeb constellation
+      "https://celestrak.org/NORAD/elements/gp.php?GROUP=weather&FORMAT=json", // Weather satellites
+      "https://celestrak.org/NORAD/elements/gp.php?GROUP=goes&FORMAT=json", // GOES weather satellites
+      "https://celestrak.org/NORAD/elements/gp.php?GROUP=resource&FORMAT=json", // Earth observation satellites
+      "https://celestrak.org/NORAD/elements/gp.php?GROUP=cubesat&FORMAT=json", // CubeSats
+      "https://celestrak.org/NORAD/elements/gp.php?GROUP=planet&FORMAT=json", // Planet Labs satellites
+      "https://celestrak.org/NORAD/elements/gp.php?GROUP=spire&FORMAT=json", // Spire Global satellites
     ];
     
     const promises = urls.map(url => 
@@ -145,13 +157,23 @@ export const fetchCelesTrakSatellites = async (): Promise<DisplaySatellite[]> =>
     const results = await Promise.all(promises);
     const allSatellites: CelesTrakSatellite[] = results.flat();
     
-    // Take a sample to avoid overwhelming the UI
-    const sampleSize = 50;
-    const sampledSatellites = allSatellites
-      .sort(() => 0.5 - Math.random())
-      .slice(0, sampleSize);
+    // Filter out obviously inactive/decayed satellites and sort by name
+    // Remove the artificial sampling limit to show all available public satellites
+    const activeSatellites = allSatellites
+      .filter(sat => {
+        // Basic filtering for clearly active satellites
+        const name = sat.OBJECT_NAME.toUpperCase();
+        // Skip debris, rocket bodies, and clearly inactive objects
+        return !name.includes("DEB") && 
+               !name.includes("DEBRIS") && 
+               !name.includes("R/B") && 
+               !name.includes("ROCKET BODY") &&
+               sat.MEAN_MOTION > 0.5; // Filter out very slow objects (likely debris)
+      })
+      .sort((a, b) => a.OBJECT_NAME.localeCompare(b.OBJECT_NAME));
     
-    return sampledSatellites.map(convertCelesTrakSatelliteToDisplay);
+    console.log(`Fetched ${activeSatellites.length} active satellites from CelesTrak`);
+    return activeSatellites.map(convertCelesTrakSatelliteToDisplay);
   } catch (error) {
     console.error("Error fetching CelesTrak satellites:", error);
     return [];
