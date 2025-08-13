@@ -33,6 +33,7 @@ import SaveIcon from "@mui/icons-material/Save";
 import CancelIcon from "@mui/icons-material/Cancel";
 import ManageSearchIcon from "@mui/icons-material/ManageSearch";
 import ExploreIcon from "@mui/icons-material/Explore";
+import SatelliteAltIcon from "@mui/icons-material/SatelliteAlt";
 import { 
   DisplaySatellite, 
   convertApiSatelliteToDisplay, 
@@ -508,11 +509,14 @@ export default function SatsPage() {
     >
       {/* Header Section */}
       <Box className="sats-header">
-        <Typography variant="h4" className="sats-title">
-          SATELLITE DATABASE
-        </Typography>
-        <Typography variant="subtitle1" className="sats-subtitle">
-          Mission Operations Command Center - Status: {status.toUpperCase()}
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, marginBottom: 1 }}>
+          <SatelliteAltIcon sx={{ color: 'var(--theme-primary)', fontSize: '2rem' }} />
+          <Typography variant="h5" className="sats-title">
+            SPACE VEHICLES
+          </Typography>
+        </Box>
+        <Typography variant="subtitle2" className="sats-subtitle">
+          Orbital Asset Management System
         </Typography>
         
         {/* Action Buttons */}

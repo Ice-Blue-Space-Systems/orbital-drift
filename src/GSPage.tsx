@@ -33,6 +33,7 @@ import SaveIcon from "@mui/icons-material/Save";
 import CancelIcon from "@mui/icons-material/Cancel";
 import ManageSearchIcon from "@mui/icons-material/ManageSearch";
 import ExploreIcon from "@mui/icons-material/Explore";
+import RadarIcon from "@mui/icons-material/Radar";
 import { 
   DisplayGroundStation, 
   convertApiGroundStationToDisplay, 
@@ -506,10 +507,13 @@ export default function GSPage() {
     >
       {/* Header Section */}
       <Box className="gs-header">
-        <Typography variant="h4" className="gs-title">
-          GROUND STATION NETWORK
-        </Typography>
-        <Typography variant="subtitle1" className="gs-subtitle">
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, marginBottom: 1 }}>
+          <RadarIcon sx={{ color: 'var(--theme-primary)', fontSize: '2rem' }} />
+          <Typography variant="h5" className="gs-title">
+            GROUND STATION NETWORK
+          </Typography>
+        </Box>
+        <Typography variant="subtitle2" className="gs-subtitle">
           Global Communications Infrastructure
         </Typography>
         
