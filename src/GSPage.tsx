@@ -599,41 +599,59 @@ export default function GSPage() {
     >
       {/* Header Section */}
       <Box className="gs-header">
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, marginBottom: 1 }}>
-          <RadarIcon sx={{ color: 'var(--theme-primary)', fontSize: '2rem' }} />
-          <Typography variant="h5" className="gs-title">
-            GROUND STATION NETWORK
-          </Typography>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, marginBottom: 1, justifyContent: 'space-between' }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+            <RadarIcon sx={{ color: 'var(--theme-primary)', fontSize: '2rem' }} />
+            <Typography variant="h5" className="gs-title">
+              GROUND STATION NETWORK
+            </Typography>
+          </Box>
+          
+          {/* Action Buttons */}
+          <Box sx={{ display: 'flex', gap: 1 }}>
+            <Tooltip title="Add Ground Station">
+              <IconButton
+                onClick={() => setAddDialogOpen(true)}
+                sx={{
+                  backgroundColor: `rgba(${theme.theme.primaryRGB}, 0.2)`,
+                  color: theme.theme.primary,
+                  border: `1px solid ${theme.theme.primary}`,
+                  '&:hover': {
+                    backgroundColor: `rgba(${theme.theme.primaryRGB}, 0.3)`,
+                    boxShadow: `0 0 10px rgba(${theme.theme.primaryRGB}, 0.5)`
+                  }
+                }}
+              >
+                <AddIcon />
+              </IconButton>
+            </Tooltip>
+            
+            <Tooltip title="Refresh Station Data">
+              <IconButton
+                onClick={refreshGroundStationData}
+                disabled={loading}
+                sx={{
+                  backgroundColor: `rgba(${theme.theme.secondaryRGB || theme.theme.primaryRGB}, 0.2)`,
+                  color: theme.theme.secondary,
+                  border: `1px solid ${theme.theme.secondary}`,
+                  '&:hover': {
+                    backgroundColor: `rgba(${theme.theme.secondaryRGB || theme.theme.primaryRGB}, 0.3)`,
+                    boxShadow: `0 0 10px rgba(${theme.theme.secondaryRGB || theme.theme.primaryRGB}, 0.5)`
+                  },
+                  '&:disabled': {
+                    opacity: 0.5,
+                    color: theme.theme.textSecondary
+                  }
+                }}
+              >
+                <RefreshIcon />
+              </IconButton>
+            </Tooltip>
+          </Box>
         </Box>
         <Typography variant="subtitle2" className="gs-subtitle">
           Global Communications Infrastructure
         </Typography>
-        
-        {/* Action Buttons */}
-        <Box className="gs-actions">
-          <Tooltip title="Add Ground Station">
-            <Button
-              variant="contained"
-              startIcon={<AddIcon />}
-              onClick={() => setAddDialogOpen(true)}
-              className="action-button add-button"
-            >
-              ADD STATION
-            </Button>
-          </Tooltip>
-          
-          <Tooltip title="Refresh Station Data">
-            <Button
-              variant="outlined"
-              startIcon={<RefreshIcon />}
-              onClick={refreshGroundStationData}
-              disabled={loading}
-              className="action-button refresh-button"
-            >
-              REFRESH DATA
-            </Button>
-          </Tooltip>
-        </Box>
 
         {/* Enhanced Stats */}
         <Box className="gs-stats">
