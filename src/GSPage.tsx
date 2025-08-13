@@ -346,10 +346,10 @@ export default function GSPage() {
     const getStatusColor = (status: string) => {
       switch (status) {
         case "Active": return theme.theme.primary;
-        case "Inactive": return "#ffaa00";
-        case "Maintenance": return "#ff8800";
-        case "Decommissioned": return "#ff0040";
-        default: return "#888888";
+        case "Inactive": return theme.theme.warning || "#ffaa00";
+        case "Maintenance": return theme.theme.accent || theme.theme.secondary;
+        case "Decommissioned": return theme.theme.error || "#ff4444";
+        default: return theme.theme.textSecondary;
       }
     };
 
@@ -359,7 +359,7 @@ export default function GSPage() {
         size="small"
         sx={{
           backgroundColor: getStatusColor(params.value),
-          color: "#000",
+          color: theme.theme.background,
           fontWeight: "bold",
           fontSize: "11px",
         }}
@@ -387,7 +387,7 @@ export default function GSPage() {
   const CoordinatesCellRenderer = (params: any) => {
     const { latitude, longitude } = params.data;
     return (
-      <span style={{ color: "#ffaa00", fontFamily: "monospace" }}>
+      <span style={{ color: theme.theme.accent || theme.theme.secondary, fontFamily: "monospace" }}>
         {latitude.toFixed(4)}°, {longitude.toFixed(4)}°
       </span>
     );
@@ -404,7 +404,7 @@ export default function GSPage() {
           <IconButton
             size="small"
             onClick={() => deleteGroundStation(params.data.id)}
-            sx={{ color: "#ff0040", padding: "2px" }}
+            sx={{ color: theme.theme.error || "#ff4444", padding: "2px" }}
           >
             <DeleteIcon fontSize="small" />
           </IconButton>
@@ -415,7 +415,7 @@ export default function GSPage() {
 
   // Country cell renderer with flag
   const CountryCellRenderer = (params: any) => {
-    if (!params.value) return <span style={{ color: "#888" }}>N/A</span>;
+    if (!params.value) return <span style={{ color: theme.theme.textSecondary }}>N/A</span>;
     
     const countryCode = countryCodeMap[params.value] || params.value.slice(0, 2).toUpperCase();
     const flagUrl = `https://flagcdn.com/24x18/${countryCode.toLowerCase()}.png`;
@@ -429,7 +429,7 @@ export default function GSPage() {
             width: "20px", 
             height: "15px", 
             objectFit: "cover",
-            border: "1px solid #333",
+            border: `1px solid ${theme.theme.secondary}`,
             borderRadius: "2px"
           }}
           onError={(e) => {
@@ -437,7 +437,7 @@ export default function GSPage() {
             e.currentTarget.src = "https://flagcdn.com/24x18/un.png";
           }}
         />
-        <span style={{ color: "#aaaaaa" }}>{params.value}</span>
+        <span style={{ color: theme.theme.textPrimary }}>{params.value}</span>
       </Box>
     );
   };
@@ -500,7 +500,7 @@ export default function GSPage() {
       field: "city", 
       filter: "agTextColumnFilter",
       flex: 1,
-      cellStyle: { color: "#cccccc" }
+      cellStyle: { color: theme.theme.textPrimary }
     },
     { 
       headerName: "COORDINATES", 
@@ -516,7 +516,7 @@ export default function GSPage() {
       filter: "agNumberColumnFilter",
       type: "numericColumn",
       flex: 1,
-      cellStyle: { color: "#ffaa00", textAlign: "right" },
+      cellStyle: { color: theme.theme.accent || theme.theme.secondary, textAlign: "right" },
       valueFormatter: (params) => params.value ? params.value.toLocaleString() : "N/A"
     },
     { 
@@ -524,7 +524,7 @@ export default function GSPage() {
       field: "frequency", 
       filter: "agTextColumnFilter",
       flex: 1,
-      cellStyle: { color: "#ff6600" },
+      cellStyle: { color: theme.theme.warning || theme.theme.primary },
       valueFormatter: (params) => params.value ? `${params.value} MHz` : "N/A"
     },
     { 
@@ -536,21 +536,21 @@ export default function GSPage() {
         values: ["S", "X", "Ka", "Ku", "L", "C", "Unknown"]
       },
       flex: 0.8,
-      cellStyle: { color: "#66ff66", textAlign: "center", fontWeight: "bold" }
+      cellStyle: { color: theme.theme.primary, textAlign: "center", fontWeight: "bold" }
     },
     { 
       headerName: "OPERATOR", 
       field: "operator", 
       filter: "agTextColumnFilter",
       flex: 1.5,
-      cellStyle: { color: "#cc88ff" }
+      cellStyle: { color: theme.theme.secondary }
     },
     { 
       headerName: "ESTABLISHED", 
       field: "established", 
       filter: "agDateColumnFilter",
       flex: 1,
-      cellStyle: { color: "#88ccff" },
+      cellStyle: { color: theme.theme.accent || theme.theme.secondary },
       valueFormatter: (params) => params.value ? new Date(params.value).toLocaleDateString() : "N/A"
     },
   ];
@@ -758,7 +758,7 @@ export default function GSPage() {
 
         {/* Grid Content */}
         {(activeTab === 0 ? filteredMyGroundStations : filteredDiscoverableGroundStations).length === 0 ? (
-          <Box sx={{ padding: 4, textAlign: 'center', color: '#888' }}>
+          <Box sx={{ padding: 4, textAlign: 'center', color: theme.theme.textSecondary }}>
             <Typography variant="h6">
               {activeTab === 0 
                 ? (status === "loading" ? "Loading my ground stations..." : "No managed ground stations found") 

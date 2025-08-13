@@ -46,19 +46,40 @@ interface CelesTrakSatellite {
 const countryFromSatelliteName = (name: string): string => {
   const nameUpper = name.toUpperCase();
   
+  // SpaceX and US Commercial
   if (nameUpper.includes("STARLINK") || nameUpper.includes("FALCON") || nameUpper.includes("DRAGON")) return "USA";
-  if (nameUpper.includes("COSMOS") || nameUpper.includes("SOYUZ") || nameUpper.includes("PROGRESS")) return "Russia";
-  if (nameUpper.includes("TIANGONG") || nameUpper.includes("SHENZHOU")) return "China";
-  if (nameUpper.includes("SENTINEL") || nameUpper.includes("GALILEO")) return "Europe";
-  if (nameUpper.includes("IRIDIUM")) return "USA";
-  if (nameUpper.includes("GLOBALSTAR")) return "USA";
-  if (nameUpper.includes("ONEWE")) return "USA";
-  if (nameUpper.includes("TERRA") || nameUpper.includes("AQUA") || nameUpper.includes("LANDSAT")) return "USA";
-  if (nameUpper.includes("ENVISAT") || nameUpper.includes("ERS")) return "Europe";
-  if (nameUpper.includes("ALOS")) return "Japan";
-  if (nameUpper.includes("RESOURCESAT") || nameUpper.includes("CARTOSAT")) return "India";
-  if (nameUpper.includes("RADARSAT")) return "Canada";
   
+  // Russian satellites
+  if (nameUpper.includes("COSMOS") || nameUpper.includes("SOYUZ") || nameUpper.includes("PROGRESS")) return "Russia";
+  if (nameUpper.includes("MOLNIYA") || nameUpper.includes("GLONAS")) return "Russia";
+  
+  // Chinese satellites
+  if (nameUpper.includes("TIANGONG") || nameUpper.includes("SHENZHOU") || nameUpper.includes("CHANG'E")) return "China";
+  if (nameUpper.includes("FENGYUN") || nameUpper.includes("YAOGAN")) return "China";
+  
+  // European satellites
+  if (nameUpper.includes("SENTINEL") || nameUpper.includes("GALILEO") || nameUpper.includes("ENVISAT")) return "Europe";
+  if (nameUpper.includes("ERS") || nameUpper.includes("METEOSAT")) return "Europe";
+  
+  // US Commercial and Government
+  if (nameUpper.includes("IRIDIUM") || nameUpper.includes("GLOBALSTAR") || nameUpper.includes("ONEWEB")) return "USA";
+  if (nameUpper.includes("TERRA") || nameUpper.includes("AQUA") || nameUpper.includes("LANDSAT")) return "USA";
+  if (nameUpper.includes("GPS") || nameUpper.includes("NAVSTAR")) return "USA";
+  if (nameUpper.includes("GOES") || nameUpper.includes("NOAA")) return "USA";
+  
+  // Japanese satellites
+  if (nameUpper.includes("ALOS") || nameUpper.includes("HIMAWARI") || nameUpper.includes("JCSAT")) return "Japan";
+  
+  // Indian satellites
+  if (nameUpper.includes("RESOURCESAT") || nameUpper.includes("CARTOSAT") || nameUpper.includes("INSAT")) return "India";
+  
+  // Canadian satellites
+  if (nameUpper.includes("RADARSAT") || nameUpper.includes("ANIK")) return "Canada";
+  
+  // ISS and international missions
+  if (nameUpper.includes("ISS") || nameUpper.includes("INTERNATIONAL SPACE STATION")) return "International";
+  
+  console.log(`Country detection for satellite "${name}" defaulted to International`);
   return "International";
 };
 
@@ -90,6 +111,9 @@ export const convertApiSatelliteToDisplay = (sat: ApiSatellite): DisplaySatellit
   noradId: sat.noradId,
   status: "Active", // Default since API doesn't provide status
   orbitType: "LEO", // Default since API doesn't provide orbit type
+  category: "Unknown", // Default category
+  constellation: undefined,
+  country: countryFromSatelliteName(sat.name || "Unknown Satellite"),
   description: sat.description,
   lastUpdate: new Date().toISOString(),
 });

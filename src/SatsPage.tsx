@@ -351,9 +351,9 @@ export default function SatsPage() {
     const getStatusColor = (status: string) => {
       switch (status) {
         case "Active": return theme.theme.primary;
-        case "Inactive": return "#ffaa00";
-        case "Decayed": return "#ff0040";
-        default: return "#888888";
+        case "Inactive": return theme.theme.warning || "#ffaa00";
+        case "Decayed": return theme.theme.error || "#ff4444";
+        default: return theme.theme.textSecondary;
       }
     };
 
@@ -363,7 +363,7 @@ export default function SatsPage() {
         size="small"
         sx={{
           backgroundColor: getStatusColor(params.value),
-          color: "#000",
+          color: theme.theme.background,
           fontWeight: "bold",
           fontSize: "11px",
         }}
@@ -398,7 +398,7 @@ export default function SatsPage() {
           <IconButton
             size="small"
             onClick={() => deleteSatellite(params.data.id)}
-            sx={{ color: "#ff0040", padding: "2px" }}
+            sx={{ color: theme.theme.error || "#ff4444", padding: "2px" }}
           >
             <DeleteIcon fontSize="small" />
           </IconButton>
@@ -409,7 +409,9 @@ export default function SatsPage() {
 
   // Country cell renderer with flag
   const CountryCellRenderer = (params: any) => {
-    if (!params.value) return <span style={{ color: "#888" }}>N/A</span>;
+    if (!params.value || params.value === "Unknown") {
+      return <span style={{ color: theme.theme.textSecondary }}>N/A</span>;
+    }
     
     const countryCode = countryCodeMap[params.value] || params.value.slice(0, 2).toUpperCase();
     const flagUrl = `https://flagcdn.com/24x18/${countryCode.toLowerCase()}.png`;
@@ -423,7 +425,7 @@ export default function SatsPage() {
             width: "20px", 
             height: "15px", 
             objectFit: "cover",
-            border: "1px solid #333",
+            border: `1px solid ${theme.theme.secondary}`,
             borderRadius: "2px"
           }}
           onError={(e) => {
@@ -431,7 +433,7 @@ export default function SatsPage() {
             e.currentTarget.src = "https://flagcdn.com/24x18/un.png";
           }}
         />
-        <span style={{ color: "#aaaaaa" }}>{params.value}</span>
+        <span style={{ color: theme.theme.textPrimary }}>{params.value}</span>
       </Box>
     );
   };
@@ -458,22 +460,23 @@ export default function SatsPage() {
   // Category cell renderer with colored chips
   const CategoryCellRenderer = (params: any) => {
     if (!params.value || params.value === "Unknown") {
-      return <span style={{ color: "#888" }}>N/A</span>;
+      return <span style={{ color: theme.theme.textSecondary }}>N/A</span>;
     }
 
     const getCategoryColor = (category: string) => {
-      switch (category) {
-        case "Space Station": return "#ff6b35";
-        case "Navigation": return "#4ecdc4";
-        case "Communication": return "#45b7d1";
-        case "Weather": return "#96ceb4";
-        case "Earth Observation": return "#feca57";
-        case "CubeSat": return "#ff9ff3";
-        case "Commercial": return "#54a0ff";
-        case "Scientific": return "#5f27cd";
-        case "Military": return "#ee5a24";
-        default: return "#888888";
-      }
+      // Use theme-aware colors that work with both themes
+      const colors: Record<string, string> = {
+        "Space Station": theme.theme.primary,
+        "Navigation": theme.theme.secondary,
+        "Communication": theme.theme.accent || theme.theme.primary,
+        "Weather": theme.theme.secondary,
+        "Earth Observation": theme.theme.accent || theme.theme.secondary,
+        "CubeSat": theme.theme.primary,
+        "Commercial": theme.theme.secondary,
+        "Scientific": theme.theme.accent || theme.theme.primary,
+        "Military": theme.theme.error || theme.theme.primary,
+      };
+      return colors[category] || theme.theme.textSecondary;
     };
 
     return (
@@ -482,7 +485,7 @@ export default function SatsPage() {
         size="small"
         sx={{
           backgroundColor: getCategoryColor(params.value),
-          color: "#000",
+          color: theme.theme.background,
           fontWeight: "bold",
           fontSize: "10px",
           maxWidth: "120px"
@@ -494,7 +497,7 @@ export default function SatsPage() {
   // Constellation cell renderer
   const ConstellationCellRenderer = (params: any) => {
     if (!params.value) {
-      return <span style={{ color: "#888" }}>N/A</span>;
+      return <span style={{ color: theme.theme.textSecondary }}>N/A</span>;
     }
 
     return (
@@ -547,7 +550,7 @@ export default function SatsPage() {
       field: "type", 
       filter: "agSetColumnFilter",
       width: 80,
-      cellStyle: { color: "#66aaff" },
+      cellStyle: { color: theme.theme.accent || theme.theme.secondary },
       valueFormatter: (params) => params.value ? params.value.toUpperCase() : "N/A"
     },
     { 
@@ -556,7 +559,7 @@ export default function SatsPage() {
       filter: "agNumberColumnFilter",
       type: "numericColumn",
       width: 90,
-      cellStyle: { color: "#ffcc66", textAlign: "right" },
+      cellStyle: { color: theme.theme.warning || theme.theme.secondary, textAlign: "right" },
       valueFormatter: (params) => params.value ? params.value.toString() : "N/A"
     },
     { 
@@ -571,7 +574,7 @@ export default function SatsPage() {
       field: "orbitType", 
       filter: "agSetColumnFilter",
       width: 100,
-      cellStyle: { color: "#00aaff" },
+      cellStyle: { color: theme.theme.primary },
       valueFormatter: (params) => params.value || "N/A"
     },
     { 
@@ -580,7 +583,7 @@ export default function SatsPage() {
       filter: "agNumberColumnFilter",
       type: "numericColumn",
       width: 110,
-      cellStyle: { color: "#ffaa00", textAlign: "right" },
+      cellStyle: { color: theme.theme.accent || theme.theme.secondary, textAlign: "right" },
       valueFormatter: (params) => params.value ? params.value.toLocaleString() : "N/A"
     },
     { 
@@ -589,7 +592,7 @@ export default function SatsPage() {
       filter: "agNumberColumnFilter", 
       type: "numericColumn",
       width: 110,
-      cellStyle: { color: "#ffaa00", textAlign: "right" },
+      cellStyle: { color: theme.theme.accent || theme.theme.secondary, textAlign: "right" },
       valueFormatter: (params) => params.value ? params.value.toLocaleString() : "N/A"
     },
     { 
@@ -598,7 +601,7 @@ export default function SatsPage() {
       filter: "agNumberColumnFilter",
       type: "numericColumn", 
       width: 130,
-      cellStyle: { color: "#ff6600", textAlign: "right" },
+      cellStyle: { color: theme.theme.warning || theme.theme.primary, textAlign: "right" },
       valueFormatter: (params) => params.value ? `${params.value.toFixed(2)}°` : "N/A"
     },
     { 
@@ -607,22 +610,23 @@ export default function SatsPage() {
       filter: "agNumberColumnFilter",
       type: "numericColumn",
       width: 110,
-      cellStyle: { color: "#66ff66", textAlign: "right" },
+      cellStyle: { color: theme.theme.primary, textAlign: "right" },
       valueFormatter: (params) => params.value ? `${params.value.toFixed(1)} min` : "N/A"
     },
     { 
       headerName: "COUNTRY", 
       field: "country", 
       filter: "agTextColumnFilter",
-      width: 140,
+      width: 160,
       cellRenderer: CountryCellRenderer,
+      pinned: false, // Ensure it's not hidden
     },
     { 
       headerName: "LAUNCH DATE", 
       field: "launchDate", 
       filter: "agDateColumnFilter",
       width: 120,
-      cellStyle: { color: "#cc88ff" },
+      cellStyle: { color: theme.theme.secondary },
       valueFormatter: (params) => params.value ? new Date(params.value).toLocaleDateString() : "N/A"
     },
     { 
@@ -630,7 +634,7 @@ export default function SatsPage() {
       field: "description", 
       filter: "agTextColumnFilter",
       width: 150,
-      cellStyle: { color: "#88ddff" },
+      cellStyle: { color: theme.theme.textPrimary },
       valueFormatter: (params) => params.value || "N/A"
     },
   ];
