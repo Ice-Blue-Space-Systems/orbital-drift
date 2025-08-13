@@ -125,7 +125,7 @@
 
 /* Grid Container */
 .gs-grid-container {
-  background: #0a0a0a;
+  background: var(--theme-background-dark, #0a0a0a);
   border: none;
   border-radius: 0;
   padding: 0;
@@ -135,9 +135,9 @@
 
 /* Clean AG Grid Theme */
 .matrix-grid.ag-theme-alpine-dark {
-  --ag-background-color: #0a0a0a !important;
-  --ag-header-background-color: #0a0a0a !important;
-  --ag-odd-row-background-color: #0a0a0a !important;
+  --ag-background-color: var(--theme-background-dark, #0a0a0a) !important;
+  --ag-header-background-color: var(--theme-background-dark, #0a0a0a) !important;
+  --ag-odd-row-background-color: var(--theme-background-dark, #0a0a0a) !important;
   --ag-even-row-background-color: rgba(255, 255, 255, 0.02);
   --ag-row-hover-color: rgba(255, 255, 255, 0.05) !important;
   --ag-selected-row-background-color: rgba(var(--theme-primary-rgb, 0, 255, 65), 0.1) !important;
@@ -155,17 +155,17 @@
   border: none !important;
   border-radius: 0;
   overflow: hidden;
-  background-color: #0a0a0a !important;
+  background-color: var(--theme-background-dark, #0a0a0a) !important;
 }
 
 .matrix-grid.ag-theme-alpine-dark .ag-root-wrapper {
   border: none !important;
-  background-color: #0a0a0a !important;
+  background-color: var(--theme-background-dark, #0a0a0a) !important;
 }
 
 .matrix-grid.ag-theme-alpine-dark .ag-root {
   border: none !important;
-  background-color: #0a0a0a !important;
+  background-color: var(--theme-background-dark, #0a0a0a) !important;
 }
 
 /* Ensure the entire grid viewport stays dark */
@@ -174,12 +174,12 @@
 .matrix-grid .ag-body-viewport,
 .matrix-grid .ag-body-horizontal-scroll-viewport,
 .matrix-grid .ag-body-vertical-scroll-viewport {
-  background-color: #0a0a0a !important;
+  background-color: var(--theme-background-dark, #0a0a0a) !important;
 }
 
 .matrix-grid .ag-header {
   border-bottom: 1px solid rgba(255, 255, 255, 0.2) !important;
-  background: #0a0a0a !important;
+  background: var(--theme-background-dark, #0a0a0a) !important;
 }
 
 .matrix-grid .ag-header-cell {
@@ -194,11 +194,11 @@
 
 .matrix-grid .ag-row {
   border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
-  background-color: #0a0a0a !important;
+  background-color: var(--theme-background-dark, #0a0a0a) !important;
 }
 
 .matrix-grid .ag-row:nth-child(odd) {
-  background-color: #0a0a0a !important;
+  background-color: var(--theme-background-dark, #0a0a0a) !important;
 }
 
 .matrix-grid .ag-row:hover {
@@ -460,7 +460,7 @@
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(10, 10, 10, 0.95);
+  background: var(--theme-background-dark, rgba(10, 10, 10, 0.95));
   display: flex;
   flex-direction: column;
   justify-content: center;
