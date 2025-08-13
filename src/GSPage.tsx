@@ -106,6 +106,7 @@ export default function GSPage() {
   useEffect(() => {
     const rootElement = document.documentElement;
     rootElement.style.setProperty('--theme-primary', theme.theme.primary);
+    rootElement.style.setProperty('--theme-primary-rgb', theme.theme.primaryRGB);
     rootElement.style.setProperty('--theme-secondary', theme.theme.secondary);
     rootElement.style.setProperty('--theme-background-gradient', theme.theme.backgroundGradient);
     rootElement.style.setProperty('--theme-background-dark', theme.theme.backgroundDark);
@@ -253,7 +254,7 @@ export default function GSPage() {
   const StatusCellRenderer = (params: any) => {
     const getStatusColor = (status: string) => {
       switch (status) {
-        case "Active": return "#00ff41";
+        case "Active": return theme.theme.primary;
         case "Inactive": return "#ffaa00";
         case "Maintenance": return "#ff8800";
         case "Decommissioned": return "#ff0040";
@@ -283,8 +284,8 @@ export default function GSPage() {
         size="small"
         variant="outlined"
         sx={{
-          borderColor: params.value === "predefined" ? "#00aaff" : "#00ff41",
-          color: params.value === "predefined" ? "#00aaff" : "#00ff41",
+          borderColor: params.value === "predefined" ? theme.theme.secondary : theme.theme.primary,
+          color: params.value === "predefined" ? theme.theme.secondary : theme.theme.primary,
           fontSize: "10px",
         }}
       />
@@ -359,8 +360,8 @@ export default function GSPage() {
           onClick={() => quickAddGroundStation(params.data)}
           disabled={loading}
           sx={{
-            color: "#00ff41",
-            "&:hover": { backgroundColor: "rgba(0, 255, 65, 0.1)" }
+            color: theme.theme.primary,
+            "&:hover": { backgroundColor: `rgba(${theme.theme.primaryRGB}, 0.1)` }
           }}
         >
           <AddIcon fontSize="small" />
@@ -376,7 +377,7 @@ export default function GSPage() {
       field: "name", 
       filter: "agTextColumnFilter",
       width: 180,
-      cellStyle: { color: "#00ff41", fontWeight: "bold" }
+      cellStyle: { color: theme.theme.primary, fontWeight: "bold" }
     },
     { 
       headerName: "SOURCE", 
@@ -614,27 +615,27 @@ export default function GSPage() {
       <Box className="gs-grid-container">
         
         {/* Tabs */}
-        <Box sx={{ borderBottom: 1, borderColor: 'rgba(0, 255, 65, 0.3)', marginBottom: 2 }}>
+        <Box sx={{ borderBottom: 1, borderColor: `rgba(${theme.theme.primaryRGB}, 0.3)`, marginBottom: 2 }}>
           <Tabs 
             value={activeTab} 
             onChange={(_, newValue) => setActiveTab(newValue)}
             sx={{
               '& .MuiTabs-indicator': {
-                backgroundColor: '#00ff41',
+                backgroundColor: theme.theme.primary,
                 height: '2px',
               },
               '& .MuiTab-root': {
-                color: 'rgba(0, 255, 65, 0.7)',
+                color: `rgba(${theme.theme.primaryRGB}, 0.7)`,
                 fontFamily: "'Courier New', Courier, monospace",
                 fontSize: '0.9rem',
                 fontWeight: 'bold',
                 textTransform: 'uppercase',
                 '&.Mui-selected': {
-                  color: '#00ff41',
+                  color: theme.theme.primary,
                 },
                 '&:hover': {
-                  color: '#00ff41',
-                  backgroundColor: 'rgba(0, 255, 65, 0.1)',
+                  color: theme.theme.primary,
+                  backgroundColor: `rgba(${theme.theme.primaryRGB}, 0.1)`,
                 },
               },
             }}
