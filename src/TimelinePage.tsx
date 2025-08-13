@@ -107,12 +107,8 @@ const TimelinePage: React.FC = () => {
       height: '100%',
       groupOrder: 'id',
       stack: false,
-      margin: {
-        item: {
-          horizontal: 10,
-          vertical: 8
-        }
-      },
+      showGroupLabel: false, // Hide group labels
+      groupLabelMinWidth: 0, // Set minimum width to 0
       orientation: {
         axis: 'bottom' as const,
         item: 'top' as const
@@ -674,7 +670,119 @@ const TimelinePage: React.FC = () => {
             background: theme.theme.backgroundGradient,
             borderRadius: "0 6px 6px 0", // Only round the right corners to match the container
           }}
-        />
+        >
+          {/* Overlay for empty state or loading */}
+          {(!selectedSatelliteId || !selectedGroundStationId || contactWindowsStatus === "loading") && (
+            <div
+              style={{
+                position: "absolute",
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                justifyContent: "center",
+                background: "rgba(0, 0, 0, 0.7)",
+                backdropFilter: "blur(10px)",
+                WebkitBackdropFilter: "blur(10px)",
+                zIndex: 10,
+                borderRadius: "0 6px 6px 0",
+              }}
+            >
+              {contactWindowsStatus === "loading" ? (
+                // Loading state
+                <>
+                  <div
+                    style={{
+                      width: "60px",
+                      height: "60px",
+                      border: `4px solid rgba(${theme.theme.primaryRGB}, 0.3)`,
+                      borderTop: `4px solid ${theme.theme.primary}`,
+                      borderRadius: "50%",
+                      animation: "spin 1s linear infinite",
+                      marginBottom: "20px",
+                    }}
+                  />
+                  <div
+                    style={{
+                      color: theme.theme.primary,
+                      fontSize: "18px",
+                      fontFamily: "Courier New, Courier, monospace",
+                      fontWeight: "bold",
+                      textShadow: `0 0 10px ${theme.theme.primary}`,
+                      marginBottom: "8px",
+                    }}
+                  >
+                    Loading Contact Windows...
+                  </div>
+                  <div
+                    style={{
+                      color: theme.theme.textSecondary,
+                      fontSize: "14px",
+                      fontFamily: "Courier New, Courier, monospace",
+                    }}
+                  >
+                    {selectedSatellite?.name} ↔ {selectedGroundStation?.name}
+                  </div>
+                </>
+              ) : (
+                // Empty state - no selections
+                <>
+                  <div
+                    style={{
+                      fontSize: "48px",
+                      marginBottom: "20px",
+                      opacity: 0.6,
+                    }}
+                  >
+                    📡
+                  </div>
+                  <div
+                    style={{
+                      color: theme.theme.primary,
+                      fontSize: "24px",
+                      fontFamily: "Courier New, Courier, monospace",
+                      fontWeight: "bold",
+                      textShadow: `0 0 10px ${theme.theme.primary}`,
+                      marginBottom: "16px",
+                      textAlign: "center",
+                    }}
+                  >
+                    SELECT SATELLITE & GROUND STATION
+                  </div>
+                  <div
+                    style={{
+                      color: theme.theme.textSecondary,
+                      fontSize: "16px",
+                      fontFamily: "Courier New, Courier, monospace",
+                      textAlign: "center",
+                      lineHeight: "1.6",
+                      maxWidth: "400px",
+                    }}
+                  >
+                    Choose a satellite and ground station from the left panel to view contact windows on the timeline
+                  </div>
+                  <div
+                    style={{
+                      marginTop: "24px",
+                      padding: "12px 20px",
+                      border: `2px solid rgba(${theme.theme.primaryRGB}, 0.3)`,
+                      borderRadius: "8px",
+                      background: "rgba(0, 0, 0, 0.5)",
+                      color: theme.theme.accent,
+                      fontSize: "14px",
+                      fontFamily: "Courier New, Courier, monospace",
+                    }}
+                  >
+                    💡 TIP: Use the toolbar above to navigate and zoom the timeline
+                  </div>
+                </>
+              )}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

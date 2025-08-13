@@ -53,7 +53,7 @@ export function transformContactWindowsToTimelineItems(
 
   const groups = Array.from(groupMap.entries()).map(([groupId, { satellite, groundStation }]) => ({
     id: groupId,
-    content: `${satellite.name} ↔ ${groundStation.name}`,
+    content: '', // Empty content to hide group labels
     className: 'timeline-group',
   }));
 
