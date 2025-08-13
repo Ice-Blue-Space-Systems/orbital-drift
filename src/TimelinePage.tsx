@@ -325,17 +325,30 @@ const TimelinePage: React.FC = () => {
     }
   }, [contactWindows, selectedSatelliteId, selectedGroundStationId, showAllPairs]);
 
-  // Auto-fetch contact windows when selections change
+  // Auto-fetch contact windows when selections change or when navigating back to empty state
   useEffect(() => {
     if (selectedSatelliteId && selectedGroundStationId) {
-      console.log('TimelinePage: Auto-fetching contact windows for:', {
-        satelliteId: selectedSatelliteId,
-        groundStationId: selectedGroundStationId
-      });
-      dispatch(fetchContactWindows({ 
-        satelliteId: selectedSatelliteId, 
-        groundStationId: selectedGroundStationId 
-      }));
+      // Force refetch if we have selections but no contact windows data and no active request
+      if (contactWindows.length === 0 && contactWindowsStatus !== "loading") {
+        console.log('TimelinePage: Force-refetching contact windows for:', {
+          satelliteId: selectedSatelliteId,
+          groundStationId: selectedGroundStationId,
+          reason: 'Empty contact windows with selections'
+        });
+        dispatch(fetchContactWindows({ 
+          satelliteId: selectedSatelliteId, 
+          groundStationId: selectedGroundStationId 
+        }));
+      } else {
+        console.log('TimelinePage: Auto-fetching contact windows for:', {
+          satelliteId: selectedSatelliteId,
+          groundStationId: selectedGroundStationId
+        });
+        dispatch(fetchContactWindows({ 
+          satelliteId: selectedSatelliteId, 
+          groundStationId: selectedGroundStationId 
+        }));
+      }
     }
   }, [selectedSatelliteId, selectedGroundStationId, dispatch]);
 
@@ -698,7 +711,9 @@ const TimelinePage: React.FC = () => {
           }}
         >
           {/* Overlay for empty state or loading */}
-          {(!selectedSatelliteId || !selectedGroundStationId || contactWindowsStatus === "loading") && (
+          {(!selectedSatelliteId || !selectedGroundStationId || 
+            contactWindowsStatus === "loading" || 
+            (selectedSatelliteId && selectedGroundStationId && contactWindows.length === 0 && contactWindowsStatus === "succeeded")) && (
             <div
               style={{
                 position: "absolute",
@@ -748,6 +763,55 @@ const TimelinePage: React.FC = () => {
                       color: theme.theme.textSecondary,
                       fontSize: "14px",
                       fontFamily: "Courier New, Courier, monospace",
+                    }}
+                  >
+                    {selectedSatellite?.name} ↔ {selectedGroundStation?.name}
+                  </div>
+                </>
+              ) : selectedSatelliteId && selectedGroundStationId && contactWindows.length === 0 && contactWindowsStatus === "succeeded" ? (
+                // No contact windows found for selected pair
+                <>
+                  <div
+                    style={{
+                      fontSize: "48px",
+                      marginBottom: "20px",
+                      opacity: 0.6,
+                    }}
+                  >
+                    🔍
+                  </div>
+                  <div
+                    style={{
+                      color: theme.theme.primary,
+                      fontSize: "20px",
+                      fontFamily: "Courier New, Courier, monospace",
+                      fontWeight: "bold",
+                      textShadow: `0 0 10px ${theme.theme.primary}`,
+                      marginBottom: "16px",
+                      textAlign: "center",
+                    }}
+                  >
+                    NO CONTACT WINDOWS FOUND
+                  </div>
+                  <div
+                    style={{
+                      color: theme.theme.textSecondary,
+                      fontSize: "16px",
+                      fontFamily: "Courier New, Courier, monospace",
+                      textAlign: "center",
+                      lineHeight: "1.6",
+                      maxWidth: "400px",
+                      marginBottom: "16px",
+                    }}
+                  >
+                    No contact windows available for this satellite-ground station pair
+                  </div>
+                  <div
+                    style={{
+                      color: theme.theme.accent,
+                      fontSize: "14px",
+                      fontFamily: "Courier New, Courier, monospace",
+                      textAlign: "center",
                     }}
                   >
                     {selectedSatellite?.name} ↔ {selectedGroundStation?.name}
