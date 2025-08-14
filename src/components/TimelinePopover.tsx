@@ -15,25 +15,17 @@ import { useNavigate } from "react-router-dom";
 import { useTheme } from "../contexts/ThemeContext";
 import { useSelectedEntities } from "../hooks/useSelectedEntities";
 import { selectContactWindows } from "../store/contactWindowsSlice";
-import { DataSet } from "vis-data";
-import { Timeline } from "vis-timeline/standalone";
-import "vis-timeline/styles/vis-timeline-graph2d.min.css";
-import { transformContactWindowsToTimelineItems } from "../utils/timelineUtils";
 
 const TimelinePopover: React.FC = () => {
   const [anchorEl, setAnchorEl] = useState<HTMLButtonElement | null>(null);
   const { theme } = useTheme();
   const navigate = useNavigate();
-  const timelineRef = useRef<HTMLDivElement>(null);
-  const timelineInstance = useRef<Timeline | null>(null);
   
   const {
     selectedSatelliteId,
     selectedGroundStationId,
     selectedSatellite,
     selectedGroundStation,
-    satellites,
-    groundStations,
   } = useSelectedEntities();
   
   const contactWindows = useSelector(selectContactWindows);
@@ -41,8 +33,19 @@ const TimelinePopover: React.FC = () => {
   
   const open = Boolean(anchorEl);
   
+  // Filter contact windows for the selected pair
+  const relevantWindows = contactWindows.filter((window: any) => {
+    if (!selectedSatelliteId || !selectedGroundStationId) return false;
+    
+    // Handle both ObjectId and string formats
+    const matchesSatellite = String(window.satelliteId) === String(selectedSatelliteId).replace('api-', '');
+    const matchesGroundStation = String(window.groundStationId) === String(selectedGroundStationId).replace('api-', '');
+    
+    return matchesSatellite && matchesGroundStation;
+  });
+  
   // Calculate upcoming contact windows
-  const upcomingWindows = contactWindows.filter((window: any) => {
+  const upcomingWindows = relevantWindows.filter((window: any) => {
     const now = cesiumClockTime || new Date();
     return new Date(window.scheduledAOS) > now;
   });
@@ -60,101 +63,6 @@ const TimelinePopover: React.FC = () => {
     handleClose();
   };
 
-  // Initialize mini timeline when popover opens
-  useEffect(() => {
-    if (!open || !timelineRef.current) return;
-
-    console.log('TimelinePopover: Initializing timeline', {
-      selectedSatelliteId,
-      selectedGroundStationId,
-      contactWindowsCount: contactWindows.length,
-      satellitesCount: satellites.length,
-      groundStationsCount: groundStations.length
-    });
-
-    // Clear any existing timeline with error handling
-    if (timelineInstance.current) {
-      try {
-        timelineInstance.current.destroy();
-        timelineInstance.current = null;
-      } catch (error) {
-        console.warn('Timeline cleanup error in popover:', error);
-      }
-    }
-
-    // Debounce timeline creation to prevent rapid recreation
-    const timeoutId = setTimeout(() => {
-      try {
-        // Always try to create the timeline if we have satellite and ground station data
-        if (satellites.length > 0 && groundStations.length > 0 && timelineRef.current) {
-          // Create timeline items (will be empty for predefined ground stations)
-          const timelineData = transformContactWindowsToTimelineItems(
-            contactWindows,
-            satellites,
-            groundStations
-          );
-
-          console.log('TimelinePopover: Timeline data created', {
-            itemsCount: timelineData.items.length,
-            groupsCount: timelineData.groups.length
-          });
-
-          const items = new DataSet(timelineData.items);
-          const groups = new DataSet(timelineData.groups);
-          const now = cesiumClockTime || new Date();
-          
-          // Calculate time range for mini view (next 24 hours)
-          const start = new Date(now.getTime() - 2 * 60 * 60 * 1000); // 2 hours before
-          const end = new Date(now.getTime() + 22 * 60 * 60 * 1000); // 22 hours after
-
-          const options = {
-            width: '100%',
-            height: '120px',
-            start: start,
-            end: end,
-            zoomable: false,
-            moveable: false,
-            showCurrentTime: true,
-            currentTime: now,
-            orientation: { axis: 'top' },
-            margin: {
-              item: 2,
-              axis: 5
-            },
-            template: (item: any) => {
-              const duration = Math.round(item.durationSeconds / 60);
-              return `<div style="font-size: 10px; padding: 1px 3px;">${duration}m</div>`;
-            }
-          };
-
-          timelineInstance.current = new Timeline(timelineRef.current, items, options);
-          
-          // Set groups if available
-          if (timelineData.groups.length > 0) {
-            timelineInstance.current.setGroups(groups as any);
-          }
-
-          console.log('TimelinePopover: Timeline created successfully');
-        }
-      } catch (error) {
-        console.error('Error creating mini timeline:', error);
-      }
-    }, 150); // 150ms debounce
-
-    // Cleanup function
-    return () => {
-      clearTimeout(timeoutId);
-      if (timelineInstance.current) {
-        try {
-          timelineInstance.current.destroy();
-          timelineInstance.current = null;
-        } catch (error) {
-          console.warn('Timeline cleanup error in popover:', error);
-        }
-      }
-    };
-  }, [open, contactWindows, selectedSatelliteId, selectedGroundStationId, cesiumClockTime, satellites, groundStations]);
-
   const getStatusColor = () => {
     if (!selectedSatelliteId || !selectedGroundStationId) return "#666";
     if (upcomingWindows.length > 0) return theme.primary;
@@ -171,6 +79,130 @@ const TimelinePopover: React.FC = () => {
     return "Mission Timeline - No upcoming contacts";
   };
 
+  // Simple timeline component using CSS bars instead of vis-timeline
+  const SimpleTimeline = () => {
+    const now = cesiumClockTime || new Date();
+    const timeRange = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
+    const startTime = now.getTime() - (2 * 60 * 60 * 1000); // 2 hours before now
+    const endTime = now.getTime() + (22 * 60 * 60 * 1000); // 22 hours after now
+    
+    return (
+      <Box sx={{ 
+        position: 'relative',
+        height: '120px',
+        backgroundColor: 'rgba(0, 0, 0, 0.1)',
+        borderRadius: '8px',
+        overflow: 'hidden',
+        border: `1px solid rgba(${theme.primaryRGB}, 0.2)`
+      }}>
+        {/* Time axis */}
+        <Box sx={{ 
+          position: 'absolute',
+          bottom: 0,
+          left: 0,
+          right: 0,
+          height: '20px',
+          backgroundColor: 'rgba(0, 0, 0, 0.3)',
+          display: 'flex',
+          alignItems: 'center',
+          paddingX: 1
+        }}>
+          <Typography variant="caption" sx={{ color: '#888', fontSize: '10px', fontFamily: 'inherit' }}>
+            {new Date(startTime).toLocaleTimeString()}
+          </Typography>
+          <Box sx={{ flex: 1 }} />
+          <Typography variant="caption" sx={{ color: theme.primary, fontSize: '10px', fontFamily: 'inherit' }}>
+            NOW
+          </Typography>
+          <Box sx={{ flex: 1 }} />
+          <Typography variant="caption" sx={{ color: '#888', fontSize: '10px', fontFamily: 'inherit' }}>
+            {new Date(endTime).toLocaleTimeString()}
+          </Typography>
+        </Box>
+        
+        {/* Current time indicator */}
+        <Box sx={{
+          position: 'absolute',
+          left: `${((now.getTime() - startTime) / (endTime - startTime)) * 100}%`,
+          top: 0,
+          bottom: 0,
+          width: '2px',
+          backgroundColor: theme.accent,
+          zIndex: 2
+        }} />
+        
+        {/* Contact windows */}
+        {relevantWindows.map((window: any, index: number) => {
+          const windowStart = new Date(window.scheduledAOS).getTime();
+          const windowEnd = new Date(window.scheduledLOS).getTime();
+          
+          // Only show windows within our time range
+          if (windowEnd < startTime || windowStart > endTime) return null;
+          
+          const leftPercent = Math.max(0, ((windowStart - startTime) / (endTime - startTime)) * 100);
+          const rightPercent = Math.min(100, ((windowEnd - startTime) / (endTime - startTime)) * 100);
+          const widthPercent = rightPercent - leftPercent;
+          
+          const duration = Math.round((windowEnd - windowStart) / 60000);
+          const isUpcoming = windowStart > now.getTime();
+          
+          return (
+            <Box
+              key={index}
+              sx={{
+                position: 'absolute',
+                left: `${leftPercent}%`,
+                width: `${widthPercent}%`,
+                top: '10px',
+                height: '80px',
+                backgroundColor: isUpcoming ? theme.primary : 'rgba(100, 100, 100, 0.5)',
+                borderRadius: '4px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease',
+                '&:hover': {
+                  backgroundColor: isUpcoming ? theme.accent : 'rgba(150, 150, 150, 0.7)',
+                  transform: 'scaleY(1.1)'
+                }
+              }}
+              title={`Contact Window: ${new Date(windowStart).toLocaleString()} - ${new Date(windowEnd).toLocaleString()}\nDuration: ${duration} minutes`}
+            >
+              <Typography sx={{ 
+                color: isUpcoming ? theme.backgroundDark : '#fff',
+                fontSize: '10px',
+                fontWeight: 'bold',
+                fontFamily: 'inherit'
+              }}>
+                {duration}m
+              </Typography>
+            </Box>
+          );
+        })}
+        
+        {/* No windows message */}
+        {relevantWindows.length === 0 && (
+          <Box sx={{ 
+            position: 'absolute',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+            color: '#666',
+            textAlign: 'center',
+            fontSize: '12px',
+            fontFamily: 'inherit'
+          }}>
+            {selectedGroundStationId?.startsWith('predefined-') 
+              ? 'No stored contact windows for predefined ground station'
+              : 'No contact windows available for this satellite-ground station pair'
+            }
+          </Box>
+        )}
+      </Box>
+    );
+  };
+
   return (
     <>
       <Tooltip title={getTooltipText()} arrow>
@@ -179,17 +211,6 @@ const TimelinePopover: React.FC = () => {
           className="icon-button"
           sx={{
             color: getStatusColor(),
-            borderRadius: "8px",
-            border: `1px solid ${getStatusColor()}`,
-            backgroundColor: "rgba(0, 0, 0, 0.3)",
-            backdropFilter: "blur(10px)",
-            "-webkit-backdrop-filter": "blur(10px)",
-            transition: "all 0.2s ease",
-            "&:hover": {
-              backgroundColor: "rgba(0, 0, 0, 0.6)",
-              borderColor: `rgba(${theme.primaryRGB}, 0.4)`,
-              boxShadow: `0 8px 25px rgba(${theme.primaryRGB}, 0.2)`,
-            },
           }}
         >
           <TimelineIcon fontSize="small" />
@@ -340,7 +361,7 @@ const TimelinePopover: React.FC = () => {
               }}>
                 {/* Satellite and Ground Station Info */}
                 <Box sx={{ padding: 1.5, borderBottom: `1px solid rgba(${theme.primaryRGB}, 0.2)` }}>
-                  <Box sx={{ display: 'flex', gap: 2 }}>
+                  <Box sx={{ display: 'flex', gap: 2, marginBottom: 1 }}>
                     <Typography variant="body2" sx={{ color: '#aaa', fontFamily: 'inherit' }}>
                       SAT: {selectedSatellite?.name || selectedSatelliteId}
                     </Typography>
@@ -348,47 +369,14 @@ const TimelinePopover: React.FC = () => {
                       GS: {selectedGroundStation?.name || selectedGroundStationId}
                     </Typography>
                   </Box>
+                  <Typography variant="caption" sx={{ color: theme.primary, fontFamily: 'inherit' }}>
+                    {relevantWindows.length} contact window{relevantWindows.length !== 1 ? 's' : ''} found
+                  </Typography>
                 </Box>
 
-                {/* Mini Timeline */}
-                <Box sx={{ 
-                  padding: 1,
-                  minHeight: '140px',
-                  '& .vis-timeline': {
-                    border: 'none',
-                    backgroundColor: 'transparent',
-                  },
-                  '& .vis-item': {
-                    backgroundColor: theme.primary,
-                    border: 'none',
-                    borderRadius: '4px',
-                    color: theme.backgroundDark,
-                  },
-                  '& .vis-time-axis': {
-                    color: '#888',
-                  },
-                  '& .vis-current-time': {
-                    backgroundColor: theme.accent,
-                  }
-                }}>
-                  <div ref={timelineRef} style={{ width: '100%', height: '120px' }} />
-                  {contactWindows.length === 0 && selectedSatelliteId && selectedGroundStationId && (
-                    <Box sx={{ 
-                      position: 'absolute',
-                      top: '50%',
-                      left: '50%',
-                      transform: 'translate(-50%, -50%)',
-                      color: '#666',
-                      textAlign: 'center',
-                      pointerEvents: 'none',
-                      fontSize: '12px'
-                    }}>
-                      {selectedGroundStationId.startsWith('predefined-') 
-                        ? 'No stored contact windows for predefined ground station'
-                        : 'No contact windows available for this pair'
-                      }
-                    </Box>
-                  )}
+                {/* Simple Timeline */}
+                <Box sx={{ padding: 1 }}>
+                  <SimpleTimeline />
                 </Box>
               </Box>
             </>

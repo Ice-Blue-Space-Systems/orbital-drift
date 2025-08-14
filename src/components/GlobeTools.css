@@ -121,13 +121,13 @@
     gap: 5px;
     padding: 5px;
   }
-  }
   
   .globe-tools .icon-button {
     min-width: 36px;
     min-height: 36px;
     padding: 6px;
   }
+}
 
 @media (max-width: 700px) {
   .globe-tools {
