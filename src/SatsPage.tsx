@@ -649,55 +649,11 @@ export default function SatsPage() {
     >
       {/* Header Section */}
       <Box className="sats-header">
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, marginBottom: 1, justifyContent: 'space-between' }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-            <SatelliteAltIcon sx={{ color: 'var(--theme-primary)', fontSize: '2rem' }} />
-            <Typography variant="h5" className="sats-title">
-              SPACE VEHICLES
-            </Typography>
-          </Box>
-          
-          {/* Action Buttons */}
-          <Box sx={{ display: 'flex', gap: 1 }}>
-            <Tooltip title="Add Custom Satellite">
-              <IconButton
-                onClick={() => setAddDialogOpen(true)}
-                sx={{
-                  backgroundColor: `rgba(${theme.theme.primaryRGB}, 0.2)`,
-                  color: theme.theme.primary,
-                  border: `1px solid ${theme.theme.primary}`,
-                  '&:hover': {
-                    backgroundColor: `rgba(${theme.theme.primaryRGB}, 0.3)`,
-                    boxShadow: `0 0 10px rgba(${theme.theme.primaryRGB}, 0.5)`
-                  }
-                }}
-              >
-                <AddIcon />
-              </IconButton>
-            </Tooltip>
-            
-            <Tooltip title="Refresh Satellite Data">
-              <IconButton
-                onClick={refreshSatelliteData}
-                disabled={loading}
-                sx={{
-                  backgroundColor: `rgba(${theme.theme.secondaryRGB || theme.theme.primaryRGB}, 0.2)`,
-                  color: theme.theme.secondary,
-                  border: `1px solid ${theme.theme.secondary}`,
-                  '&:hover': {
-                    backgroundColor: `rgba(${theme.theme.secondaryRGB || theme.theme.primaryRGB}, 0.3)`,
-                    boxShadow: `0 0 10px rgba(${theme.theme.secondaryRGB || theme.theme.primaryRGB}, 0.5)`
-                  },
-                  '&:disabled': {
-                    opacity: 0.5,
-                    color: theme.theme.textSecondary
-                  }
-                }}
-              >
-                <RefreshIcon />
-              </IconButton>
-            </Tooltip>
-          </Box>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, marginBottom: 1 }}>
+          <SatelliteAltIcon sx={{ color: 'var(--theme-primary)', fontSize: '2rem' }} />
+          <Typography variant="h5" className="sats-title">
+            SPACE VEHICLES
+          </Typography>
         </Box>
         <Typography variant="subtitle2" className="sats-subtitle">
           Orbital Asset Management System
@@ -784,7 +740,14 @@ export default function SatsPage() {
       <Box className="sats-grid-container">
         
         {/* Tabs */}
-        <Box sx={{ borderBottom: 1, borderColor: `rgba(${theme.theme.primaryRGB}, 0.3)`, marginBottom: 2 }}>
+        <Box sx={{ 
+          display: 'flex', 
+          justifyContent: 'space-between', 
+          alignItems: 'center',
+          borderBottom: 1, 
+          borderColor: `rgba(${theme.theme.primaryRGB}, 0.3)`, 
+          marginBottom: 2 
+        }}>
           <Tabs 
             value={activeTab} 
             onChange={(_, newValue) => setActiveTab(newValue)}
@@ -820,6 +783,48 @@ export default function SatsPage() {
               label={`Discover More (${discoverableSatellites.length})`} 
             />
           </Tabs>
+
+          {/* Action Buttons - positioned in tab panel area */}
+          <Box sx={{ display: 'flex', gap: 1 }}>
+            <Tooltip title="Add Custom Satellite">
+              <IconButton
+                onClick={() => setAddDialogOpen(true)}
+                sx={{
+                  backgroundColor: `rgba(${theme.theme.primaryRGB}, 0.2)`,
+                  color: theme.theme.primary,
+                  border: `1px solid ${theme.theme.primary}`,
+                  '&:hover': {
+                    backgroundColor: `rgba(${theme.theme.primaryRGB}, 0.3)`,
+                    boxShadow: `0 0 10px rgba(${theme.theme.primaryRGB}, 0.5)`
+                  }
+                }}
+              >
+                <AddIcon />
+              </IconButton>
+            </Tooltip>
+            
+            <Tooltip title="Refresh Satellite Data">
+              <IconButton
+                onClick={refreshSatelliteData}
+                disabled={loading}
+                sx={{
+                  backgroundColor: `rgba(${theme.theme.secondaryRGB || theme.theme.primaryRGB}, 0.2)`,
+                  color: theme.theme.secondary,
+                  border: `1px solid ${theme.theme.secondary}`,
+                  '&:hover': {
+                    backgroundColor: `rgba(${theme.theme.secondaryRGB || theme.theme.primaryRGB}, 0.3)`,
+                    boxShadow: `0 0 10px rgba(${theme.theme.secondaryRGB || theme.theme.primaryRGB}, 0.5)`
+                  },
+                  '&:disabled': {
+                    opacity: 0.5,
+                    color: theme.theme.textSecondary
+                  }
+                }}
+              >
+                <RefreshIcon />
+              </IconButton>
+            </Tooltip>
+          </Box>
         </Box>
 
         {/* Grid Content */}
