@@ -599,8 +599,8 @@ export default function GSPage() {
     >
       {/* Header Section */}
       <Box className="gs-header">
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, marginBottom: 1 }}>
-          <RadarIcon sx={{ color: 'var(--theme-primary)', fontSize: '2rem' }} />
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, marginBottom: 0.5 }}>
+          <RadarIcon sx={{ color: 'var(--theme-primary)', fontSize: '1.8rem' }} />
           <Typography variant="h5" className="gs-title">
             GROUND STATION NETWORK
           </Typography>
@@ -697,8 +697,8 @@ export default function GSPage() {
           justifyContent: 'space-between', 
           alignItems: 'center',
           borderBottom: 1, 
-          borderColor: `rgba(${theme.theme.primaryRGB}, 0.3)`, 
-          marginBottom: 2 
+          borderColor: `rgba(${theme.theme.primaryRGB}, 0.15)`, 
+          marginBottom: 1 
         }}>
           <Tabs 
             value={activeTab} 

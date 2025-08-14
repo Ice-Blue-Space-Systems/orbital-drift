@@ -649,8 +649,8 @@ export default function SatsPage() {
     >
       {/* Header Section */}
       <Box className="sats-header">
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, marginBottom: 1 }}>
-          <SatelliteAltIcon sx={{ color: 'var(--theme-primary)', fontSize: '2rem' }} />
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, marginBottom: 0.5 }}>
+          <SatelliteAltIcon sx={{ color: 'var(--theme-primary)', fontSize: '1.8rem' }} />
           <Typography variant="h5" className="sats-title">
             SPACE VEHICLES
           </Typography>
@@ -745,8 +745,8 @@ export default function SatsPage() {
           justifyContent: 'space-between', 
           alignItems: 'center',
           borderBottom: 1, 
-          borderColor: `rgba(${theme.theme.primaryRGB}, 0.3)`, 
-          marginBottom: 2 
+          borderColor: `rgba(${theme.theme.primaryRGB}, 0.15)`, 
+          marginBottom: 1 
         }}>
           <Tabs 
             value={activeTab} 

@@ -4,7 +4,7 @@
   min-height: 100vh;
   color: var(--theme-primary, #00ff41);
   font-family: 'Courier New', Courier, monospace;
-  padding: 32px;
+  padding: 16px 24px;
   position: relative;
   overflow-x: auto;
 }
@@ -23,11 +23,11 @@
   background: transparent;
   border: none;
   border-radius: 0;
-  padding: 0 0 32px 0;
-  margin-bottom: 32px;
+  padding: 0 0 12px 0;
+  margin-bottom: 12px;
   box-shadow: none;
   backdrop-filter: none;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .gs-title {
@@ -36,16 +36,16 @@
   font-weight: 300 !important;
   letter-spacing: 1px !important;
   text-shadow: none !important;
-  margin-bottom: 4px !important;
+  margin-bottom: 2px !important;
   text-transform: uppercase;
-  font-size: 1.8rem !important;
+  font-size: 1.6rem !important;
 }
 
 .gs-subtitle {
   color: rgba(255, 255, 255, 0.5) !important;
   font-family: 'Courier New', Courier, monospace !important;
   letter-spacing: 0.5px !important;
-  margin-bottom: 32px !important;
+  margin-bottom: 12px !important;
   text-transform: none;
   font-weight: 300 !important;
 }
@@ -53,7 +53,7 @@
 .gs-actions {
   display: flex;
   gap: 16px;
-  margin-bottom: 32px;
+  margin-bottom: 16px;
   flex-wrap: wrap;
 }
 
@@ -92,7 +92,7 @@
 
 .gs-stats {
   display: flex;
-  gap: 24px;
+  gap: 16px;
   flex-wrap: wrap;
 }
 
@@ -398,8 +398,8 @@
 .console-status-bar {
   display: flex;
   flex-wrap: wrap;
-  gap: 24px;
-  margin-top: 24px;
+  gap: 16px;
+  margin-top: 8px;
   padding: 0;
   background: transparent;
   border: none;
