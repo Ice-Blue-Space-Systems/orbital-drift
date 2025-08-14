@@ -33,50 +33,12 @@
   transition: opacity 0.3s ease;
 }
 
-.globe-tools:hover::after {
-  opacity: 1;
-}
-
-.globe-tools:hover {
-  box-shadow: 
-    0 20px 60px rgba(var(--theme-primary-rgb), 0.25),
-    inset 0 1px 0 rgba(255, 255, 255, 0.1),
-    0 0 35px rgba(var(--theme-primary-rgb), 0.2);
-  border-color: rgba(var(--theme-primary-rgb), 0.5);
-}
-
-/* Animated gradient border effect on hover */
-.globe-tools::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  border-radius: 20px;
-  padding: 1px;
-  background: linear-gradient(
-    45deg,
-    var(--theme-primary),
-    rgba(var(--theme-primary-rgb), 0.3),
-    var(--theme-primary)
-  );
-  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-  mask-composite: exclude;
-  -webkit-mask-composite: xor;
-  opacity: 0;
-  transition: opacity 0.4s ease;
-}
-
-.globe-tools:hover::before {
-  opacity: 1;
-}
+/* Removed hover effects for consistent border appearance */
 
 /* Globe Tools Button Container */
 .globe-tools-buttons {
   display: flex;
-  gap: 10px;
+  gap: 6px;
   align-items: center;
   flex-wrap: wrap;
   min-height: 48px;
@@ -86,119 +48,62 @@
   z-index: 1;
 }
 
-/* Globe Tools Button Groups - Enhanced with glow */
+/* Globe Tools Button Groups - Simplified */
 .globe-tools-group {
   display: flex;
   gap: 6px;
   align-items: center;
-  padding: 6px 10px;
-  border-radius: 10px;
-  background: rgba(0, 0, 0, 0.4);
-  border: 1px solid rgba(var(--theme-primary-rgb), 0.2);
+  padding: 6px;
+  border-radius: 12px;
+  background: rgba(0, 0, 0, 0.2);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   flex-shrink: 0;
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
 }
 
 .globe-tools-group:hover {
-  background: rgba(0, 0, 0, 0.6);
-  border-color: rgba(var(--theme-primary-rgb), 0.4);
-  box-shadow: 
-    0 8px 25px rgba(var(--theme-primary-rgb), 0.2),
-    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  background: rgba(0, 0, 0, 0.4);
 }
 
-/* Icon Button Styling - Matching Widget Style */
+/* Icon Button Styling - Minimal, no borders */
 .globe-tools .icon-button {
   color: rgba(255, 255, 255, 0.7);
   background: transparent;
-  border: 1px solid transparent;
-  border-radius: 6px;
-  padding: 6px;
-  min-width: 34px;
-  min-height: 34px;
+  border: none;
+  border-radius: 8px;
+  padding: 8px;
+  min-width: 36px;
+  min-height: 36px;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
-  backdrop-filter: blur(5px);
-  -webkit-backdrop-filter: blur(5px);
 }
 
 .globe-tools .icon-button:hover {
   color: var(--theme-primary);
   background: rgba(var(--theme-primary-rgb), 0.15);
-  border-color: rgba(var(--theme-primary-rgb), 0.3);
-  box-shadow: 
-    0 4px 15px rgba(var(--theme-primary-rgb), 0.3),
-    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  transform: scale(1.05);
 }
 
 .globe-tools .icon-button:active {
-  transform: translateY(0px);
-  box-shadow: 
-    0 2px 8px rgba(var(--theme-primary-rgb), 0.2),
-    inset 0 2px 4px rgba(0, 0, 0, 0.2);
+  transform: scale(0.95);
 }
 
-/* Active/Selected Button State - Enhanced glow */
+/* Active/Selected Button State - Clean glow */
 .globe-tools .icon-button.active {
   color: var(--theme-primary) !important;
   background: rgba(var(--theme-primary-rgb), 0.25) !important;
-  border-color: rgba(var(--theme-primary-rgb), 0.6) !important;
-  box-shadow: 
-    0 6px 20px rgba(var(--theme-primary-rgb), 0.4),
-    inset 0 1px 0 rgba(255, 255, 255, 0.2),
-    0 0 15px rgba(var(--theme-primary-rgb), 0.3) !important;
-  transform: translateY(-1px);
+  box-shadow: 0 0 15px rgba(var(--theme-primary-rgb), 0.4) !important;
+  transform: scale(1.1);
 }
 
-/* Divider Styling - Enhanced with glow effect */
-.globe-tools-divider {
-  width: 1px;
-  height: 30px;
-  background: linear-gradient(
-    to bottom,
-    transparent,
-    rgba(var(--theme-primary-rgb), 0.4) 20%,
-    var(--theme-primary) 50%,
-    rgba(var(--theme-primary-rgb), 0.4) 80%,
-    transparent
-  );
-  margin: 0 12px;
-  position: relative;
-  flex-shrink: 0;
-  border-radius: 1px;
-  box-shadow: 0 0 8px rgba(var(--theme-primary-rgb), 0.3);
-}
-
-.globe-tools-divider::before {
-  content: '';
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 4px;
-  height: 4px;
-  background: var(--theme-primary);
-  border-radius: 50%;
-  box-shadow: 
-    0 0 8px rgba(var(--theme-primary-rgb), 0.8),
-    0 0 12px rgba(var(--theme-primary-rgb), 0.4);
-}
-
-/* Responsive Design - Updated for new sizing */
+/* Responsive Design - Updated for minimal design */
 @media (max-width: 1200px) {
   .globe-tools {
     max-width: 800px;
   }
   
   .globe-tools-buttons {
-    gap: 10px;
-    padding: 14px 18px;
-  }
-  
-  .globe-tools-divider {
-    margin: 0 10px;
+    gap: 5px;
+    padding: 12px 16px;
   }
 }
 
@@ -208,13 +113,14 @@
   }
   
   .globe-tools-buttons {
-    gap: 8px;
-    padding: 12px 16px;
+    gap: 4px;
+    padding: 10px 14px;
   }
   
   .globe-tools-group {
-    gap: 6px;
-    padding: 6px 10px;
+    gap: 5px;
+    padding: 5px;
+  }
   }
   
   .globe-tools .icon-button {
@@ -222,12 +128,6 @@
     min-height: 36px;
     padding: 6px;
   }
-  
-  .globe-tools-divider {
-    margin: 0 8px;
-    height: 32px;
-  }
-}
 
 @media (max-width: 700px) {
   .globe-tools {
@@ -253,5 +153,7 @@
   
   .globe-tools-divider {
     display: none;
+  .globe-tools .icon-button {
+    border-radius: 6px;
   }
 }

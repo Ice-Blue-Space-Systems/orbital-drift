@@ -16,6 +16,7 @@ import { useTheme } from "../contexts/ThemeContext";
 import { useSelectedEntities } from "../hooks/useSelectedEntities";
 import { getContactWindowsPopoverProps } from "../utils/popoverUtils";
 import { Box } from "@mui/material";
+import { DragIndicator as DragIndicatorIcon } from "@mui/icons-material";
 
 interface GlobeToolsProps {
   groundStations: any[];
@@ -115,6 +116,12 @@ const GlobeTools: React.FC<GlobeToolsProps> = ({
 
   // Drag functionality
   const handleMouseDown = (e: React.MouseEvent) => {
+    // Only start dragging if not clicking on buttons or interactive elements
+    const target = e.target as HTMLElement;
+    if (target.closest('button') || target.closest('[role="button"]') || target.closest('.popover-trigger')) {
+      return;
+    }
+
     setIsDragging(true);
     setDragStart({
       x: e.clientX - position.x,
@@ -202,15 +209,24 @@ const GlobeTools: React.FC<GlobeToolsProps> = ({
     >
       {/* Globe Tools Button Container */}
       <div className="globe-tools-buttons">
+        {/* Drag Handle */}
+        <DragIndicatorIcon 
+          sx={{ 
+            color: 'rgba(var(--theme-primary-rgb), 0.5)', 
+            fontSize: 16,
+            cursor: 'grab',
+            opacity: 0.7,
+            marginRight: '6px',
+            '&:hover': {
+              opacity: 1,
+              color: 'var(--theme-primary)',
+            }
+          }} 
+        />
+        
         {/* Existing Tool Groups */}
         <SatellitePopover />
-        
-        <div className="globe-tools-divider"></div>
-        
         <GroundStationPopover />
-        
-        <div className="globe-tools-divider"></div>
-        
         <ContactWindowsPopover 
           {...getContactWindowsPopoverProps(
             selectedSatelliteId,
@@ -221,14 +237,7 @@ const GlobeTools: React.FC<GlobeToolsProps> = ({
             debugInfo.currentTime
           )}
         />
-        
-        <div className="globe-tools-divider"></div>
-        
         <ConsolePopover debugInfo={debugInfo} nextContactWindow={nextContactWindow} />
-        
-        <div className="globe-tools-divider"></div>
-
-        {/* Timeline Popover - Mission Planner (last) */}
         <TimelinePopover />
       </div>
     </Box>
