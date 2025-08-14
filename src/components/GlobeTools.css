@@ -1,164 +1,159 @@
-/* Globe Tools Panel - Clean Top Border Aesthetic */
+/* Globe Tools Panel - Matching Control Widget Aesthetic */
 .globe-tools {
   position: absolute;
-  top: 64px;
-  left: 0;
-  background: linear-gradient(
-    180deg,
-    rgba(0, 0, 0, 0.9) 0%,
-    rgba(0, 0, 0, 0.7) 50%,
-    transparent 100%
-  );
-  border-top: 3px solid var(--theme-primary, #00ff00);
-  border-left: none;
-  border-right: none;
-  border-bottom: none;
-  border-radius: 0;
+  top: 80px;
+  left: 20px;
+  background: rgba(10, 15, 25, 0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(var(--theme-primary-rgb), 0.3);
+  border-radius: 20px;
   box-shadow: 
-    0 4px 20px rgba(0, 0, 0, 0.3),
-    inset 0 1px 0 rgba(var(--theme-primary-rgb, 0, 255, 0), 0.2),
-    0 0 15px rgba(var(--theme-primary-rgb, 0, 255, 0), 0.1);
-  transition: all 0.3s ease-in-out;
+    0 16px 50px rgba(var(--theme-primary-rgb), 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    0 0 40px rgba(var(--theme-primary-rgb), 0.15);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   z-index: 1000;
   width: auto;
   min-width: fit-content;
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-}
-
-/* Enhanced Glassmorphic Arrow Connector pointing UP to Globe icon */
-.globe-tools::before {
-  content: "";
-  position: absolute;
-  bottom: 100%;
-  left: 40px; /* Position to align with Globe icon: 16px padding + 24px (half of Globe button) */
-  transform: translateX(-50%);
-  width: 0;
-  height: 0;
-  border-left: 12px solid transparent;
-  border-right: 12px solid transparent;
-  border-bottom: 10px solid var(--theme-primary, #00ff00);
-  filter: 
-    drop-shadow(0 -2px 4px rgba(0, 0, 0, 0.4))
-    drop-shadow(0 0 8px rgba(var(--theme-primary-rgb, 0, 255, 0), 0.3))
-    drop-shadow(0 0 15px rgba(var(--theme-primary-rgb, 0, 255, 0), 0.2));
-  z-index: 1001;
-  pointer-events: none;
-  animation: arrow-glow 2s ease-in-out infinite alternate;
-}
-
-@keyframes arrow-glow {
-  0% {
-    filter: 
-      drop-shadow(0 -2px 4px rgba(0, 0, 0, 0.4))
-      drop-shadow(0 0 8px rgba(var(--theme-primary-rgb, 0, 255, 0), 0.3))
-      drop-shadow(0 0 15px rgba(var(--theme-primary-rgb, 0, 255, 0), 0.2));
-  }
-  100% {
-    filter: 
-      drop-shadow(0 -2px 6px rgba(0, 0, 0, 0.5))
-      drop-shadow(0 0 12px rgba(var(--theme-primary-rgb, 0, 255, 0), 0.5))
-      drop-shadow(0 0 25px rgba(var(--theme-primary-rgb, 0, 255, 0), 0.3));
-  }
+  font-family: 'Courier New', Courier, monospace;
 }
 
 .globe-tools:hover {
-  border-top-color: var(--theme-primary, #00ff00);
+  transform: scale(1.02);
   box-shadow: 
-    0 6px 25px rgba(0, 0, 0, 0.4),
-    inset 0 1px 0 rgba(var(--theme-primary-rgb, 0, 255, 0), 0.3),
-    0 0 20px rgba(var(--theme-primary-rgb, 0, 255, 0), 0.3),
-    0 0 35px rgba(var(--theme-primary-rgb, 0, 255, 0), 0.1);
+    0 25px 80px rgba(var(--theme-primary-rgb), 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    0 0 40px rgba(var(--theme-primary-rgb), 0.25);
+  border-color: rgba(var(--theme-primary-rgb), 0.5);
+}
+
+/* Animated gradient border effect on hover */
+.globe-tools::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  border-radius: 20px;
+  padding: 1px;
+  background: linear-gradient(
+    45deg,
+    var(--theme-primary),
+    rgba(var(--theme-primary-rgb), 0.3),
+    var(--theme-primary)
+  );
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+  -webkit-mask-composite: xor;
+  opacity: 0;
+  transition: opacity 0.4s ease;
 }
 
 .globe-tools:hover::before {
-  border-bottom-color: var(--theme-primary, #00ff00);
-  filter: 
-    drop-shadow(0 -2px 6px rgba(0, 0, 0, 0.5))
-    drop-shadow(0 0 12px rgba(var(--theme-primary-rgb, 0, 255, 0), 0.6))
-    drop-shadow(0 0 25px rgba(var(--theme-primary-rgb, 0, 255, 0), 0.4));
-  animation: none; /* Stop the breathing animation on hover for immediate strong glow */
+  opacity: 1;
 }
 
 /* Globe Tools Button Container */
 .globe-tools-buttons {
   display: flex;
-  gap: 8px;
+  gap: 12px;
   align-items: center;
   flex-wrap: wrap;
   min-height: 56px;
-  padding: 8px 16px 16px 16px; /* Extra bottom padding for the arrow */
+  padding: 16px 20px;
   background: transparent;
+  position: relative;
+  z-index: 1;
 }
 
-/* Globe Tools Button Groups */
+/* Globe Tools Button Groups - Enhanced with glow */
 .globe-tools-group {
   display: flex;
-  gap: 4px;
+  gap: 8px;
   align-items: center;
-  padding: 4px;
-  border-radius: 4px;
-  background: rgba(0, 0, 0, 0.3);
-  border: 1px solid rgba(var(--theme-primary-rgb, 0, 255, 0), 0.1);
-  transition: all 0.2s ease;
+  padding: 8px 12px;
+  border-radius: 12px;
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(var(--theme-primary-rgb), 0.2);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   flex-shrink: 0;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.globe-tools-group:hover {
+  background: rgba(0, 0, 0, 0.6);
+  border-color: rgba(var(--theme-primary-rgb), 0.4);
+  box-shadow: 
+    0 8px 25px rgba(var(--theme-primary-rgb), 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  transform: translateY(-1px);
+}
+
+/* Icon Button Styling - Matching Widget Style */
+.globe-tools .icon-button {
+  color: rgba(255, 255, 255, 0.7);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  padding: 8px;
+  min-width: 40px;
+  min-height: 40px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
   backdrop-filter: blur(5px);
   -webkit-backdrop-filter: blur(5px);
 }
 
-.globe-tools-group:hover {
-  background: rgba(0, 0, 0, 0.4);
-  border-color: rgba(var(--theme-primary-rgb, 0, 255, 0), 0.3);
-  box-shadow: 0 0 8px rgba(var(--theme-primary-rgb, 0, 255, 0), 0.1);
-}
-
-/* Icon Button Styling - Clean Console Style */
-.globe-tools .icon-button {
-  color: #888888;
-  background: transparent;
-  border: 1px solid transparent;
-  border-radius: 4px;
-  padding: 6px;
-  min-width: 36px;
-  min-height: 36px;
-  transition: all 0.2s ease;
-  position: relative;
-}
-
 .globe-tools .icon-button:hover {
-  color: var(--theme-primary, #00ff00);
-  background: rgba(var(--theme-primary-rgb, 0, 255, 0), 0.1);
-  border-color: rgba(var(--theme-primary-rgb, 0, 255, 0), 0.2);
-  box-shadow: 0 0 8px rgba(var(--theme-primary-rgb, 0, 255, 0), 0.2);
+  color: var(--theme-primary);
+  background: rgba(var(--theme-primary-rgb), 0.15);
+  border-color: rgba(var(--theme-primary-rgb), 0.3);
+  box-shadow: 
+    0 4px 15px rgba(var(--theme-primary-rgb), 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  transform: translateY(-2px);
 }
 
 .globe-tools .icon-button:active {
-  transform: translateY(1px);
-  box-shadow: 0 0 4px rgba(var(--theme-primary-rgb, 0, 255, 0), 0.1);
+  transform: translateY(0px);
+  box-shadow: 
+    0 2px 8px rgba(var(--theme-primary-rgb), 0.2),
+    inset 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
-/* Active/Selected Button State */
+/* Active/Selected Button State - Enhanced glow */
 .globe-tools .icon-button.active {
-  color: var(--theme-primary, #00ff00) !important;
-  background: rgba(var(--theme-primary-rgb, 0, 255, 0), 0.15) !important;
-  border-color: rgba(var(--theme-primary-rgb, 0, 255, 0), 0.4) !important;
-  box-shadow: 0 0 12px rgba(var(--theme-primary-rgb, 0, 255, 0), 0.3) !important;
+  color: var(--theme-primary) !important;
+  background: rgba(var(--theme-primary-rgb), 0.25) !important;
+  border-color: rgba(var(--theme-primary-rgb), 0.6) !important;
+  box-shadow: 
+    0 6px 20px rgba(var(--theme-primary-rgb), 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2),
+    0 0 15px rgba(var(--theme-primary-rgb), 0.3) !important;
+  transform: translateY(-1px);
 }
 
-/* Divider Styling */
+/* Divider Styling - Enhanced with glow effect */
 .globe-tools-divider {
-  width: 1px;
-  height: 32px;
+  width: 2px;
+  height: 36px;
   background: linear-gradient(
     to bottom,
     transparent,
-    rgba(var(--theme-primary-rgb, 0, 255, 0), 0.3) 20%,
-    rgba(var(--theme-primary-rgb, 0, 255, 0), 0.3) 80%,
+    rgba(var(--theme-primary-rgb), 0.4) 20%,
+    var(--theme-primary) 50%,
+    rgba(var(--theme-primary-rgb), 0.4) 80%,
     transparent
   );
-  margin: 0 8px;
+  margin: 0 12px;
   position: relative;
   flex-shrink: 0;
+  border-radius: 1px;
+  box-shadow: 0 0 8px rgba(var(--theme-primary-rgb), 0.3);
 }
 
 .globe-tools-divider::before {
@@ -167,25 +162,28 @@
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  width: 3px;
-  height: 3px;
-  background: var(--theme-primary, #00ff00);
+  width: 4px;
+  height: 4px;
+  background: var(--theme-primary);
   border-radius: 50%;
-  box-shadow: 0 0 6px rgba(var(--theme-primary-rgb, 0, 255, 0), 0.6);
+  box-shadow: 
+    0 0 8px rgba(var(--theme-primary-rgb), 0.8),
+    0 0 12px rgba(var(--theme-primary-rgb), 0.4);
 }
 
-/* Responsive Design */
+/* Responsive Design - Updated for new sizing */
 @media (max-width: 1200px) {
   .globe-tools {
-    max-width: 700px;
+    max-width: 800px;
   }
   
   .globe-tools-buttons {
-    gap: 6px;
+    gap: 10px;
+    padding: 14px 18px;
   }
   
   .globe-tools-divider {
-    margin: 0 6px;
+    margin: 0 10px;
   }
 }
 
@@ -195,12 +193,13 @@
   }
   
   .globe-tools-buttons {
-    gap: 4px;
+    gap: 8px;
+    padding: 12px 16px;
   }
   
   .globe-tools-group {
-    gap: 2px;
-    padding: 2px;
+    gap: 6px;
+    padding: 6px 10px;
   }
   
   .globe-tools .icon-button {
@@ -210,19 +209,31 @@
   }
   
   .globe-tools-divider {
-    margin: 0 4px;
-    height: 28px;
+    margin: 0 8px;
+    height: 32px;
   }
 }
 
 @media (max-width: 700px) {
   .globe-tools {
     max-width: 400px;
+    border-radius: 16px;
   }
   
   .globe-tools-buttons {
     flex-wrap: wrap;
     justify-content: flex-start;
+    gap: 6px;
+    padding: 10px 14px;
+  }
+  
+  .globe-tools-group {
+    border-radius: 10px;
+    padding: 4px 8px;
+  }
+  
+  .globe-tools .icon-button {
+    border-radius: 6px;
   }
   
   .globe-tools-divider {

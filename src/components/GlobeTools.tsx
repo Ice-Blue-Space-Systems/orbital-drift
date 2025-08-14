@@ -119,16 +119,53 @@ const GlobeTools: React.FC<GlobeToolsProps> = ({
       className="globe-tools"
       sx={{
         position: 'absolute',
-        top: '64px',
-        left: 0,
-        background: `linear-gradient(180deg, ${theme.cardBackground} 0%, rgba(0, 0, 0, 0.7) 50%, transparent 100%)`,
-        borderTop: `3px solid ${theme.primary}`,
-        borderLeft: 'none',
-        borderRight: 'none',
-        borderBottom: 'none',
-        borderRadius: 0,
-        boxShadow: `0 4px 20px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(${theme.primaryRGB}, 0.2)`,
-        transition: 'all 0.3s ease-in-out',
+        top: '80px',
+        left: '20px',
+        background: 'rgba(10, 15, 25, 0.85)',
+        backdropFilter: 'blur(20px)',
+        border: `1px solid rgba(${theme.primaryRGB}, 0.3)`,
+        borderRadius: '20px',
+        boxShadow: `
+          0 16px 50px rgba(${theme.primaryRGB}, 0.2),
+          inset 0 1px 0 rgba(255, 255, 255, 0.1),
+          0 0 40px rgba(${theme.primaryRGB}, 0.15)
+        `,
+        transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+        fontFamily: "'Courier New', Courier, monospace",
+        minWidth: 'fit-content',
+        zIndex: 1000,
+        '&:hover': {
+          transform: 'scale(1.02)',
+          boxShadow: `
+            0 25px 80px rgba(${theme.primaryRGB}, 0.3),
+            inset 0 1px 0 rgba(255, 255, 255, 0.1),
+            0 0 40px rgba(${theme.primaryRGB}, 0.25)
+          `,
+          borderColor: `rgba(${theme.primaryRGB}, 0.5)`,
+        },
+        '&::before': {
+          content: '""',
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          borderRadius: '20px',
+          padding: '1px',
+          background: `linear-gradient(
+            45deg,
+            ${theme.primary},
+            rgba(${theme.primaryRGB}, 0.3),
+            ${theme.primary}
+          )`,
+          mask: 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
+          maskComposite: 'exclude',
+          opacity: 0,
+          transition: 'opacity 0.4s ease',
+        },
+        '&:hover::before': {
+          opacity: 1,
+        },
         // CSS Custom Properties for the CSS file to use
         '--theme-primary': theme.primary,
         '--theme-primary-rgb': theme.primaryRGB,
