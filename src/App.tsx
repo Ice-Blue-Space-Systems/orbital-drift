@@ -6,6 +6,7 @@ import {
   Route,
   Navigate,
   useNavigate,
+  useLocation,
 } from "react-router-dom";
 import { AppBar, Toolbar, IconButton, Tooltip, Box, styled } from "@mui/material";
 import PublicIcon from "@mui/icons-material/Public";
@@ -498,6 +499,8 @@ function GlobalAppBar() {
 // Component inside Router that can use useLocation
 function AppContent() {
   const { theme } = useTheme();
+  const location = useLocation();
+  const isGlobePage = location.pathname === '/globe' || location.pathname === '/';
 
   // Global clock fallback for when no Cesium viewer is active
   useGlobalClock();
@@ -508,8 +511,8 @@ function AppContent() {
       background: theme.appBackground,
       transition: 'background 0.5s ease',
     }}>
-      {/* Global Navigation Bar */}
-      <GlobalAppBar />
+      {/* Global Navigation Bar - Hidden on Globe page */}
+      {!isGlobePage && <GlobalAppBar />}
       
       {/* Global Cesium Control Panel - appears on all pages */}
       <CesiumControlPanel position="top-right" />

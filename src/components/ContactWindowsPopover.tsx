@@ -16,16 +16,27 @@ import ContactWindows from "./ContactWindows";
 import { useSelector } from "react-redux";
 import { selectContactWindows, selectContactWindowsStatus } from "../store/contactWindowsSlice";
 import { useTheme } from "../contexts/ThemeContext";
+import { ContactWindow } from "../types";
 
 interface ContactWindowsPopoverProps {
-  satelliteId: string;
-  groundStationId: string;
+  nextContactWindow?: ContactWindow | null;
+  selectedSatelliteName?: string | null;
+  selectedGroundStationName?: string | null;
+  currentTime?: Date;
+  // Legacy props for backward compatibility
+  satelliteId?: string;
+  groundStationId?: string;
   satelliteName?: string;
   groundStationName?: string;
   showPlaceholder?: boolean;
 }
 
 const ContactWindowsPopover: React.FC<ContactWindowsPopoverProps> = ({
+  nextContactWindow,
+  selectedSatelliteName,
+  selectedGroundStationName,
+  currentTime,
+  // Legacy props
   satelliteId,
   groundStationId,
   satelliteName = "Unknown Satellite",
@@ -39,13 +50,18 @@ const ContactWindowsPopover: React.FC<ContactWindowsPopoverProps> = ({
   
   const open = Boolean(anchorEl);
   
+  // Use new props or fall back to legacy props
+  const displaySatelliteName = selectedSatelliteName || satelliteName;
+  const displayGroundStationName = selectedGroundStationName || groundStationName;
+  
   // Calculate stats
-  const upcomingWindows = contactWindows.filter((window: any) => 
-    new Date(window.scheduledAOS) > new Date()
-  ).length;
+  const upcomingWindows = contactWindows.filter((window: any) => {
+    const now = currentTime || new Date(); // Use simulation time if available, fallback to real time
+    return new Date(window.scheduledAOS) > now;
+  }).length;
   
   const activeWindow = contactWindows.find((window: any) => {
-    const now = new Date();
+    const now = currentTime || new Date(); // Use simulation time if available, fallback to real time
     return new Date(window.scheduledAOS) <= now && new Date(window.scheduledLOS) >= now;
   });
 
@@ -263,10 +279,10 @@ const ContactWindowsPopover: React.FC<ContactWindowsPopoverProps> = ({
                 
                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
                   <Typography variant="body2" sx={{ color: '#aaa', fontFamily: 'inherit' }}>
-                    SAT: {satelliteName}
+                    SAT: {displaySatelliteName}
                   </Typography>
                   <Typography variant="body2" sx={{ color: '#aaa', fontFamily: 'inherit' }}>
-                    GS: {groundStationName}
+                    GS: {displayGroundStationName}
                   </Typography>
                 </Box>
               </Box>
@@ -324,11 +340,17 @@ const ContactWindowsPopover: React.FC<ContactWindowsPopoverProps> = ({
 
               {/* Contact Windows Content */}
               <Box sx={{ maxHeight: '400px', overflow: 'hidden' }}>
-                <ContactWindows 
-                  satelliteId={satelliteId} 
-                  groundStationId={groundStationId}
-                  compact={true}
-                />
+                {satelliteId && groundStationId ? (
+                  <ContactWindows 
+                    satelliteId={satelliteId} 
+                    groundStationId={groundStationId}
+                    compact={true}
+                  />
+                ) : (
+                  <Typography variant="body2" sx={{ p: 2, color: theme.textSecondary }}>
+                    Select a satellite and ground station to view contact windows
+                  </Typography>
+                )}
               </Box>
             </>
           )}

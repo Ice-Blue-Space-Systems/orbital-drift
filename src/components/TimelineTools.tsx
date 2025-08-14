@@ -10,14 +10,14 @@ import MyLocationIcon from "@mui/icons-material/MyLocation";
 import LocationDisabledIcon from "@mui/icons-material/LocationDisabled";
 import FilterListIcon from "@mui/icons-material/FilterList";
 import FilterListOffIcon from "@mui/icons-material/FilterListOff";
-import SatellitePopover from "./SatellitePopover"; // Import SatellitePopover
-import GroundStationPopover from "./GroundStationPopover"; // Import GroundStationPopover
-import ContactWindowsPopover from "./ContactWindowsPopover"; // Import ContactWindowsPopover
-import ConsolePopover from "./ConsolePopover"; // Import ConsolePopover
-import "./TimelineTools.css"; // Import the CSS file
-import { useSelector } from "react-redux";
-import { RootState } from "../store";
+import SatellitePopover from "./SatellitePopover";
+import GroundStationPopover from "./GroundStationPopover";
+import ContactWindowsPopover from "./ContactWindowsPopover";
+import ConsolePopover from "./ConsolePopover";
+import "./TimelineTools.css";
 import { useTheme } from "../contexts/ThemeContext";
+import { useSelectedEntities } from "../hooks/useSelectedEntities";
+import { getContactWindowsPopoverProps } from "../utils/popoverUtils";
 
 export interface TimelineToolsProps {
   onJumpToNext: () => void;
@@ -49,19 +49,14 @@ const TimelineTools: React.FC<TimelineToolsProps> = ({
   nextContactWindow,
 }) => {
   const { theme } = useTheme();
-  const selectedSatId = useSelector(
-    (state: RootState) => state.mongo.selectedSatId
-  );
-  const selectedGroundStationId = useSelector(
-    (state: RootState) => state.mongo.selectedGroundStationId
-  );
   
-  // Get satellites and ground stations data to find names
-  const { satellites, groundStations } = useSelector((state: RootState) => state.mongo);
-  
-  // Find the selected satellite and ground station names
-  const selectedSatellite = satellites.find((sat: any) => sat._id === selectedSatId);
-  const selectedGroundStation = groundStations.find((gs: any) => gs._id === selectedGroundStationId);
+  // Use shared hook for selected entities
+  const {
+    selectedSatelliteId: selectedSatId,
+    selectedGroundStationId,
+    selectedSatellite,
+    selectedGroundStation,
+  } = useSelectedEntities();
     
   return (
     <div 
@@ -139,15 +134,16 @@ const TimelineTools: React.FC<TimelineToolsProps> = ({
         <GroundStationPopover />
 
         {/* Contact Windows Popover */}
-        {selectedSatId && selectedGroundStationId && satellites.length > 0 && groundStations.length > 0 && (
-          <ContactWindowsPopover
-            key={`${selectedSatId}-${selectedGroundStationId}-${selectedSatellite?.name || 'unknown'}`}
-            satelliteId={selectedSatId}
-            groundStationId={selectedGroundStationId}
-            satelliteName={selectedSatellite?.name || "Unknown Satellite"}
-            groundStationName={selectedGroundStation?.name || "Unknown Ground Station"}
-          />
-        )}
+        <ContactWindowsPopover
+          {...getContactWindowsPopoverProps(
+            selectedSatId,
+            selectedGroundStationId,
+            selectedSatellite,
+            selectedGroundStation,
+            nextContactWindow,
+            debugInfo?.currentTime
+          )}
+        />
 
         {/* Console Popover */}
         <ConsolePopover

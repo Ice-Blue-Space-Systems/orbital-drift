@@ -1,18 +1,22 @@
-import React, { useEffect, useMemo } from "react";
+import React, { useEffect, useMemo, useState, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
+import { useNavigate } from "react-router-dom";
 import {
   fetchContactWindows,
   selectContactWindows,
 } from "../store/contactWindowsSlice";
 import { AppDispatch, RootState } from "../store";
 import "./GlobeTools.css";
-import SatellitePopover from "./SatellitePopover"; // Import the SatellitePopover component
-import GroundStationPopover from "./GroundStationPopover"; // Import the GroundStationPopover component
-import ContactWindowsPopover from "./ContactWindowsPopover"; // Import the ContactWindowsPopover component
-import ConsolePopover from "./ConsolePopover"; // Import the ConsolePopover component
+import SatellitePopover from "./SatellitePopover";
+import GroundStationPopover from "./GroundStationPopover";
+import ContactWindowsPopover from "./ContactWindowsPopover";
+import ConsolePopover from "./ConsolePopover";
 import { ContactWindow } from "../types";
 import { useTheme } from "../contexts/ThemeContext";
-import { Box } from "@mui/material";
+import { useSelectedEntities } from "../hooks/useSelectedEntities";
+import { getContactWindowsPopoverProps } from "../utils/popoverUtils";
+import { Box, IconButton, Tooltip } from "@mui/material";
+import TimelineIcon from "@mui/icons-material/Timeline";
 
 interface GlobeToolsProps {
   groundStations: any[];
@@ -23,20 +27,22 @@ const GlobeTools: React.FC<GlobeToolsProps> = ({
   debugInfo,
 }) => {
   const dispatch = useDispatch<AppDispatch>();
+  const navigate = useNavigate();
   const { theme } = useTheme();
-  const selectedSatelliteId = useSelector(
-    (state: RootState) => state.mongo.selectedSatId
-  ); // Retrieve selected satellite ID
-  const selectedGroundStationId = useSelector(
-    (state: RootState) => state.mongo.selectedGroundStationId
-  ); // Retrieve selected ground station ID
-
-  // Get satellites and ground stations data to find names
-  const { satellites, groundStations } = useSelector((state: RootState) => state.mongo);
+  const globeToolsRef = useRef<HTMLDivElement>(null);
   
-  // Find the selected satellite and ground station names
-  const selectedSatellite = satellites.find((sat: any) => sat._id === selectedSatelliteId);
-  const selectedGroundStation = groundStations.find((gs: any) => gs._id === selectedGroundStationId);
+  // Use shared hook for selected entities
+  const {
+    selectedSatelliteId,
+    selectedGroundStationId,
+    selectedSatellite,
+    selectedGroundStation,
+  } = useSelectedEntities();
+  
+  // State for dragging
+  const [position, setPosition] = useState({ x: 20, y: 20 });
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
 
   // Retrieve contact windows from Redux
   const contactWindows = useSelector(selectContactWindows);
@@ -45,7 +51,6 @@ const GlobeTools: React.FC<GlobeToolsProps> = ({
   useEffect(() => {
     if (selectedSatelliteId) {
       console.log(`Selected Satellite ID: ${selectedSatelliteId}`);
-      // Example: Fetch data or update UI based on the selected satellite
       dispatch(
         fetchContactWindows({
           satelliteId: selectedSatelliteId,
@@ -85,6 +90,7 @@ const GlobeTools: React.FC<GlobeToolsProps> = ({
     if (selectedSatelliteId.startsWith('api-')) {
       realSatId = selectedSatelliteId.replace('api-', '');
     }
+
     if (selectedGroundStationId.startsWith('api-')) {
       realGroundStationId = selectedGroundStationId.replace('api-', '');
     }
@@ -114,58 +120,73 @@ const GlobeTools: React.FC<GlobeToolsProps> = ({
     debugInfo.currentTime,
   ]);
 
+  // Navigation handlers
+  const handlePlannerClick = () => {
+    navigate('/timeline');
+  };
+
+  // Drag functionality
+  const handleMouseDown = (e: React.MouseEvent) => {
+    setIsDragging(true);
+    setDragStart({
+      x: e.clientX - position.x,
+      y: e.clientY - position.y,
+    });
+    e.preventDefault();
+  };
+
+  const handleMouseMove = (e: MouseEvent) => {
+    if (isDragging) {
+      const newX = e.clientX - dragStart.x;
+      const newY = e.clientY - dragStart.y;
+      
+      // Constrain to viewport bounds
+      const maxX = window.innerWidth - (globeToolsRef.current?.offsetWidth || 200);
+      const maxY = window.innerHeight - (globeToolsRef.current?.offsetHeight || 100);
+      
+      setPosition({
+        x: Math.max(0, Math.min(newX, maxX)),
+        y: Math.max(0, Math.min(newY, maxY)),
+      });
+    }
+  };
+
+  const handleMouseUp = () => {
+    setIsDragging(false);
+  };
+
+  // Add global event listeners for drag
+  useEffect(() => {
+    if (isDragging) {
+      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mouseup', handleMouseUp);
+      document.body.style.cursor = 'grabbing';
+      document.body.style.userSelect = 'none';
+    } else {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+    }
+
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+    };
+  }, [isDragging, dragStart]);
+
   return (
     <Box
+      ref={globeToolsRef}
       className="globe-tools"
+      onMouseDown={handleMouseDown}
       sx={{
         position: 'absolute',
-        top: '80px',
-        left: '20px',
-        background: 'rgba(10, 15, 25, 0.85)',
-        backdropFilter: 'blur(20px)',
-        border: `1px solid rgba(${theme.primaryRGB}, 0.3)`,
-        borderRadius: '20px',
-        boxShadow: `
-          0 16px 50px rgba(${theme.primaryRGB}, 0.2),
-          inset 0 1px 0 rgba(255, 255, 255, 0.1),
-          0 0 40px rgba(${theme.primaryRGB}, 0.15)
-        `,
-        transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
-        fontFamily: "'Courier New', Courier, monospace",
-        minWidth: 'fit-content',
-        zIndex: 1000,
-        '&:hover': {
-          transform: 'scale(1.02)',
-          boxShadow: `
-            0 25px 80px rgba(${theme.primaryRGB}, 0.3),
-            inset 0 1px 0 rgba(255, 255, 255, 0.1),
-            0 0 40px rgba(${theme.primaryRGB}, 0.25)
-          `,
-          borderColor: `rgba(${theme.primaryRGB}, 0.5)`,
-        },
-        '&::before': {
-          content: '""',
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          borderRadius: '20px',
-          padding: '1px',
-          background: `linear-gradient(
-            45deg,
-            ${theme.primary},
-            rgba(${theme.primaryRGB}, 0.3),
-            ${theme.primary}
-          )`,
-          mask: 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
-          maskComposite: 'exclude',
-          opacity: 0,
-          transition: 'opacity 0.4s ease',
-        },
-        '&:hover::before': {
-          opacity: 1,
-        },
+        left: `${position.x}px`,
+        top: `${position.y}px`,
+        cursor: isDragging ? 'grabbing' : 'grab',
         // CSS Custom Properties for the CSS file to use
         '--theme-primary': theme.primary,
         '--theme-primary-rgb': theme.primaryRGB,
@@ -177,40 +198,43 @@ const GlobeTools: React.FC<GlobeToolsProps> = ({
     >
       {/* Globe Tools Button Container */}
       <div className="globe-tools-buttons">
-        <div className="globe-tools-group">
-          {/* Satellite Popover */}
-          <SatellitePopover />
-
-          {/* Ground Station Popover */}
-          <GroundStationPopover />
-
-          {/* Contact Windows Popover */}
-          {selectedSatelliteId && selectedGroundStationId && satellites.length > 0 && groundStations.length > 0 && (
-            <ContactWindowsPopover
-              key={`${selectedSatelliteId}-${selectedGroundStationId}-${selectedSatellite?.name || 'unknown'}`}
-              satelliteId={selectedSatelliteId}
-              groundStationId={selectedGroundStationId}
-              satelliteName={selectedSatellite?.name || "Unknown Satellite"}
-              groundStationName={selectedGroundStation?.name || "Unknown Ground Station"}
-            />
+        {/* Existing Tool Groups */}
+        <SatellitePopover />
+        
+        <div className="globe-tools-divider"></div>
+        
+        <GroundStationPopover />
+        
+        <div className="globe-tools-divider"></div>
+        
+        <ContactWindowsPopover 
+          {...getContactWindowsPopoverProps(
+            selectedSatelliteId,
+            selectedGroundStationId,
+            selectedSatellite,
+            selectedGroundStation,
+            nextContactWindow,
+            debugInfo.currentTime
           )}
-          {(!selectedSatelliteId || !selectedGroundStationId) && (
-            <ContactWindowsPopover
-              satelliteId={selectedSatelliteId || ''}
-              groundStationId={selectedGroundStationId || ''}
-              showPlaceholder={true}
-            />
-          )}
-        </div>
-
+        />
+        
+        <div className="globe-tools-divider"></div>
+        
+        <ConsolePopover debugInfo={debugInfo} nextContactWindow={nextContactWindow} />
+        
         <div className="globe-tools-divider"></div>
 
+        {/* Navigation Group - Mission Planner (last) */}
         <div className="globe-tools-group">
-          {/* Console Popover */}
-          <ConsolePopover
-            debugInfo={debugInfo}
-            nextContactWindow={nextContactWindow}
-          />
+          <Tooltip title="Mission Planner" arrow>
+            <IconButton
+              className="icon-button"
+              onClick={handlePlannerClick}
+              sx={{ color: 'inherit' }}
+            >
+              <TimelineIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>
         </div>
       </div>
     </Box>

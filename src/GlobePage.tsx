@@ -6,6 +6,7 @@ import { fetchMongoData } from "./store/mongoSlice";
 import { selectContactWindows } from "./store/contactWindowsSlice";
 import CesiumViewer from "./components/CesiumViewer";
 import GlobeTools from "./components/GlobeTools";
+import UtcTimeWidget from "./components/UtcTimeWidget";
 import { useLineOfSight } from "./hooks/useLineOfSight";
 import { useSatellitePosition } from "./hooks/useSatellitePosition";
 import { useTleTrackHistory } from "./hooks/useTleTrackHistory";
@@ -191,16 +192,18 @@ function GlobePage() {
     groundStationPos,
     lineOfSightPositionsRef
   );
-
   return (
     <div
       style={{
         display: "flex",
         flexDirection: "column",
-        height: "calc(100vh - 64px)",
+        height: "100vh",
       }}
     >
-      {/* Our collapsible toolbox on the right (GlobeTools) */}
+      {/* UTC Time Widget - Top Center */}
+      <UtcTimeWidget position="top-center" />
+
+      {/* Globe Tools - Top Left (position will be set via CSS) */}
       <GlobeTools groundStations={groundStations} debugInfo={debugInfo} />
 
       {/* Main Cesium globe, stretched to fill the remaining space */}

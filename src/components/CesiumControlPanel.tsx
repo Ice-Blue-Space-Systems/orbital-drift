@@ -206,10 +206,10 @@ const CesiumControlPanel: React.FC<CesiumControlPanelProps> = ({
       let initialStyles;
       switch (position) {
         case "top-left":
-          initialStyles = { top: "80px", left: "20px" };
+          initialStyles = { top: "20px", left: "20px" };
           break;
         case "top-right":
-          initialStyles = { top: "80px", right: "20px" };
+          initialStyles = { top: "20px", right: "20px" };
           break;
         case "bottom-left":
           initialStyles = { bottom: "20px", left: "20px" };
@@ -218,7 +218,7 @@ const CesiumControlPanel: React.FC<CesiumControlPanelProps> = ({
           initialStyles = { bottom: "20px", right: "20px" };
           break;
         default:
-          initialStyles = { top: "80px", right: "20px" };
+          initialStyles = { top: "20px", right: "20px" };
       }
       
       return {
@@ -231,15 +231,15 @@ const CesiumControlPanel: React.FC<CesiumControlPanelProps> = ({
     // Otherwise use default position based on position prop
     switch (position) {
       case "top-left":
-        return { ...baseStyles, top: "80px", left: "20px" };
+        return { ...baseStyles, top: "20px", left: "20px" };
       case "top-right":
-        return { ...baseStyles, top: "80px", right: "20px" };
+        return { ...baseStyles, top: "20px", right: "20px" };
       case "bottom-left":
         return { ...baseStyles, bottom: "20px", left: "20px" };
       case "bottom-right":
         return { ...baseStyles, bottom: "20px", right: "20px" };
       default:
-        return { ...baseStyles, top: "80px", right: "20px" };
+        return { ...baseStyles, top: "20px", right: "20px" };
     }
   };
 

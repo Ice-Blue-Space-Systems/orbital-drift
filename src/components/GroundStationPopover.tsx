@@ -3,6 +3,7 @@ import { IconButton, Tooltip, TextField, ListItem, ListItemButton, Box, Typograp
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import RadarIcon from "@mui/icons-material/Radar";
 import AddIcon from "@mui/icons-material/Add";
+import LaunchIcon from "@mui/icons-material/Launch";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faSatelliteDish } from "@fortawesome/free-solid-svg-icons";
 import { useSelector, useDispatch } from "react-redux";
@@ -21,6 +22,11 @@ const GroundStationPopover: React.FC = () => {
   const {groundStations, selectedGroundStationId } = useSelector((state: RootState) => state.mongo);
   const showLineOfSight = useSelector((state: RootState) => state.mongo.showLineOfSight);
   const showVisibilityCones = useSelector((state: RootState) => state.mongo.showVisibilityCones);
+
+  // Popout handler
+  const handleGroundStationsPopOut = () => {
+    window.open('/gs', '_blank', 'width=1200,height=800');
+  };
 
   // Get merged ground station data (API + predefined)
   const displayGroundStations = useMemo(() => {
@@ -196,6 +202,41 @@ const GroundStationPopover: React.FC = () => {
               filter: `drop-shadow(0 -2px 4px rgba(${theme.primaryRGB}, 0.2))`,
             }}
           ></div>
+
+          {/* Header with title and popout button */}
+          <Box sx={{ 
+            display: 'flex', 
+            justifyContent: 'space-between', 
+            alignItems: 'center', 
+            marginBottom: '12px',
+            paddingBottom: '8px',
+            borderBottom: `1px solid rgba(${theme.primaryRGB}, 0.2)`
+          }}>
+            <Typography 
+              variant="h6" 
+              sx={{ 
+                color: theme.primary, 
+                fontWeight: "bold", 
+                fontFamily: "'Courier New', Courier, monospace",
+                fontSize: '1rem'
+              }}
+            >
+              📡 Ground Stations
+            </Typography>
+            <Tooltip title="Open Full Ground Stations Database" arrow>
+              <IconButton
+                onClick={handleGroundStationsPopOut}
+                sx={{ 
+                  color: theme.textSecondary,
+                  '&:hover': { color: theme.primary },
+                  padding: '4px'
+                }}
+                size="small"
+              >
+                <LaunchIcon fontSize="small" />
+              </IconButton>
+            </Tooltip>
+          </Box>
 
           {/* Fixed Header Section */}
           <div style={{ flexShrink: 0 }}>

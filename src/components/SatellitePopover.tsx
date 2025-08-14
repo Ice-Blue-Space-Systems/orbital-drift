@@ -5,6 +5,7 @@ import HistoryIcon from "@mui/icons-material/History";
 import PublicIcon from "@mui/icons-material/Public";
 import MyLocationIcon from "@mui/icons-material/MyLocation"; // For nadir lines - represents targeting/location
 import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
+import LaunchIcon from "@mui/icons-material/Launch";
 import { useSelector, useDispatch } from "react-redux";
 import { RootState } from "../store";
 import { setSelectedSatId, setShowHistory, setShowTle, setShowGroundTrack, setShowNadirLines } from "../store/mongoSlice";
@@ -24,6 +25,11 @@ const SatellitePopover: React.FC = () => {
   const showTleState = useSelector((state: RootState) => state.mongo.showTle);
   const showGroundTrackState = useSelector((state: RootState) => state.mongo.showGroundTrack);
   const showNadirLinesState = useSelector((state: RootState) => state.mongo.showNadirLines);
+
+  // Popout handler
+  const handleSatsPopOut = () => {
+    window.open('/sats', '_blank', 'width=1200,height=800');
+  };
 
   // Load CelesTrak data when popover opens
   useEffect(() => {
@@ -151,6 +157,41 @@ const SatellitePopover: React.FC = () => {
               filter: `drop-shadow(0 -2px 4px rgba(${theme.primaryRGB}, 0.2))`,
             }}
           ></div>
+
+          {/* Header with title and popout button */}
+          <Box sx={{ 
+            display: 'flex', 
+            justifyContent: 'space-between', 
+            alignItems: 'center', 
+            marginBottom: '12px',
+            paddingBottom: '8px',
+            borderBottom: `1px solid rgba(${theme.primaryRGB}, 0.2)`
+          }}>
+            <Typography 
+              variant="h6" 
+              sx={{ 
+                color: theme.primary, 
+                fontWeight: "bold", 
+                fontFamily: "'Courier New', Courier, monospace",
+                fontSize: '1rem'
+              }}
+            >
+              🛰️ Satellites
+            </Typography>
+            <Tooltip title="Open Full Satellites Database" arrow>
+              <IconButton
+                onClick={handleSatsPopOut}
+                sx={{ 
+                  color: theme.textSecondary,
+                  '&:hover': { color: theme.primary },
+                  padding: '4px'
+                }}
+                size="small"
+              >
+                <LaunchIcon fontSize="small" />
+              </IconButton>
+            </Tooltip>
+          </Box>
 
           {/* Fixed Header Section */}
           <div style={{ flexShrink: 0 }}>
