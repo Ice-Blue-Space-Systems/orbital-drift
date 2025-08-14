@@ -6,7 +6,6 @@ import { fetchMongoData } from "./store/mongoSlice";
 import { selectContactWindows } from "./store/contactWindowsSlice";
 import CesiumViewer from "./components/CesiumViewer";
 import GlobeTools from "./components/GlobeTools";
-import UtcTimeWidget from "./components/UtcTimeWidget";
 import { useLineOfSight } from "./hooks/useLineOfSight";
 import { useSatellitePosition } from "./hooks/useSatellitePosition";
 import { useTleTrackHistory } from "./hooks/useTleTrackHistory";
@@ -214,9 +213,6 @@ const GlobePage: React.FC = () => {
         height: "100vh",
       }}
     >
-      {/* UTC Time Widget - Top Center */}
-      <UtcTimeWidget position="top-center" />
-
       {/* Globe Tools - Top Left (position will be set via CSS) */}
       <GlobeTools groundStations={groundStations} debugInfo={debugInfo} />
 

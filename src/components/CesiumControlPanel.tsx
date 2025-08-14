@@ -22,6 +22,7 @@ import { setCesiumClockMultiplier } from "../store/cesiumClockSlice";
 import { setShowCesiumOptions } from "../store/mongoSlice";
 import { RootState } from "../store";
 import { useTheme } from "../contexts/ThemeContext";
+import { selectCesiumClockUtc } from "../store/selectors/cesiumClockSelectors";
 
 interface CesiumControlPanelProps {
   position?: "top-left" | "top-right" | "bottom-left" | "bottom-right";
@@ -35,13 +36,15 @@ const CesiumControlPanel: React.FC<CesiumControlPanelProps> = ({
   const showCesiumOptions = useSelector((state: RootState) => state.mongo.showCesiumOptions);
   const { theme, toggleTheme } = useTheme();
   
+  // Use Cesium clock for accurate time that follows the simulation speed
+  const cesiumUtcTime = useSelector(selectCesiumClockUtc);
+  
   const [isExpanded, setIsExpanded] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [isPanelDragging, setIsPanelDragging] = useState(false);
   const [panelPosition, setPanelPosition] = useState({ x: 0, y: 0 });
   const [rotation, setRotation] = useState(0);
   const [speedMode, setSpeedMode] = useState<'dial' | 'slider'>('dial');
-  const [currentTime, setCurrentTime] = useState(new Date());
   const [memoryUsage, setMemoryUsage] = useState(0);
   
   const dialRef = useRef<HTMLDivElement>(null);
@@ -52,10 +55,9 @@ const CesiumControlPanel: React.FC<CesiumControlPanelProps> = ({
   const minSpeed = 0.1;
   const maxSpeed = 1000;
 
-  // Update time and memory usage every second
+  // Update memory usage every second
   useEffect(() => {
     const interval = setInterval(() => {
-      setCurrentTime(new Date());
       if ((performance as any).memory) {
         setMemoryUsage(Math.round((performance as any).memory.usedJSHeapSize / 1024 / 1024));
       }
@@ -268,11 +270,15 @@ const CesiumControlPanel: React.FC<CesiumControlPanelProps> = ({
           boxShadow: isExpanded 
             ? `0 25px 80px ${theme.glowColor}, inset 0 1px 0 rgba(255, 255, 255, 0.1), 0 0 40px ${theme.glowColor}`
             : `0 16px 50px ${theme.glowColor}, inset 0 1px 0 rgba(255, 255, 255, 0.1)`,
-          padding: 2,
+          padding: isExpanded ? 2 : '12px 16px', // Match GlobeTools padding when collapsed
           minWidth: isExpanded ? '300px' : '280px',
+          minHeight: isExpanded ? 'auto' : '48px', // Match GlobeTools height when collapsed
           fontFamily: "'Courier New', Courier, monospace",
           transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
           transform: isExpanded ? 'scale(1.02)' : 'scale(1)',
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: isExpanded ? 'flex-start' : 'center', // Vertically center when collapsed
           '&::before': {
             content: '""',
             position: 'absolute',
@@ -290,13 +296,14 @@ const CesiumControlPanel: React.FC<CesiumControlPanelProps> = ({
           },
         }}
       >
-        {/* Header */}
+        {        /* Header */}
         <Box sx={{ 
           display: 'flex', 
           alignItems: 'center', 
           justifyContent: 'space-between',
           marginBottom: isExpanded ? 2 : 0,
-          padding: '8px 4px'
+          padding: isExpanded ? '8px 4px' : '0px', // Remove padding when collapsed since it's in the main container
+          minHeight: '32px', // Match GlobeTools button height
         }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             <DragIndicatorIcon 
@@ -311,61 +318,38 @@ const CesiumControlPanel: React.FC<CesiumControlPanelProps> = ({
                 }
               }} 
             />
-            <TuneIcon sx={{ color: theme.primary, fontSize: 20 }} />
+            
+            {/* UTC Time Display */}
             <Typography 
               variant="body2" 
               sx={{ 
-                color: theme.primary, 
+                color: theme.primary, // Use theme primary color (green for matrix, blue for ice blue)
                 fontFamily: 'inherit',
                 fontWeight: 'bold',
-                textShadow: theme.textShadow
+                marginLeft: 2,
+                marginRight: 2,
+                textShadow: `0 0 8px ${theme.primary}66, 0 0 12px ${theme.primary}33`, // Console glow using theme color
+                fontSize: '0.8rem',
+                letterSpacing: '0.5px', // Monospace console feel
               }}
             >
-              CONTROL
+              {cesiumUtcTime || new Date().toUTCString()}
             </Typography>
           </Box>
           
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            {/* Theme Switcher */}
-            <Tooltip title="Switch Theme" arrow>
-              <IconButton
-                onClick={toggleTheme}
-                sx={{
-                  color: theme.primary,
-                  padding: '4px',
-                  transition: 'all 0.2s ease',
-                  '&:hover': {
-                    backgroundColor: `rgba(${theme.primaryRGB}, 0.1)`,
-                    transform: 'scale(1.1)',
-                  },
-                }}
-              >
-                <PaletteIcon sx={{ fontSize: 16 }} />
-              </IconButton>
-            </Tooltip>
-
-            {/* Speed Display */}
+            {/* Sim/Live Status Chip */}
             <Chip 
-              label={formatSpeed(currentMultiplier)}
+              label={currentMultiplier === 1 ? "LIVE" : `SIM ${formatSpeed(currentMultiplier)}`}
               size="small"
               sx={{
-                backgroundColor: currentMultiplier !== 1 ? `rgba(255, 170, 0, 0.3)` : `rgba(${theme.primaryRGB}, 0.2)`,
-                color: currentMultiplier !== 1 ? '#ffaa00' : theme.primary,
+                backgroundColor: currentMultiplier === 1 ? '#00ff00' : '#9600ff',
+                color: '#000000',
                 fontFamily: 'inherit',
                 fontWeight: 'bold',
-                animation: currentMultiplier !== 1 ? 'pulse 2s infinite' : 'none',
-                border: currentMultiplier !== 1 ? '1px solid rgba(255, 170, 0, 0.5)' : `1px solid rgba(${theme.primaryRGB}, 0.3)`,
-                boxShadow: currentMultiplier !== 1 ? '0 0 15px rgba(255, 170, 0, 0.4)' : `0 0 10px rgba(${theme.primaryRGB}, 0.3)`,
-                '@keyframes pulse': {
-                  '0%, 100%': { 
-                    opacity: 1,
-                    transform: 'scale(1)',
-                  },
-                  '50%': { 
-                    opacity: 0.8,
-                    transform: 'scale(1.05)',
-                  },
-                },
+                fontSize: '0.65rem',
+                border: 'none',
+                boxShadow: currentMultiplier === 1 ? '0 0 10px rgba(0, 255, 0, 0.5)' : '0 0 10px rgba(150, 0, 255, 0.5)',
               }}
             />
             
@@ -391,6 +375,7 @@ const CesiumControlPanel: React.FC<CesiumControlPanelProps> = ({
         {isExpanded && (
           <Box sx={{ 
             animation: 'slideDown 0.3s ease',
+            padding: '8px', // Add padding for expanded content
             '@keyframes slideDown': {
               from: { opacity: 0, transform: 'translateY(-10px)' },
               to: { opacity: 1, transform: 'translateY(0)' },
@@ -541,15 +526,33 @@ const CesiumControlPanel: React.FC<CesiumControlPanelProps> = ({
               borderRadius: '12px',
               border: `1px solid rgba(${theme.primaryRGB}, 0.2)`
             }}>
-              <Typography variant="caption" sx={{ 
-                color: theme.primary, 
-                fontFamily: 'inherit', 
-                fontWeight: 'bold',
-                display: 'block',
-                marginBottom: 2
-              }}>
-                CESIUM INTERFACE
-              </Typography>
+              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 2 }}>
+                <Typography variant="caption" sx={{ 
+                  color: theme.primary, 
+                  fontFamily: 'inherit', 
+                  fontWeight: 'bold'
+                }}>
+                  INTERFACE
+                </Typography>
+                
+                {/* Theme Switcher */}
+                <Tooltip title="Switch Theme" arrow>
+                  <IconButton
+                    onClick={toggleTheme}
+                    sx={{
+                      color: theme.primary,
+                      padding: '4px',
+                      transition: 'all 0.2s ease',
+                      '&:hover': {
+                        backgroundColor: `rgba(${theme.primaryRGB}, 0.1)`,
+                        transform: 'scale(1.1)',
+                      },
+                    }}
+                  >
+                    <PaletteIcon sx={{ fontSize: 16 }} />
+                  </IconButton>
+                </Tooltip>
+              </Box>
 
               {/* Master Toggle */}
               <FormControlLabel
@@ -663,7 +666,9 @@ const CesiumControlPanel: React.FC<CesiumControlPanelProps> = ({
                 </Box>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', color: '#aaa', fontFamily: 'inherit' }}>
                   <span>Time:</span>
-                  <span style={{ color: theme.accent }}>{currentTime.toLocaleTimeString()}</span>
+                  <span style={{ color: theme.accent }}>
+                    {cesiumUtcTime ? new Date(cesiumUtcTime).toLocaleTimeString() : new Date().toLocaleTimeString()}
+                  </span>
                 </Box>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', color: '#aaa', fontFamily: 'inherit' }}>
                   <span>Speed:</span>
@@ -705,49 +710,6 @@ const CesiumControlPanel: React.FC<CesiumControlPanelProps> = ({
                 </Typography>
               </Box>
             </Box>
-          </Box>
-        )}
-
-        {/* Quick Action Buttons - Always Visible when Collapsed */}
-        {!isExpanded && (
-          <Box sx={{ 
-            display: 'flex', 
-            gap: 1, 
-            marginTop: 1,
-            animation: 'fadeIn 0.3s ease',
-            '@keyframes fadeIn': {
-              from: { opacity: 0 },
-              to: { opacity: 1 },
-            },
-          }}>
-            {/* Quick Speed Presets + Mission Mode Toggle */}
-            {[0.1, 1, 10, 100].map((speed) => (
-              <Tooltip key={speed} title={`Set speed to ${speed}x`} arrow>
-                <IconButton
-                  size="small"
-                  onClick={() => dispatch(setCesiumClockMultiplier(speed))}
-                  sx={{
-                    color: currentMultiplier === speed ? theme.primary : '#666',
-                    backgroundColor: currentMultiplier === speed ? `rgba(${theme.primaryRGB}, 0.2)` : 'rgba(255, 255, 255, 0.05)',
-                    border: `1px solid rgba(${theme.primaryRGB}, 0.3)`,
-                    borderRadius: '6px',
-                    fontSize: '0.6rem',
-                    fontFamily: 'inherit',
-                    minWidth: '28px',
-                    height: '28px',
-                    '&:hover': {
-                      backgroundColor: `rgba(${theme.primaryRGB}, 0.1)`,
-                      color: theme.primary,
-                      transform: 'scale(1.05)',
-                      boxShadow: `0 0 8px rgba(${theme.primaryRGB}, 0.4)`,
-                    },
-                    transition: 'all 0.2s ease',
-                  }}
-                >
-                  {speed === 0.1 ? '0.1x' : `${speed}x`}
-                </IconButton>
-              </Tooltip>
-            ))}
           </Box>
         )}
       </Box>
