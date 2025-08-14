@@ -1,135 +1,159 @@
-/* Timeline Tools Panel - Clean Top Border Aesthetic */
+/* Timeline Tools Panel - Matching Control Widget Aesthetic */
 .timeline-tools {
   position: absolute;
-  top: 0;
-  left: 0;
-  background: linear-gradient(
-    180deg,
-    rgba(0, 0, 0, 0.9) 0%,
-    rgba(0, 0, 0, 0.7) 50%,
-    transparent 100%
-  );
-  border-top: 3px solid var(--theme-primary);
-  border-left: none;
-  border-right: none;
-  border-bottom: none;
-  border-radius: 0;
+  top: 20px;
+  left: 20px;
+  background: rgba(10, 15, 25, 0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(var(--theme-primary-rgb), 0.3);
+  border-radius: 20px;
   box-shadow: 
-    0 4px 20px rgba(0, 0, 0, 0.3),
-    inset 0 1px 0 rgba(var(--theme-primary-rgb), 0.2);
-  transition: all 0.3s ease-in-out;
+    0 16px 50px rgba(var(--theme-primary-rgb), 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    0 0 40px rgba(var(--theme-primary-rgb), 0.15);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   z-index: 1000;
   width: auto;
   min-width: fit-content;
-}
-
-/* Arrow Connector pointing UP to Timeline icon */
-.timeline-tools::before {
-  content: "";
-  position: absolute;
-  bottom: 100%;
-  left: 96px; /* Position to align with Timeline icon: 16px padding + 48px (Globe button) + 16px gap + 16px (half of Timeline button) */
-  transform: translateX(-50%);
-  width: 0;
-  height: 0;
-  border-left: 10px solid transparent;
-  border-right: 10px solid transparent;
-  border-bottom: 8px solid var(--theme-primary);
-  filter: drop-shadow(0 -2px 4px rgba(0, 0, 0, 0.3));
-  z-index: 1001;
-  pointer-events: none;
+  font-family: 'Courier New', Courier, monospace;
 }
 
 .timeline-tools:hover {
-  border-top-color: var(--theme-primary);
+  transform: scale(1.02);
   box-shadow: 
-    0 6px 25px rgba(0, 0, 0, 0.4),
-    inset 0 1px 0 rgba(var(--theme-primary-rgb), 0.3),
-    0 0 15px rgba(var(--theme-primary-rgb), 0.2);
+    0 25px 80px rgba(var(--theme-primary-rgb), 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    0 0 40px rgba(var(--theme-primary-rgb), 0.25);
+  border-color: rgba(var(--theme-primary-rgb), 0.5);
+}
+
+/* Animated gradient border effect on hover */
+.timeline-tools::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  border-radius: 20px;
+  padding: 1px;
+  background: linear-gradient(
+    45deg,
+    var(--theme-primary),
+    rgba(var(--theme-primary-rgb), 0.3),
+    var(--theme-primary)
+  );
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+  -webkit-mask-composite: xor;
+  opacity: 0;
+  transition: opacity 0.4s ease;
 }
 
 .timeline-tools:hover::before {
-  border-bottom-color: var(--theme-primary);
-  filter: drop-shadow(0 -2px 4px rgba(0, 0, 0, 0.4)) drop-shadow(0 0 5px rgba(var(--theme-primary-rgb), 0.3));
+  opacity: 1;
 }
 
 /* Timeline Tools Button Container */
 .timeline-tools-buttons {
   display: flex;
-  gap: 8px;
+  gap: 12px;
   align-items: center;
   flex-wrap: wrap;
   min-height: 56px;
-  padding: 8px 16px 16px 16px; /* Extra bottom padding for the arrow */
+  padding: 16px 20px;
   background: transparent;
+  position: relative;
+  z-index: 1;
 }
 
-/* Timeline Tools Button Groups */
+/* Timeline Tools Button Groups - Enhanced with glow */
 .timeline-tools-group {
   display: flex;
-  gap: 4px;
+  gap: 8px;
   align-items: center;
-  padding: 4px;
-  border-radius: 4px;
-  background: rgba(0, 0, 0, 0.3);
-  border: 1px solid rgba(var(--theme-primary-rgb), 0.1);
-  transition: all 0.2s ease;
+  padding: 8px 12px;
+  border-radius: 12px;
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(var(--theme-primary-rgb), 0.2);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   flex-shrink: 0;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
 }
 
 .timeline-tools-group:hover {
-  background: rgba(0, 0, 0, 0.4);
-  border-color: rgba(var(--theme-primary-rgb), 0.3);
-  box-shadow: 0 0 8px rgba(var(--theme-primary-rgb), 0.1);
+  background: rgba(0, 0, 0, 0.6);
+  border-color: rgba(var(--theme-primary-rgb), 0.4);
+  box-shadow: 
+    0 8px 25px rgba(var(--theme-primary-rgb), 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  transform: translateY(-1px);
 }
 
-/* Icon Button Styling - Clean Console Style */
+/* Icon Button Styling - Matching Widget Style */
 .timeline-tools .icon-button {
-  color: #888888;
+  color: rgba(255, 255, 255, 0.7);
   background: transparent;
   border: 1px solid transparent;
-  border-radius: 4px;
-  padding: 6px;
-  min-width: 36px;
-  min-height: 36px;
-  transition: all 0.2s ease;
+  border-radius: 8px;
+  padding: 8px;
+  min-width: 40px;
+  min-height: 40px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
 }
 
 .timeline-tools .icon-button:hover {
   color: var(--theme-primary);
-  background: rgba(var(--theme-primary-rgb), 0.1);
-  border-color: rgba(var(--theme-primary-rgb), 0.2);
-  box-shadow: 0 0 8px rgba(var(--theme-primary-rgb), 0.2);
+  background: rgba(var(--theme-primary-rgb), 0.15);
+  border-color: rgba(var(--theme-primary-rgb), 0.3);
+  box-shadow: 
+    0 4px 15px rgba(var(--theme-primary-rgb), 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  transform: translateY(-2px);
 }
 
 .timeline-tools .icon-button:active {
-  transform: translateY(1px);
-  box-shadow: 0 0 4px rgba(var(--theme-primary-rgb), 0.1);
+  transform: translateY(0px);
+  box-shadow: 
+    0 2px 8px rgba(var(--theme-primary-rgb), 0.2),
+    inset 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
-/* Active/Selected Button State */
+/* Active/Selected Button State - Enhanced glow */
 .timeline-tools .icon-button.active {
   color: var(--theme-primary) !important;
-  background: rgba(var(--theme-primary-rgb), 0.15) !important;
-  border-color: rgba(var(--theme-primary-rgb), 0.4) !important;
-  box-shadow: 0 0 12px rgba(var(--theme-primary-rgb), 0.3) !important;
+  background: rgba(var(--theme-primary-rgb), 0.25) !important;
+  border-color: rgba(var(--theme-primary-rgb), 0.6) !important;
+  box-shadow: 
+    0 6px 20px rgba(var(--theme-primary-rgb), 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2),
+    0 0 15px rgba(var(--theme-primary-rgb), 0.3) !important;
+  transform: translateY(-1px);
 }
 
-/* Divider Styling */
+/* Divider Styling - Enhanced with glow effect */
 .timeline-tools-divider {
-  width: 1px;
-  height: 32px;
+  width: 2px;
+  height: 36px;
   background: linear-gradient(
     to bottom,
     transparent,
-    rgba(var(--theme-primary-rgb), 0.3) 20%,
-    rgba(var(--theme-primary-rgb), 0.3) 80%,
+    rgba(var(--theme-primary-rgb), 0.4) 20%,
+    var(--theme-primary) 50%,
+    rgba(var(--theme-primary-rgb), 0.4) 80%,
     transparent
   );
-  margin: 0 8px;
+  margin: 0 12px;
   position: relative;
   flex-shrink: 0;
+  border-radius: 1px;
+  box-shadow: 0 0 8px rgba(var(--theme-primary-rgb), 0.3);
 }
 
 .timeline-tools-divider::before {
@@ -138,25 +162,28 @@
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  width: 3px;
-  height: 3px;
+  width: 4px;
+  height: 4px;
   background: var(--theme-primary);
   border-radius: 50%;
-  box-shadow: 0 0 6px rgba(var(--theme-primary-rgb), 0.6);
+  box-shadow: 
+    0 0 8px rgba(var(--theme-primary-rgb), 0.8),
+    0 0 12px rgba(var(--theme-primary-rgb), 0.4);
 }
 
-/* Responsive Design */
+/* Responsive Design - Updated for new sizing */
 @media (max-width: 1200px) {
   .timeline-tools {
-    max-width: 700px;
+    max-width: 800px;
   }
   
   .timeline-tools-buttons {
-    gap: 6px;
+    gap: 10px;
+    padding: 14px 18px;
   }
   
   .timeline-tools-divider {
-    margin: 0 6px;
+    margin: 0 10px;
   }
 }
 
@@ -166,12 +193,13 @@
   }
   
   .timeline-tools-buttons {
-    gap: 4px;
+    gap: 8px;
+    padding: 12px 16px;
   }
   
   .timeline-tools-group {
-    gap: 2px;
-    padding: 2px;
+    gap: 6px;
+    padding: 6px 10px;
   }
   
   .timeline-tools .icon-button {
@@ -181,19 +209,31 @@
   }
   
   .timeline-tools-divider {
-    margin: 0 4px;
-    height: 28px;
+    margin: 0 8px;
+    height: 32px;
   }
 }
 
 @media (max-width: 700px) {
   .timeline-tools {
     max-width: 400px;
+    border-radius: 16px;
   }
   
   .timeline-tools-buttons {
     flex-wrap: wrap;
     justify-content: flex-start;
+    gap: 6px;
+    padding: 10px 14px;
+  }
+  
+  .timeline-tools-group {
+    border-radius: 10px;
+    padding: 4px 8px;
+  }
+  
+  .timeline-tools .icon-button {
+    border-radius: 6px;
   }
   
   .timeline-tools-divider {
