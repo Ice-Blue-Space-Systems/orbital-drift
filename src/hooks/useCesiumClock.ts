@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react";
-import { setCesiumClockMultiplier } from "../store/cesiumClockSlice";
+import { updateCesiumClockMultiplier } from "../store/cesiumClockSlice";
 import { useDispatch } from "react-redux";
 
 /**
@@ -37,7 +37,7 @@ export function useCesiumClock(viewerRef: React.MutableRefObject<any>) {
           const multiplier = viewer.clock.multiplier;
           
           // Only dispatch multiplier changes, let useGlobalClock handle time
-          dispatch(setCesiumClockMultiplier(multiplier));
+          dispatch(updateCesiumClockMultiplier(multiplier));
           
           // Log occasionally to show sync is working
           if (Math.random() < 0.01) { // Log ~1% of updates

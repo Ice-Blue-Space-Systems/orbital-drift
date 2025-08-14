@@ -18,7 +18,7 @@ import {
   Palette as PaletteIcon,
   DragIndicator as DragIndicatorIcon,
 } from "@mui/icons-material";
-import { setCesiumClockMultiplier } from "../store/cesiumClockSlice";
+import { setCesiumClockMultiplier, setSimulationSpeed, resetToLive } from "../store/cesiumClockSlice";
 import { setShowCesiumOptions } from "../store/mongoSlice";
 import { RootState } from "../store";
 import { useTheme } from "../contexts/ThemeContext";
@@ -46,6 +46,7 @@ const CesiumControlPanel: React.FC<CesiumControlPanelProps> = ({
   const [rotation, setRotation] = useState(0);
   const [speedMode, setSpeedMode] = useState<'dial' | 'slider'>('dial');
   const [memoryUsage, setMemoryUsage] = useState(0);
+  const [userClickedLive, setUserClickedLive] = useState(true);
   
   const dialRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
@@ -137,6 +138,7 @@ const CesiumControlPanel: React.FC<CesiumControlPanelProps> = ({
       setRotation(angle);
       
       const newMultiplier = angleToMultiplier(angle);
+      setUserClickedLive(false);
       dispatch(setCesiumClockMultiplier(newMultiplier));
     };
 
@@ -153,6 +155,7 @@ const CesiumControlPanel: React.FC<CesiumControlPanelProps> = ({
   const handleSliderChange = (event: Event, newValue: number | number[]) => {
     const value = Array.isArray(newValue) ? newValue[0] : newValue;
     const newMultiplier = sliderToMultiplier(value);
+    setUserClickedLive(false);
     dispatch(setCesiumClockMultiplier(newMultiplier));
   };
 
@@ -340,16 +343,16 @@ const CesiumControlPanel: React.FC<CesiumControlPanelProps> = ({
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             {/* Sim/Live Status Chip */}
             <Chip 
-              label={currentMultiplier === 1 ? "LIVE" : `SIM ${formatSpeed(currentMultiplier)}`}
+              label={userClickedLive ? "LIVE" : `SIM ${formatSpeed(currentMultiplier)}`}
               size="small"
               sx={{
-                backgroundColor: currentMultiplier === 1 ? '#00ff00' : '#9600ff',
+                backgroundColor: userClickedLive ? '#00ff00' : '#9600ff',
                 color: '#000000',
                 fontFamily: 'inherit',
                 fontWeight: 'bold',
                 fontSize: '0.65rem',
                 border: 'none',
-                boxShadow: currentMultiplier === 1 ? '0 0 10px rgba(0, 255, 0, 0.5)' : '0 0 10px rgba(150, 0, 255, 0.5)',
+                boxShadow: userClickedLive ? '0 0 10px rgba(0, 255, 0, 0.5)' : '0 0 10px rgba(150, 0, 255, 0.5)',
               }}
             />
             
@@ -496,16 +499,45 @@ const CesiumControlPanel: React.FC<CesiumControlPanelProps> = ({
 
               {/* Speed Presets */}
               <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                {/* LIVE Button */}
+                <Chip
+                  label="LIVE"
+                  size="small"
+                  clickable
+                  onClick={() => {
+                    setUserClickedLive(true);
+                    dispatch(resetToLive());
+                  }}
+                  sx={{
+                    backgroundColor: userClickedLive ? 'rgba(0, 255, 0, 0.3)' : 'rgba(255, 255, 255, 0.1)',
+                    color: userClickedLive ? '#00ff00' : '#aaa',
+                    fontFamily: 'inherit',
+                    fontSize: '0.6rem',
+                    height: '20px',
+                    fontWeight: 'bold',
+                    border: userClickedLive ? '1px solid rgba(0, 255, 0, 0.5)' : 'none',
+                    boxShadow: userClickedLive ? '0 0 8px rgba(0, 255, 0, 0.3)' : 'none',
+                    '&:hover': {
+                      backgroundColor: 'rgba(0, 255, 0, 0.2)',
+                      color: '#00ff00',
+                      boxShadow: '0 0 8px rgba(0, 255, 0, 0.3)',
+                    },
+                  }}
+                />
+                
                 {presetSpeeds.map((speed) => (
                   <Chip
                     key={speed}
                     label={formatSpeed(speed)}
                     size="small"
                     clickable
-                    onClick={() => dispatch(setCesiumClockMultiplier(speed))}
+                    onClick={() => {
+                      setUserClickedLive(false);
+                      dispatch(setSimulationSpeed(speed));
+                    }}
                     sx={{
-                      backgroundColor: currentMultiplier === speed ? `rgba(${theme.primaryRGB}, 0.3)` : 'rgba(255, 255, 255, 0.1)',
-                      color: currentMultiplier === speed ? theme.primary : '#aaa',
+                      backgroundColor: !userClickedLive && currentMultiplier === speed ? `rgba(${theme.primaryRGB}, 0.3)` : 'rgba(255, 255, 255, 0.1)',
+                      color: !userClickedLive && currentMultiplier === speed ? theme.primary : '#aaa',
                       fontFamily: 'inherit',
                       fontSize: '0.6rem',
                       height: '20px',
@@ -673,10 +705,10 @@ const CesiumControlPanel: React.FC<CesiumControlPanelProps> = ({
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', color: '#aaa', fontFamily: 'inherit' }}>
                   <span>Speed:</span>
                   <span style={{ 
-                    color: currentMultiplier === 1 ? theme.primary : currentMultiplier > 1 ? theme.accent : '#ff6600',
+                    color: userClickedLive ? '#00ff00' : currentMultiplier > 1 ? theme.accent : '#ff6600',
                     fontWeight: 'bold'
                   }}>
-                    {formatSpeed(currentMultiplier)}
+                    {userClickedLive ? 'LIVE' : formatSpeed(currentMultiplier)}
                   </span>
                 </Box>
               </Box>
