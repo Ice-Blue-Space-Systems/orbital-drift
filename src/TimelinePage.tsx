@@ -407,7 +407,7 @@ const TimelinePage: React.FC = () => {
 
       return () => clearTimeout(timeoutId);
     }
-  }, [selectedSatelliteId, selectedGroundStationId, dispatch, contactWindowsStatus, contactWindows.length]);
+  }, [selectedSatelliteId, selectedGroundStationId, dispatch, contactWindows.length]); // Removed contactWindowsStatus from deps
 
   // Timeline control functions
   const jumpToNextContactWindow = () => {

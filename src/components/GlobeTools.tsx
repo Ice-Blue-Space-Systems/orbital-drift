@@ -62,7 +62,7 @@ const GlobeTools: React.FC<GlobeToolsProps> = ({
 
       return () => clearTimeout(timeoutId);
     }
-  }, [selectedSatelliteId, selectedGroundStationId, dispatch, contactWindowsStatus]);
+  }, [selectedSatelliteId, selectedGroundStationId, dispatch]); // Removed contactWindowsStatus from deps
 
   // Remove the duplicate fetch effect to prevent double API calls
 
