@@ -13,8 +13,12 @@ import { fetchMongoData } from "./store/mongoSlice";
 import { GroundStation, Satellite, ContactWindow } from "./types";
 import { transformContactWindowsToTimelineItems } from "./utils/timelineUtils";
 import { useTheme } from "./contexts/ThemeContext";
+import { useRoutePerformance } from "./utils/performanceUtils";
 
 const TimelinePage: React.FC = () => {
+  // Add performance monitoring
+  useRoutePerformance('timeline');
+
   const theme = useTheme();
   const dispatch = useDispatch<AppDispatch>();
 
@@ -56,36 +60,59 @@ const TimelinePage: React.FC = () => {
     }
   }, [status, dispatch]);
 
-  // Update CSS custom properties when theme changes
+  // Update CSS custom properties when theme changes - optimized
   useEffect(() => {
     const rootElement = document.documentElement;
-    rootElement.style.setProperty('--theme-primary', theme.theme.primary);
-    rootElement.style.setProperty('--theme-secondary', theme.theme.secondary);
-    rootElement.style.setProperty('--theme-background-gradient', theme.theme.backgroundGradient);
-    rootElement.style.setProperty('--theme-background-dark', theme.theme.backgroundDark);
-    rootElement.style.setProperty('--theme-background-secondary', theme.theme.buttonBackground);
-    rootElement.style.setProperty('--theme-border-gradient', theme.theme.borderGradient);
-    rootElement.style.setProperty('--theme-glow-color', theme.theme.glowColor);
-    rootElement.style.setProperty('--theme-button-background', theme.theme.buttonBackground);
-    rootElement.style.setProperty('--theme-secondary-glow', `rgba(${theme.theme.primaryRGB}, 0.5)`);
+    
+    // Batch CSS updates to avoid multiple reflows
+    const updates = [
+      ['--theme-primary', theme.theme.primary],
+      ['--theme-secondary', theme.theme.secondary],
+      ['--theme-background-gradient', theme.theme.backgroundGradient],
+      ['--theme-background-dark', theme.theme.backgroundDark],
+      ['--theme-background-secondary', theme.theme.buttonBackground],
+      ['--theme-border-gradient', theme.theme.borderGradient],
+      ['--theme-glow-color', theme.theme.glowColor],
+      ['--theme-button-background', theme.theme.buttonBackground],
+      ['--theme-secondary-glow', `rgba(${theme.theme.primaryRGB}, 0.5)`],
+    ];
     
     // Timeline-specific theme variables
     if (theme.currentTheme === 'iceBlue') {
-      // Ice Blue theme - blue colors
-      rootElement.style.setProperty('--timeline-bg-start', 'rgba(10, 25, 40, 0.8)');
-      rootElement.style.setProperty('--timeline-bg-middle', 'rgba(15, 30, 45, 0.9)');
-      rootElement.style.setProperty('--timeline-bg-end', 'rgba(20, 35, 50, 0.8)');
-      rootElement.style.setProperty('--timeline-axis-bg', 'rgba(10, 30, 50, 0.9)');
-      rootElement.style.setProperty('--timeline-primary-color', theme.theme.primary);
+      updates.push(
+        ['--timeline-bg-start', 'rgba(10, 25, 40, 0.8)'],
+        ['--timeline-bg-middle', 'rgba(15, 30, 45, 0.9)'],
+        ['--timeline-bg-end', 'rgba(20, 35, 50, 0.8)'],
+        ['--timeline-axis-bg', 'rgba(10, 30, 50, 0.9)'],
+        ['--timeline-primary-color', theme.theme.primary]
+      );
     } else {
-      // Matrix theme (default) - green colors
-      rootElement.style.setProperty('--timeline-bg-start', 'rgba(0, 30, 0, 0.8)');
-      rootElement.style.setProperty('--timeline-bg-middle', 'rgba(0, 15, 0, 0.9)');
-      rootElement.style.setProperty('--timeline-bg-end', 'rgba(0, 20, 0, 0.8)');
-      rootElement.style.setProperty('--timeline-axis-bg', 'rgba(0, 40, 0, 0.9)');
-      rootElement.style.setProperty('--timeline-primary-color', theme.theme.primary);
+      updates.push(
+        ['--timeline-bg-start', 'rgba(0, 30, 0, 0.8)'],
+        ['--timeline-bg-middle', 'rgba(0, 15, 0, 0.9)'],
+        ['--timeline-bg-end', 'rgba(0, 20, 0, 0.8)'],
+        ['--timeline-axis-bg', 'rgba(0, 40, 0, 0.9)'],
+        ['--timeline-primary-color', theme.theme.primary]
+      );
     }
-  }, [theme]);
+    
+    // Apply all updates in a single batch
+    requestAnimationFrame(() => {
+      updates.forEach(([property, value]) => {
+        rootElement.style.setProperty(property, value);
+      });
+    });
+  }, [
+    theme.currentTheme, 
+    theme.theme.primary, 
+    theme.theme.secondary, 
+    theme.theme.backgroundGradient, 
+    theme.theme.backgroundDark, 
+    theme.theme.buttonBackground, 
+    theme.theme.borderGradient, 
+    theme.theme.glowColor, 
+    theme.theme.primaryRGB
+  ]);
 
   // Calculate the next contact window
   const nextContactWindow = useMemo(() => {
@@ -245,70 +272,95 @@ const TimelinePage: React.FC = () => {
 
     return () => {
       container.removeEventListener("mousedown", handleMouseDown);
+      // Proper cleanup with error handling
       if (timelineInstance.current) {
-        timelineInstance.current.destroy();
+        try {
+          timelineInstance.current.destroy();
+          timelineInstance.current = null;
+        } catch (error) {
+          console.warn('Timeline cleanup error:', error);
+        }
       }
     };
   }, []);
 
-  // Update the timeline when contact windows change
+  // Update the timeline when contact windows change - optimized
   useEffect(() => {
     if (!timelineInstance.current) return;
     
     // Only proceed if we have the necessary data
-    if (!satellites.length || !groundStations.length || !filteredContactWindows.length) {
+    if (!satellites.length || !groundStations.length) {
       return;
     }
 
-    // Transform filtered contact windows into timeline items and groups using the utility function
-    const { items, groups } = transformContactWindowsToTimelineItems(
-      filteredContactWindows, 
-      satellites, 
-      groundStations
-    );
+    // Use a timeout to debounce rapid updates
+    const timeoutId = setTimeout(() => {
+      try {
+        // Transform filtered contact windows into timeline items and groups using the utility function
+        const { items, groups } = transformContactWindowsToTimelineItems(
+          filteredContactWindows, 
+          satellites, 
+          groundStations
+        );
 
-    const itemsDataSet = new DataSet(items);
-    const groupsDataSet = new DataSet(groups);
-    
-    timelineInstance.current.setItems(itemsDataSet as any);
-    timelineInstance.current.setGroups(groupsDataSet as any);
+        const itemsDataSet = new DataSet(items);
+        const groupsDataSet = new DataSet(groups);
+        
+        timelineInstance.current?.setItems(itemsDataSet as any);
+        timelineInstance.current?.setGroups(groupsDataSet as any);
+      } catch (error) {
+        console.error('Error updating timeline data:', error);
+      }
+    }, 100); // 100ms debounce
+
+    return () => clearTimeout(timeoutId);
   }, [filteredContactWindows, satellites, groundStations]);
 
-  // Sync timeline current time with Cesium clock time (single source of truth)
+  // Sync timeline current time with Cesium clock time (single source of truth) - optimized
   useEffect(() => {
     if (!timelineInstance.current || !cesiumClockTime) return;
 
-    try {
-      const currentTime = new Date(cesiumClockTime);
-      timelineInstance.current.setCurrentTime(currentTime);
-      
-      // Auto-follow current time if follow mode is enabled
-      if (followMode) {
-        const window = timelineInstance.current.getWindow();
-        const windowDuration = window.end.getTime() - window.start.getTime();
-        const buffer = windowDuration * 0.1; // 10% buffer on each side
+    // Throttle updates to avoid excessive performance impact
+    const updateTime = () => {
+      try {
+        const currentTime = new Date(cesiumClockTime);
+        timelineInstance.current?.setCurrentTime(currentTime);
         
-        // Check if current time is outside the visible window (with buffer)
-        if (currentTime.getTime() < window.start.getTime() + buffer || 
-            currentTime.getTime() > window.end.getTime() - buffer) {
-          // Center the window around current time
-          const halfWindow = windowDuration / 2;
-          timelineInstance.current.setWindow(
-            new Date(currentTime.getTime() - halfWindow),
-            new Date(currentTime.getTime() + halfWindow),
-            { animation: false } // No animation for smooth following
-          );
+        // Auto-follow current time if follow mode is enabled
+        if (followMode) {
+          const window = timelineInstance.current?.getWindow();
+          if (window) {
+            const windowDuration = window.end.getTime() - window.start.getTime();
+            const buffer = windowDuration * 0.1; // 10% buffer on each side
+            
+            // Check if current time is outside the visible window (with buffer)
+            if (currentTime.getTime() < window.start.getTime() + buffer || 
+                currentTime.getTime() > window.end.getTime() - buffer) {
+              // Center the window around current time
+              const halfWindow = windowDuration / 2;
+              timelineInstance.current?.setWindow(
+                new Date(currentTime.getTime() - halfWindow),
+                new Date(currentTime.getTime() + halfWindow),
+                { animation: false } // No animation for smooth following
+              );
+            }
+          }
         }
+        
+        // Log occasionally to show timeline is syncing (reduced frequency)
+        if (Math.random() < 0.005) { // Log ~0.5% of updates (reduced from 2%)
+          console.log(`TimelinePage: Syncing to time: ${cesiumClockTime} (Speed: ${cesiumMultiplier}x, Follow: ${followMode})`);
+        }
+      } catch (error) {
+        console.error("TimelinePage: Error parsing Cesium clock time", error);
       }
-      
-      // Log occasionally to show timeline is syncing
-      if (Math.random() < 0.02) { // Log ~2% of updates
-        console.log(`TimelinePage: Syncing to time: ${cesiumClockTime} (Speed: ${cesiumMultiplier}x, Follow: ${followMode})`);
-      }
-    } catch (error) {
-      console.error("TimelinePage: Error parsing Cesium clock time", error);
-    }
-  }, [cesiumClockTime, cesiumMultiplier, followMode]); // Include followMode in dependencies
+    };
+
+    // Use requestAnimationFrame to throttle updates
+    const rafId = requestAnimationFrame(updateTime);
+    
+    return () => cancelAnimationFrame(rafId);
+  }, [cesiumClockTime, cesiumMultiplier, followMode]);
 
   // Filter contact windows based on selection
   useEffect(() => {
@@ -325,32 +377,37 @@ const TimelinePage: React.FC = () => {
     }
   }, [contactWindows, selectedSatelliteId, selectedGroundStationId, showAllPairs]);
 
-  // Auto-fetch contact windows when selections change or when navigating back to empty state
+  // Auto-fetch contact windows when selections change or when navigating back to empty state - debounced
   useEffect(() => {
     if (selectedSatelliteId && selectedGroundStationId) {
-      // Force refetch if we have selections but no contact windows data and no active request
-      if (contactWindows.length === 0 && contactWindowsStatus !== "loading") {
-        console.log('TimelinePage: Force-refetching contact windows for:', {
-          satelliteId: selectedSatelliteId,
-          groundStationId: selectedGroundStationId,
-          reason: 'Empty contact windows with selections'
-        });
-        dispatch(fetchContactWindows({ 
-          satelliteId: selectedSatelliteId, 
-          groundStationId: selectedGroundStationId 
-        }));
-      } else {
-        console.log('TimelinePage: Auto-fetching contact windows for:', {
-          satelliteId: selectedSatelliteId,
-          groundStationId: selectedGroundStationId
-        });
-        dispatch(fetchContactWindows({ 
-          satelliteId: selectedSatelliteId, 
-          groundStationId: selectedGroundStationId 
-        }));
-      }
+      // Debounce API calls to prevent excessive requests
+      const timeoutId = setTimeout(() => {
+        // Force refetch if we have selections but no contact windows data and no active request
+        if (contactWindows.length === 0 && contactWindowsStatus !== "loading") {
+          console.log('TimelinePage: Force-refetching contact windows for:', {
+            satelliteId: selectedSatelliteId,
+            groundStationId: selectedGroundStationId,
+            reason: 'Empty contact windows with selections'
+          });
+          dispatch(fetchContactWindows({ 
+            satelliteId: selectedSatelliteId, 
+            groundStationId: selectedGroundStationId 
+          }));
+        } else if (contactWindowsStatus === "idle") {
+          console.log('TimelinePage: Auto-fetching contact windows for:', {
+            satelliteId: selectedSatelliteId,
+            groundStationId: selectedGroundStationId
+          });
+          dispatch(fetchContactWindows({ 
+            satelliteId: selectedSatelliteId, 
+            groundStationId: selectedGroundStationId 
+          }));
+        }
+      }, 300); // 300ms debounce
+
+      return () => clearTimeout(timeoutId);
     }
-  }, [selectedSatelliteId, selectedGroundStationId, dispatch]);
+  }, [selectedSatelliteId, selectedGroundStationId, dispatch, contactWindowsStatus, contactWindows.length]);
 
   // Timeline control functions
   const jumpToNextContactWindow = () => {

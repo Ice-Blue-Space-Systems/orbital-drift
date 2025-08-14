@@ -19,8 +19,12 @@ import { useCesiumClock } from "./hooks/useCesiumClock";
 import { useNextContactWindow } from "./hooks/useNextContactWindow";
 import { DebugInfo } from "./types";
 import { resolveCallbackProperty } from "./utils/cesiumUtils";
+import { useRoutePerformance } from "./utils/performanceUtils";
 
-function GlobePage() {
+const GlobePage: React.FC = () => {
+  // Add performance monitoring
+  useRoutePerformance('globe');
+
   const dispatch: AppDispatch = useDispatch();
   const { satellites, groundStations, status } = useSelector(
     (state: RootState) => state.mongo
@@ -175,12 +179,22 @@ function GlobePage() {
 
   // Cleanup on unmount: Destroy Cesium viewer
   useEffect(() => {
-    const viewer = viewerRef.current?.cesiumElement;
-
+    const currentViewerRef = viewerRef.current;
+    
     return () => {
-      if (viewer) {
-        viewer.destroy(); // Destroy the Cesium viewer
-        console.log("Cesium viewer destroyed");
+      const viewer = currentViewerRef?.cesiumElement;
+      if (viewer && !viewer.isDestroyed()) {
+        try {
+          // Give time for any pending operations to complete
+          setTimeout(() => {
+            if (!viewer.isDestroyed()) {
+              viewer.destroy();
+              console.log("Cesium viewer destroyed");
+            }
+          }, 100);
+        } catch (error) {
+          console.warn("Error destroying Cesium viewer:", error);
+        }
       }
     };
   }, []);
