@@ -378,11 +378,11 @@ const SatellitePopover: React.FC = () => {
           <div 
             style={{ 
               flex: 1,
-              overflowY: "auto",
+              overflowY: "hidden", // Hide outer scroll
               overflowX: "hidden",
-              paddingRight: "4px", // Space for scrollbar
+              paddingRight: "0px",
             }}
-            className="satellite-list-scroll"
+            className="satellite-popover-content"
           >
 
             {/* My Satellites Section - Simple Pinned List */}
@@ -426,7 +426,29 @@ const SatellitePopover: React.FC = () => {
                     }} 
                   />
                 </Box>
-                <Box sx={{ maxHeight: "150px", overflowY: "auto", paddingRight: "4px" }}>
+                <Box sx={{ 
+                  maxHeight: "150px", 
+                  overflowY: "auto", 
+                  paddingRight: "4px",
+                  // Custom scrollbar styling
+                  '&::-webkit-scrollbar': {
+                    width: '6px',
+                  },
+                  '&::-webkit-scrollbar-track': {
+                    background: `rgba(${theme.primaryRGB}, 0.1)`,
+                    borderRadius: '3px',
+                  },
+                  '&::-webkit-scrollbar-thumb': {
+                    background: `rgba(${theme.primaryRGB}, 0.4)`,
+                    borderRadius: '3px',
+                    '&:hover': {
+                      background: `rgba(${theme.primaryRGB}, 0.6)`,
+                    }
+                  },
+                  // Firefox scrollbar
+                  scrollbarWidth: 'thin',
+                  scrollbarColor: `rgba(${theme.primaryRGB}, 0.4) rgba(${theme.primaryRGB}, 0.1)`,
+                }}>
                   <List sx={{ padding: 0 }}>
                     {satellites.map((sat) => (
                       <ListItem key={sat._id} disablePadding>
@@ -630,7 +652,29 @@ const SatellitePopover: React.FC = () => {
               {/* Satellite List */}
               {filteredDiscoverableSats.length > 0 ? (
                 <>
-                  <Box sx={{ maxHeight: "300px", overflowY: "auto", paddingRight: "4px" }}>
+                  <Box sx={{ 
+                    maxHeight: "300px", 
+                    overflowY: "auto", 
+                    paddingRight: "4px",
+                    // Custom scrollbar styling
+                    '&::-webkit-scrollbar': {
+                      width: '6px',
+                    },
+                    '&::-webkit-scrollbar-track': {
+                      background: `rgba(${theme.secondaryRGB}, 0.1)`,
+                      borderRadius: '3px',
+                    },
+                    '&::-webkit-scrollbar-thumb': {
+                      background: `rgba(${theme.secondaryRGB}, 0.4)`,
+                      borderRadius: '3px',
+                      '&:hover': {
+                        background: `rgba(${theme.secondaryRGB}, 0.6)`,
+                      }
+                    },
+                    // Firefox scrollbar
+                    scrollbarWidth: 'thin',
+                    scrollbarColor: `rgba(${theme.secondaryRGB}, 0.4) rgba(${theme.secondaryRGB}, 0.1)`,
+                  }}>
                     <List sx={{ padding: 0 }}>
                       {filteredDiscoverableSats.map((sat) => (
                         <ListItem key={sat.id} disablePadding>
