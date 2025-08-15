@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect, useMemo } from "react";
 import { 
   IconButton, 
   Popover, 
@@ -12,11 +12,150 @@ import {
 } from "@mui/material";
 import EventIcon from "@mui/icons-material/Event";
 import SignalCellularAltIcon from "@mui/icons-material/SignalCellularAlt";
+import SkipNextIcon from "@mui/icons-material/SkipNext";
+import SkipPreviousIcon from "@mui/icons-material/SkipPrevious";
+import ZoomInIcon from "@mui/icons-material/ZoomIn";
+import ZoomOutIcon from "@mui/icons-material/ZoomOut";
+import FitScreenIcon from "@mui/icons-material/FitScreen";
+import AccessTimeIcon from "@mui/icons-material/AccessTime";
+import MyLocationIcon from "@mui/icons-material/MyLocation";
+import LocationDisabledIcon from "@mui/icons-material/LocationDisabled";
 import ContactWindows from "./ContactWindows";
 import { useSelector } from "react-redux";
 import { selectContactWindows, selectContactWindowsStatus } from "../store/contactWindowsSlice";
+import { selectCesiumClockDate } from "../store/selectors/cesiumClockSelectors";
 import { useTheme } from "../contexts/ThemeContext";
 import { ContactWindow } from "../types";
+
+// Mini Timeline Component
+interface MiniTimelineProps {
+  contactWindows: any[];
+  currentTime: Date;
+  centerTime: Date;
+  zoom: number;
+  theme: any;
+}
+
+const MiniTimeline: React.FC<MiniTimelineProps> = ({ 
+  contactWindows, 
+  currentTime, 
+  centerTime, 
+  zoom, 
+  theme 
+}) => {
+  const timelineWidth = 700; // Available width in popover
+  const timeSpan = (24 * 60 * 60 * 1000) / zoom; // 24 hours base, adjusted by zoom
+  const startTime = new Date(centerTime.getTime() - timeSpan / 2);
+  const endTime = new Date(centerTime.getTime() + timeSpan / 2);
+  
+  const timeToPosition = (time: Date) => {
+    const progress = (time.getTime() - startTime.getTime()) / timeSpan;
+    return Math.max(0, Math.min(timelineWidth, progress * timelineWidth));
+  };
+  
+  const currentTimePosition = timeToPosition(currentTime);
+  
+  return (
+    <Box sx={{ position: 'relative', height: '80px', backgroundColor: 'rgba(0, 0, 0, 0.3)', borderRadius: '8px', overflow: 'hidden' }}>
+      {/* Time Scale */}
+      <Box sx={{ 
+        position: 'absolute', 
+        top: 0, 
+        left: 0, 
+        right: 0, 
+        height: '20px', 
+        borderBottom: `1px solid rgba(${theme.primaryRGB}, 0.3)`,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        padding: '0 8px',
+        fontSize: '10px',
+        color: theme.textSecondary
+      }}>
+        <span>{startTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+        <span>{centerTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+        <span>{endTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+      </Box>
+      
+      {/* Timeline Track */}
+      <Box sx={{ position: 'absolute', top: '20px', left: 0, right: 0, bottom: 0 }}>
+        {/* Contact Windows */}
+        {contactWindows.map((window: any, index: number) => {
+          const aosTime = new Date(window.scheduledAOS);
+          const losTime = new Date(window.scheduledLOS);
+          
+          // Only render if window overlaps with visible timeline
+          if (losTime < startTime || aosTime > endTime) return null;
+          
+          const startPos = timeToPosition(aosTime);
+          const endPos = timeToPosition(losTime);
+          const width = Math.max(2, endPos - startPos);
+          
+          const isActive = aosTime <= currentTime && currentTime <= losTime;
+          const isPast = losTime < currentTime;
+          const isFuture = aosTime > currentTime;
+          
+          return (
+            <Tooltip 
+              key={index}
+              title={`${aosTime.toLocaleTimeString()} - ${losTime.toLocaleTimeString()}`}
+              arrow
+            >
+              <Box
+                sx={{
+                  position: 'absolute',
+                  left: `${startPos}px`,
+                  width: `${width}px`,
+                  height: '40px',
+                  top: '10px',
+                  backgroundColor: isActive 
+                    ? theme.primary 
+                    : isPast 
+                      ? 'rgba(128, 128, 128, 0.6)' 
+                      : theme.accent,
+                  border: `1px solid ${isActive ? theme.primary : isPast ? '#666' : theme.accent}`,
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                  opacity: isPast ? 0.5 : 1,
+                  animation: isActive ? 'pulse 2s infinite' : 'none',
+                  '&:hover': {
+                    opacity: 1,
+                    transform: 'scaleY(1.2)',
+                    zIndex: 10,
+                  },
+                  transition: 'all 0.2s ease',
+                }}
+              />
+            </Tooltip>
+          );
+        })}
+        
+        {/* Current Time Indicator */}
+        <Box
+          sx={{
+            position: 'absolute',
+            left: `${currentTimePosition}px`,
+            width: '2px',
+            height: '100%',
+            backgroundColor: theme.warning,
+            boxShadow: `0 0 10px ${theme.warning}`,
+            '&::before': {
+              content: '""',
+              position: 'absolute',
+              top: '-4px',
+              left: '-4px',
+              width: '10px',
+              height: '10px',
+              backgroundColor: theme.warning,
+              borderRadius: '50%',
+              boxShadow: `0 0 6px ${theme.warning}`,
+            }
+          }}
+        />
+      </Box>
+    </Box>
+  );
+};
 
 interface ContactWindowsPopoverProps {
   nextContactWindow?: ContactWindow | null;
@@ -46,7 +185,14 @@ const ContactWindowsPopover: React.FC<ContactWindowsPopoverProps> = ({
   const [anchorEl, setAnchorEl] = useState<HTMLButtonElement | null>(null);
   const contactWindows = useSelector(selectContactWindows);
   const status = useSelector(selectContactWindowsStatus);
+  const cesiumClockTime = useSelector(selectCesiumClockDate);
   const { theme } = useTheme();
+  
+  // Timeline state
+  const [followMode, setFollowMode] = useState(true);
+  const [timelineZoom, setTimelineZoom] = useState(1);
+  const [timelineCenter, setTimelineCenter] = useState(new Date());
+  const timelineRef = useRef<HTMLDivElement>(null);
   
   const open = Boolean(anchorEl);
   
@@ -54,15 +200,85 @@ const ContactWindowsPopover: React.FC<ContactWindowsPopoverProps> = ({
   const displaySatelliteName = selectedSatelliteName || satelliteName;
   const displayGroundStationName = selectedGroundStationName || groundStationName;
   
+  // Filter contact windows for selected satellite/ground station pair
+  const filteredContactWindows = useMemo(() => {
+    if (!satelliteId || !groundStationId) return [];
+    return contactWindows.filter((window: any) => 
+      window.satelliteId === satelliteId && window.groundStationId === groundStationId
+    );
+  }, [contactWindows, satelliteId, groundStationId]);
+  
+  // Timeline calculations
+  const currentSimTime = cesiumClockTime || currentTime || new Date();
+  
+  // Update timeline center when following mode is on
+  useEffect(() => {
+    if (followMode) {
+      setTimelineCenter(currentSimTime);
+    }
+  }, [currentSimTime, followMode]);
+  
+  // Timeline control functions
+  const handleJumpToNow = () => {
+    setTimelineCenter(currentSimTime);
+    setFollowMode(true);
+  };
+  
+  const handleJumpToStart = () => {
+    if (filteredContactWindows.length > 0) {
+      const earliest = new Date(Math.min(...filteredContactWindows.map((w: any) => new Date(w.scheduledAOS).getTime())));
+      setTimelineCenter(earliest);
+      setFollowMode(false);
+    }
+  };
+  
+  const handleJumpToNext = () => {
+    const upcomingWindows = filteredContactWindows
+      .filter((w: any) => new Date(w.scheduledAOS) > currentSimTime)
+      .sort((a: any, b: any) => new Date(a.scheduledAOS).getTime() - new Date(b.scheduledAOS).getTime());
+    
+    if (upcomingWindows.length > 0) {
+      setTimelineCenter(new Date(upcomingWindows[0].scheduledAOS));
+      setFollowMode(false);
+    }
+  };
+  
+  const handleZoomIn = () => {
+    setTimelineZoom(prev => Math.min(prev * 1.5, 10));
+  };
+  
+  const handleZoomOut = () => {
+    setTimelineZoom(prev => Math.max(prev / 1.5, 0.1));
+  };
+  
+  const handleFitAll = () => {
+    if (filteredContactWindows.length > 0) {
+      const times = filteredContactWindows.flatMap((w: any) => [
+        new Date(w.scheduledAOS).getTime(),
+        new Date(w.scheduledLOS).getTime()
+      ]);
+      const minTime = Math.min(...times);
+      const maxTime = Math.max(...times);
+      const centerTime = new Date((minTime + maxTime) / 2);
+      const timeSpan = maxTime - minTime;
+      
+      setTimelineCenter(centerTime);
+      setTimelineZoom(Math.min(24 * 60 * 60 * 1000 / timeSpan, 10)); // Fit to roughly 24 hours max zoom
+      setFollowMode(false);
+    }
+  };
+  
+  const handleToggleFollow = () => {
+    setFollowMode(prev => !prev);
+  };
+  
   // Calculate stats
-  const upcomingWindows = contactWindows.filter((window: any) => {
-    const now = currentTime || new Date(); // Use simulation time if available, fallback to real time
-    return new Date(window.scheduledAOS) > now;
+  const upcomingWindows = filteredContactWindows.filter((window: any) => {
+    return new Date(window.scheduledAOS) > currentSimTime;
   }).length;
   
-  const activeWindow = contactWindows.find((window: any) => {
-    const now = currentTime || new Date(); // Use simulation time if available, fallback to real time
-    return new Date(window.scheduledAOS) <= now && new Date(window.scheduledLOS) >= now;
+  const activeWindow = filteredContactWindows.find((window: any) => {
+    return new Date(window.scheduledAOS) <= currentSimTime && new Date(window.scheduledLOS) >= currentSimTime;
   });
 
   const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
@@ -158,8 +374,8 @@ const ContactWindowsPopover: React.FC<ContactWindowsPopoverProps> = ({
         }}
         PaperProps={{
           sx: {
-            width: '520px',
-            maxHeight: '600px',
+            width: '800px',
+            maxHeight: '700px',
             backgroundColor: theme.backgroundDark,
             backdropFilter: 'blur(10px)',
             border: `1px solid ${theme.primary}`,
@@ -309,9 +525,9 @@ const ContactWindowsPopover: React.FC<ContactWindowsPopoverProps> = ({
                         TOTAL TODAY
                       </Typography>
                       <Typography variant="h6" sx={{ color: theme.primary, fontFamily: 'inherit', lineHeight: 1 }}>
-                        {contactWindows.filter((w: any) => {
+                        {filteredContactWindows.filter((w: any) => {
                           const windowDate = new Date(w.scheduledAOS).toDateString();
-                          const today = new Date().toDateString();
+                          const today = currentSimTime.toDateString();
                           return windowDate === today;
                         }).length}
                       </Typography>
@@ -333,9 +549,160 @@ const ContactWindowsPopover: React.FC<ContactWindowsPopoverProps> = ({
                   </Box>
                   
                   <Typography variant="caption" sx={{ color: theme.textSecondary, fontFamily: 'inherit' }}>
-                    {new Date().toLocaleTimeString()}
+                    {currentSimTime.toLocaleTimeString()}
                   </Typography>
                 </Box>
+              </Box>
+
+              {/* Timeline Controls */}
+              <Box sx={{ 
+                padding: 2, 
+                borderBottom: `1px solid rgba(${theme.primaryRGB}, 0.2)`,
+                backgroundColor: theme.backgroundSecondary
+              }}>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                  <Typography variant="subtitle2" sx={{ color: theme.primary, fontFamily: 'inherit', fontWeight: 'bold' }}>
+                    TIMELINE CONTROLS
+                  </Typography>
+                  <Typography variant="caption" sx={{ color: theme.textSecondary, fontFamily: 'inherit' }}>
+                    {currentSimTime.toLocaleTimeString()} UTC
+                  </Typography>
+                </Box>
+                
+                <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', flexWrap: 'wrap' }}>
+                  {/* Navigation Controls */}
+                  <Box sx={{ 
+                    display: 'flex', 
+                    gap: 0.5, 
+                    padding: '4px 8px',
+                    borderRadius: '8px',
+                    backgroundColor: 'rgba(0, 0, 0, 0.4)',
+                    border: `1px solid rgba(${theme.primaryRGB}, 0.2)`,
+                  }}>
+                    <Tooltip title="Jump to Start" arrow>
+                      <IconButton 
+                        onClick={handleJumpToStart} 
+                        size="small"
+                        sx={{ color: theme.textSecondary, '&:hover': { color: theme.primary } }}
+                      >
+                        <SkipPreviousIcon fontSize="small" />
+                      </IconButton>
+                    </Tooltip>
+                    <Tooltip title="Jump to Now" arrow>
+                      <IconButton 
+                        onClick={handleJumpToNow} 
+                        size="small"
+                        sx={{ color: theme.textSecondary, '&:hover': { color: theme.primary } }}
+                      >
+                        <AccessTimeIcon fontSize="small" />
+                      </IconButton>
+                    </Tooltip>
+                    <Tooltip title={followMode ? "Disable Follow Mode" : "Enable Follow Mode"} arrow>
+                      <IconButton 
+                        onClick={handleToggleFollow} 
+                        size="small"
+                        sx={{ 
+                          color: followMode ? theme.primary : theme.textSecondary,
+                          '&:hover': { color: theme.primary }
+                        }}
+                      >
+                        {followMode ? <MyLocationIcon fontSize="small" /> : <LocationDisabledIcon fontSize="small" />}
+                      </IconButton>
+                    </Tooltip>
+                    <Tooltip title="Jump to Next Window" arrow>
+                      <IconButton 
+                        onClick={handleJumpToNext} 
+                        size="small"
+                        sx={{ color: theme.textSecondary, '&:hover': { color: theme.primary } }}
+                      >
+                        <SkipNextIcon fontSize="small" />
+                      </IconButton>
+                    </Tooltip>
+                  </Box>
+                  
+                  {/* Zoom Controls */}
+                  <Box sx={{ 
+                    display: 'flex', 
+                    gap: 0.5, 
+                    padding: '4px 8px',
+                    borderRadius: '8px',
+                    backgroundColor: 'rgba(0, 0, 0, 0.4)',
+                    border: `1px solid rgba(${theme.primaryRGB}, 0.2)`,
+                  }}>
+                    <Tooltip title="Zoom In" arrow>
+                      <IconButton 
+                        onClick={handleZoomIn} 
+                        size="small"
+                        sx={{ color: theme.textSecondary, '&:hover': { color: theme.primary } }}
+                      >
+                        <ZoomInIcon fontSize="small" />
+                      </IconButton>
+                    </Tooltip>
+                    <Tooltip title="Zoom Out" arrow>
+                      <IconButton 
+                        onClick={handleZoomOut} 
+                        size="small"
+                        sx={{ color: theme.textSecondary, '&:hover': { color: theme.primary } }}
+                      >
+                        <ZoomOutIcon fontSize="small" />
+                      </IconButton>
+                    </Tooltip>
+                    <Tooltip title="Fit All Windows" arrow>
+                      <IconButton 
+                        onClick={handleFitAll} 
+                        size="small"
+                        sx={{ color: theme.textSecondary, '&:hover': { color: theme.primary } }}
+                      >
+                        <FitScreenIcon fontSize="small" />
+                      </IconButton>
+                    </Tooltip>
+                  </Box>
+                  
+                  {/* Status Indicators */}
+                  <Box sx={{ display: 'flex', gap: 1, ml: 'auto' }}>
+                    {followMode && (
+                      <Chip 
+                        label="FOLLOW" 
+                        size="small"
+                        sx={{
+                          backgroundColor: theme.primary,
+                          color: theme.backgroundDark,
+                          fontWeight: 'bold',
+                          fontSize: '0.7rem',
+                        }}
+                      />
+                    )}
+                    <Chip 
+                      label={`ZOOM ${timelineZoom.toFixed(1)}x`} 
+                      size="small"
+                      variant="outlined"
+                      sx={{
+                        borderColor: theme.textSecondary,
+                        color: theme.textSecondary,
+                        fontSize: '0.7rem',
+                      }}
+                    />
+                  </Box>
+                </Box>
+              </Box>
+
+              {/* Mini Timeline Visualization */}
+              <Box sx={{ 
+                padding: 2, 
+                borderBottom: `1px solid rgba(${theme.primaryRGB}, 0.2)`,
+                backgroundColor: theme.backgroundSecondary,
+                minHeight: '120px'
+              }}>
+                <Typography variant="subtitle2" sx={{ color: theme.primary, fontFamily: 'inherit', fontWeight: 'bold', mb: 2 }}>
+                  CONTACT TIMELINE
+                </Typography>
+                <MiniTimeline 
+                  contactWindows={filteredContactWindows}
+                  currentTime={currentSimTime}
+                  centerTime={timelineCenter}
+                  zoom={timelineZoom}
+                  theme={theme}
+                />
               </Box>
 
               {/* Contact Windows Content */}
