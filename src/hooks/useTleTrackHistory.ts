@@ -1,52 +1,39 @@
-import { useEffect, useRef } from "react";
-import { Cartesian3 } from "cesium";
+import { useMemo } from "react";
+import { Cartesian3, JulianDate, CallbackProperty } from "cesium";
 
 export function useTleTrackHistory(
   satPositionProperty: any,
   viewerRef: React.MutableRefObject<any>,
   showTle: boolean,
-  showHistory: boolean
-): React.MutableRefObject<Cartesian3[]> {
-  const tleHistoryRef = useRef<Cartesian3[]>([]);
+  showHistory: boolean,
+  historyDuration: number = 3600 // Default to 1 hour if not provided
+): CallbackProperty | null {
+  return useMemo(() => {
+    if (!showTle || !showHistory || !satPositionProperty) return null;
 
-  useEffect(() => {
-    if (!showTle || !satPositionProperty) return;
+    return new CallbackProperty(() => {
+      const positions: Cartesian3[] = [];
+      const viewer = viewerRef.current?.cesiumElement;
+      if (!viewer?.clock) return positions;
 
-    // Wait for viewer to be available
-    const setupTleTracking = () => {
-      if (!viewerRef.current?.cesiumElement?.clock) {
-        // If viewer isn't ready yet, try again in the next tick
-        setTimeout(setupTleTracking, 10);
-        return;
+      const currentTime = viewer.clock.currentTime;
+      if (!currentTime) return positions;
+
+      // Generate history track using configurable duration
+      const stepSize = Math.max(10, Math.floor(historyDuration / 180)); // Adaptive step size, min 10 seconds
+
+      for (let i = -historyDuration; i <= 0; i += stepSize) {
+        const offsetTime = JulianDate.addSeconds(
+          currentTime,
+          i,
+          new JulianDate()
+        );
+        const pos = satPositionProperty.getValue(offsetTime);
+        if (pos) positions.push(pos);
       }
 
-      const viewer = viewerRef.current.cesiumElement;
-
-      const recordTleTrack = () => {
-        const now = viewer.clock.currentTime;
-        if (!now) return;
-        const pos = satPositionProperty.getValue(now);
-        if (pos) {
-          if (showHistory) {
-            tleHistoryRef.current.push(pos);
-          } else {
-            tleHistoryRef.current.length = 0;
-            tleHistoryRef.current.push(pos);
-          }
-        }
-      };
-
-      viewer.clock.onTick.addEventListener(recordTleTrack);
-      return () => {
-        if (viewer.clock) {
-          viewer.clock.onTick.removeEventListener(recordTleTrack);
-        }
-      };
-    };
-
-    const cleanup = setupTleTracking();
-    return cleanup;
-  }, [showTle, showHistory, satPositionProperty, viewerRef]);
-
-  return tleHistoryRef;
+      console.log(`TLE History track: ${positions.length} positions over ${historyDuration}s`);
+      return positions;
+    }, false);
+  }, [showTle, showHistory, satPositionProperty, viewerRef, historyDuration]);
 }

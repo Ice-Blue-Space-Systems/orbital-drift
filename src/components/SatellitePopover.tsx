@@ -8,7 +8,7 @@ import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
 import LaunchIcon from "@mui/icons-material/Launch";
 import { useSelector, useDispatch } from "react-redux";
 import { RootState } from "../store";
-import { setSelectedSatId, setShowHistory, setShowTle, setShowGroundTrack, setShowNadirLines } from "../store/mongoSlice";
+import { setSelectedSatId, setShowHistory, setShowTle, setShowGroundTrack, setShowNadirLines, addSatellite } from "../store/mongoSlice";
 import { fetchCelesTrakSatellites, DisplaySatellite, getSatelliteStats } from "../utils/satelliteDataUtils";
 import { useTheme } from "../contexts/ThemeContext";
 
@@ -213,28 +213,34 @@ const SatellitePopover: React.FC = () => {
 
   const handleQuickAdd = async (satellite: DisplaySatellite) => {
     try {
+      const requestBody: any = {
+        name: satellite.name,
+        noradId: satellite.noradId,
+        type: 'live', // CelesTrak satellites are live
+        description: `Added from CelesTrak - ${satellite.description || 'Satellite from CelesTrak database'}`
+      };
+
+      // If we have the original CelesTrak data, include TLE data
+      if (satellite.celestrakData) {
+        requestBody.tleData = satellite.celestrakData;
+      }
+
       // POST new satellite to API
       const response = await fetch('/api/satellites', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          name: satellite.name,
-          noradId: satellite.noradId,
-          country: satellite.country || 'Unknown',
-          launchDate: satellite.launchDate,
-          orbitType: satellite.orbitType || 'Unknown',
-          status: satellite.status,
-          description: `Added from CelesTrak - ${satellite.description || 'Satellite from CelesTrak database'}`
-        }),
+        body: JSON.stringify(requestBody),
       });
 
       if (response.ok) {
-        await response.json(); // Process response but don't store unused result
-        // Refresh the satellites data from Redux
-        // You might want to dispatch a refresh action here
-        window.location.reload(); // Simple refresh for now
+        const addedSatellite = await response.json();
+        // Add the satellite to Redux state immediately
+        dispatch(addSatellite(addedSatellite));
+      } else {
+        const errorData = await response.text();
+        console.error('Failed to add satellite:', response.status, response.statusText, errorData);
       }
     } catch (error) {
       console.error('Failed to add satellite:', error);
@@ -450,7 +456,7 @@ const SatellitePopover: React.FC = () => {
                   scrollbarColor: `rgba(${theme.primaryRGB}, 0.4) rgba(${theme.primaryRGB}, 0.1)`,
                 }}>
                   <List sx={{ padding: 0 }}>
-                    {satellites.map((sat) => (
+                    {filteredManagedSats.map((sat) => (
                       <ListItem key={sat._id} disablePadding>
                         <ListItemButton
                           onClick={() => {
@@ -678,19 +684,73 @@ const SatellitePopover: React.FC = () => {
                     <List sx={{ padding: 0 }}>
                       {filteredDiscoverableSats.map((sat) => (
                         <ListItem key={sat.id} disablePadding>
-                          <ListItemButton
-                            sx={{
-                              color: "#cccccc",
-                              transition: "all 0.2s ease-in-out",
-                              borderRadius: "6px",
-                              marginBottom: "2px",
-                              padding: "6px 8px",
-                              "&:hover": {
-                                backgroundColor: `rgba(${theme.secondaryRGB}, 0.1)`,
-                                transform: "translateX(2px)"
-                              }
-                            }}
-                          >
+                          <Tooltip title="Click to add and select this satellite" arrow placement="left">
+                            <ListItemButton
+                              onClick={async () => {
+                                // Quick-add the satellite first, then select it
+                                try {
+                                  console.log("Full satellite object:", sat);
+                                  console.log("Satellite celestrakData exists?", !!sat.celestrakData);
+                                  if (sat.celestrakData) {
+                                    console.log("CelesTrak data keys:", Object.keys(sat.celestrakData));
+                                  }
+
+                                  const requestBody: any = {
+                                    name: sat.name,
+                                    noradId: sat.noradId,
+                                    type: 'live', // CelesTrak satellites are live
+                                    description: `Added from CelesTrak - ${sat.description || 'Satellite from CelesTrak database'}`
+                                  };
+
+                                  // If we have the original CelesTrak data, include TLE data
+                                  if (sat.celestrakData) {
+                                    console.log("Including TLE data for satellite:", sat.name, sat.celestrakData);
+                                    requestBody.tleData = sat.celestrakData;
+                                  } else {
+                                    console.log("No celestrakData available for satellite:", sat.name);
+                                  }
+
+                                  console.log("Sending satellite creation request:", requestBody);
+
+                                  const response = await fetch('/api/satellites', {
+                                    method: 'POST',
+                                    headers: {
+                                      'Content-Type': 'application/json',
+                                    },
+                                    body: JSON.stringify(requestBody),
+                                  });
+
+                                  if (response.ok) {
+                                    const addedSatellite = await response.json();
+                                    // Add the satellite to Redux state immediately
+                                    dispatch(addSatellite(addedSatellite));
+                                    // Select the newly added satellite
+                                    dispatch(setSelectedSatId(addedSatellite._id));
+                                    setOpenPopover(false);
+                                  } else {
+                                    const errorData = await response.text();
+                                    console.error('Failed to add satellite:', response.status, response.statusText, errorData);
+                                  }
+                                } catch (error) {
+                                  console.error('Failed to add satellite:', error);
+                                }
+                              }}
+                              sx={{
+                                color: "#cccccc",
+                                transition: "all 0.2s ease-in-out",
+                                borderRadius: "6px",
+                                marginBottom: "2px",
+                                padding: "6px 8px",
+                                cursor: "pointer",
+                                "&:hover": {
+                                  backgroundColor: `rgba(${theme.secondaryRGB}, 0.15)`,
+                                  transform: "translateX(2px)",
+                                  "& .satellite-name": {
+                                    color: theme.secondary
+                                  }
+                                }
+                              }}
+                            >
                             <ListItemText 
                               primary={
                                 <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
@@ -698,13 +758,15 @@ const SatellitePopover: React.FC = () => {
                                     <CountryFlag country={sat.country || 'Unknown'} size={16} />
                                     <Box sx={{ flex: 1 }}>
                                       <Typography 
+                                        className="satellite-name"
                                         sx={{
                                           fontFamily: "'Courier New', Courier, monospace",
                                           fontSize: "0.75rem",
                                           color: "#cccccc",
                                           overflow: "hidden",
                                           textOverflow: "ellipsis",
-                                          whiteSpace: "nowrap"
+                                          whiteSpace: "nowrap",
+                                          transition: "color 0.2s ease"
                                         }}
                                       >
                                         {sat.name}
@@ -724,7 +786,7 @@ const SatellitePopover: React.FC = () => {
                                   <IconButton
                                     size="small"
                                     onClick={(e) => {
-                                      e.stopPropagation();
+                                      e.stopPropagation(); // Prevent the row click handler
                                       handleQuickAdd(sat);
                                     }}
                                     sx={{
@@ -744,6 +806,7 @@ const SatellitePopover: React.FC = () => {
                               }
                             />
                           </ListItemButton>
+                          </Tooltip>
                         </ListItem>
                       ))}
                     </List>

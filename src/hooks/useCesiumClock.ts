@@ -18,7 +18,7 @@ export function useCesiumClock(viewerRef: React.MutableRefObject<any>) {
     const attachListener = () => {
       const viewer = viewerRef.current?.cesiumElement;
       if (!viewer) {
-        console.log("useCesiumClock: No viewer found, will retry");
+        // console.log("useCesiumClock: No viewer found, will retry");
         return false;
       }
 
@@ -30,7 +30,7 @@ export function useCesiumClock(viewerRef: React.MutableRefObject<any>) {
         viewer.clock.onTick.removeEventListener(listenerRef.current);
       }
 
-      console.log("useCesiumClock: Cesium clock taking control");
+      // console.log("useCesiumClock: Cesium clock taking control");
 
       const updateClock = () => {
         try {
@@ -39,10 +39,6 @@ export function useCesiumClock(viewerRef: React.MutableRefObject<any>) {
           // Only dispatch multiplier changes, let useGlobalClock handle time
           dispatch(updateCesiumClockMultiplier(multiplier));
           
-          // Log occasionally to show sync is working
-          if (Math.random() < 0.01) { // Log ~1% of updates
-            console.log(`useCesiumClock: Cesium multiplier update - Speed: ${multiplier}x`);
-          }
         } catch (error) {
           console.error("useCesiumClock: Error updating clock", error);
         }
@@ -50,7 +46,7 @@ export function useCesiumClock(viewerRef: React.MutableRefObject<any>) {
 
       listenerRef.current = updateClock;
       viewer.clock.onTick.addEventListener(updateClock);
-      console.log("useCesiumClock: Clock listener attached successfully");
+      // console.log("useCesiumClock: Clock listener attached successfully");
       
       return true;
     };
@@ -70,7 +66,7 @@ export function useCesiumClock(viewerRef: React.MutableRefObject<any>) {
 
     return () => {
       isActiveRef.current = false;
-      console.log("useCesiumClock: Cesium clock releasing control");
+      // console.log("useCesiumClock: Cesium clock releasing control");
 
       // Clear retry interval
       if (intervalRef.current) {

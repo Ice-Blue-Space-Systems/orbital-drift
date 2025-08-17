@@ -45,13 +45,107 @@ app.get("/api/satellites/:id", async (req, res) => {
 // API endpoint to create a new satellite
 app.post("/api/satellites", async (req, res) => {
   try {
-    const newSatellite = new Satellite(req.body);
+    console.log("Received satellite creation request:", JSON.stringify(req.body, null, 2));
+    const { tleData, ...satelliteData } = req.body;
+    
+    // Create the satellite first
+    const newSatellite = new Satellite(satelliteData);
     const savedSatellite = await newSatellite.save();
+    console.log("Satellite saved:", savedSatellite._id);
+    
+    // If TLE data is provided, create the TLE record and link it
+    if (tleData) {
+      console.log("TLE data provided, creating TLE record...");
+      // Convert CelesTrak TLE data to TLE format
+      const tleLines = convertCelesTrakToTLE(tleData);
+      console.log("Generated TLE lines:", tleLines);
+      
+      const newTle = new Tle({
+        satelliteId: savedSatellite._id,
+        line1: tleLines.line1,
+        line2: tleLines.line2,
+        epoch: new Date(tleData.EPOCH),
+        source: "live",
+        createdAt: new Date()
+      });
+      
+      const savedTle = await newTle.save();
+      console.log("TLE saved:", savedTle._id);
+      
+      // Update satellite with currentTleId
+      savedSatellite.currentTleId = savedTle._id;
+      await savedSatellite.save();
+      console.log("Satellite updated with TLE ID");
+    } else {
+      console.log("No TLE data provided in request");
+    }
+    
     res.status(201).json(savedSatellite);
   } catch (err) {
+    console.error("Error creating satellite:", err);
     res.status(400).send(err.message);
   }
 });
+
+// Helper function to convert CelesTrak data to TLE format
+function convertCelesTrakToTLE(sat) {
+  // Helper function to format epoch
+  const formatEpoch = (epochStr) => {
+    const date = new Date(epochStr);
+    const year = date.getUTCFullYear().toString().slice(-2);
+    const dayOfYear = Math.floor((date.getTime() - new Date(date.getUTCFullYear(), 0, 0).getTime()) / (1000 * 60 * 60 * 24));
+    const fractionalDay = (date.getUTCHours() * 3600 + date.getUTCMinutes() * 60 + date.getUTCSeconds()) / 86400;
+    return `${year}${String(dayOfYear).padStart(3, '0')}.${(fractionalDay).toFixed(8).slice(2)}`;
+  };
+
+  const formatExponential = (num) => {
+    if (num === 0) return " 00000-0";
+    const absNum = Math.abs(num);
+    const sign = num >= 0 ? " " : "-";
+    const exp = Math.floor(Math.log10(absNum));
+    const mantissa = Math.round(absNum / Math.pow(10, exp) * 100000);
+    return `${sign}${String(mantissa).padStart(5, '0')}-${Math.abs(exp)}`;
+  };
+
+  const calculateTLEChecksum = (line) => {
+    let sum = 0;
+    for (let i = 0; i < line.length; i++) {
+      const char = line[i];
+      if (char >= '0' && char <= '9') {
+        sum += parseInt(char);
+      } else if (char === '-') {
+        sum += 1;
+      }
+    }
+    return sum % 10;
+  };
+
+  // Generate TLE lines
+  const epoch = formatEpoch(sat.EPOCH);
+  const meanMotionDot = sat.MEAN_MOTION_DOT ? formatExponential(sat.MEAN_MOTION_DOT) : " 00000-0";
+  const meanMotionDdot = sat.MEAN_MOTION_DDOT ? formatExponential(sat.MEAN_MOTION_DDOT) : " 00000-0";
+  const bstar = sat.BSTAR ? formatExponential(sat.BSTAR) : " 00000-0";
+
+  // Line 1
+  const line1Base = `1 ${String(sat.NORAD_CAT_ID).padStart(5)}U ${sat.OBJECT_ID.padEnd(8)} ${epoch}${meanMotionDot}${meanMotionDdot} ${bstar} 0 ${String(sat.ELEMENT_SET_NO).padStart(4)}`;
+  const line1Checksum = calculateTLEChecksum(line1Base);
+  const line1 = `${line1Base}${line1Checksum}`;
+
+  // Line 2
+  const inclination = sat.INCLINATION.toFixed(4).padStart(8);
+  const raan = sat.RA_OF_ASC_NODE.toFixed(4).padStart(8);
+  const eccentricity = String(Math.round(sat.ECCENTRICITY * 10000000)).padStart(7, '0');
+  const argPerigee = sat.ARG_OF_PERICENTER.toFixed(4).padStart(8);
+  const meanAnomaly = sat.MEAN_ANOMALY.toFixed(4).padStart(8);
+  const meanMotion = sat.MEAN_MOTION.toFixed(8).padStart(11);
+  const revNumber = String(sat.REV_AT_EPOCH).padStart(5);
+
+  const line2Base = `2 ${String(sat.NORAD_CAT_ID).padStart(5)} ${inclination} ${raan} ${eccentricity} ${argPerigee} ${meanAnomaly} ${meanMotion}${revNumber}`;
+  const line2Checksum = calculateTLEChecksum(line2Base);
+  const line2 = `${line2Base}${line2Checksum}`;
+
+  return { line1, line2 };
+}
 
 // API endpoint to update a satellite
 app.put("/api/satellites/:id", async (req, res) => {

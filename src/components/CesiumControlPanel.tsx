@@ -20,6 +20,7 @@ import {
 } from "@mui/icons-material";
 import { setCesiumClockMultiplier, setSimulationSpeed, resetToLive } from "../store/cesiumClockSlice";
 import { setShowCesiumOptions } from "../store/mongoSlice";
+import { setTleHistoryDuration, setTleFutureDuration } from "../store/mongoSlice";
 import { RootState } from "../store";
 import { useTheme } from "../contexts/ThemeContext";
 import { selectCesiumClockUtc } from "../store/selectors/cesiumClockSelectors";
@@ -34,6 +35,8 @@ const CesiumControlPanel: React.FC<CesiumControlPanelProps> = ({
   const dispatch = useDispatch();
   const currentMultiplier = useSelector((state: RootState) => state.cesiumClock.multiplier);
   const showCesiumOptions = useSelector((state: RootState) => state.mongo.showCesiumOptions);
+  const tleHistoryDuration = useSelector((state: RootState) => state.mongo.tleHistoryDuration);
+  const tleFutureDuration = useSelector((state: RootState) => state.mongo.tleFutureDuration);
   const { theme, toggleTheme } = useTheme();
   
   // Use Cesium clock for accurate time that follows the simulation speed
@@ -661,6 +664,95 @@ const CesiumControlPanel: React.FC<CesiumControlPanelProps> = ({
                     </Box>
                   </Tooltip>
                 ))}
+              </Box>
+            </Box>
+
+            {/* TLE Settings */}
+            <Box sx={{ 
+              padding: 2,
+              backgroundColor: 'rgba(0, 0, 0, 0.3)',
+              borderRadius: '12px',
+              border: `1px solid rgba(${theme.primaryRGB}, 0.2)`,
+              marginTop: 2
+            }}>
+              <Typography variant="caption" sx={{ 
+                color: theme.primary, 
+                fontFamily: 'inherit', 
+                fontWeight: 'bold',
+                display: 'block',
+                marginBottom: 2
+              }}>
+                TLE TRACK SETTINGS
+              </Typography>
+
+              {/* TLE History Duration */}
+              <Box sx={{ marginBottom: 2 }}>
+                <Typography variant="caption" sx={{ 
+                  color: '#aaa', 
+                  fontFamily: 'inherit', 
+                  fontSize: '0.7rem',
+                  display: 'block',
+                  marginBottom: 1
+                }}>
+                  History Duration: {Math.round(tleHistoryDuration / 60)} min
+                </Typography>
+                <Slider
+                  value={tleHistoryDuration / 60} // Convert seconds to minutes
+                  onChange={(e, value) => dispatch(setTleHistoryDuration((value as number) * 60))}
+                  min={5} // 5 minutes minimum
+                  max={120} // 2 hours maximum
+                  step={5}
+                  sx={{
+                    color: theme.primary,
+                    '& .MuiSlider-thumb': {
+                      backgroundColor: theme.primary,
+                      '&:hover, &.Mui-focusVisible': {
+                        boxShadow: `0 0 0 8px rgba(${theme.primaryRGB}, 0.16)`,
+                      },
+                    },
+                    '& .MuiSlider-track': {
+                      backgroundColor: theme.primary,
+                    },
+                    '& .MuiSlider-rail': {
+                      backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                    },
+                  }}
+                />
+              </Box>
+
+              {/* TLE Future Duration */}
+              <Box>
+                <Typography variant="caption" sx={{ 
+                  color: '#aaa', 
+                  fontFamily: 'inherit', 
+                  fontSize: '0.7rem',
+                  display: 'block',
+                  marginBottom: 1
+                }}>
+                  Future Duration: {Math.round(tleFutureDuration / 3600 * 10) / 10} hr
+                </Typography>
+                <Slider
+                  value={tleFutureDuration / 3600} // Convert seconds to hours
+                  onChange={(e, value) => dispatch(setTleFutureDuration((value as number) * 3600))}
+                  min={0.5} // 30 minutes minimum
+                  max={24} // 24 hours maximum
+                  step={0.5}
+                  sx={{
+                    color: theme.secondary,
+                    '& .MuiSlider-thumb': {
+                      backgroundColor: theme.secondary,
+                      '&:hover, &.Mui-focusVisible': {
+                        boxShadow: `0 0 0 8px ${theme.secondary}29`, // 16% opacity
+                      },
+                    },
+                    '& .MuiSlider-track': {
+                      backgroundColor: theme.secondary,
+                    },
+                    '& .MuiSlider-rail': {
+                      backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                    },
+                  }}
+                />
               </Box>
             </Box>
 

@@ -1,4 +1,4 @@
-import React, { JSX } from "react";
+import React, { JSX, useMemo, useRef, useEffect } from "react";
 import { Viewer, Entity, Clock } from "resium";
 import {
   Cartesian3,
@@ -14,20 +14,18 @@ import NadirLines from "./NadirLines";
 
 interface CesiumViewerProps {
   viewerRef: React.RefObject<any>;
-  visibilityConeEntities: JSX.Element[];
   satPositionProperty: any;
   groundStationPos: Cartesian3 | null;
   nextAosLosLabel: string;
   lineOfSightPositions: Cartesian3[];
-  tleHistory: any[];
-  tleFuture: any[];
+  tleHistory: CallbackProperty | null;
+  tleFuture: CallbackProperty | null;
   groundTrackHistory: any[];
   groundTrackFuture: any[];
 }
 
 const CesiumViewer: React.FC<CesiumViewerProps> = ({
   viewerRef,
-  visibilityConeEntities,
   satPositionProperty,
   groundStationPos,
   nextAosLosLabel,
@@ -47,6 +45,25 @@ const CesiumViewer: React.FC<CesiumViewerProps> = ({
   const showCesiumOptions = useSelector(
     (state: RootState) => state.mongo.showCesiumOptions
   );
+
+  // Memoize satellite name to prevent unnecessary renders
+  const selectedSatelliteName = useMemo(() => {
+    return satellites.find((sat) => sat._id === selectedSatelliteId)?.name || "Satellite";
+  }, [satellites, selectedSatelliteId]);
+
+  // Debug: Log when component re-renders (less frequent)
+  const renderCount = useRef(0);
+  renderCount.current++;
+  
+  if (renderCount.current % 100 === 1) { // Log every 100th render to reduce spam
+    console.log("🔄 CesiumViewer: Component re-rendering", {
+      selectedSatelliteId,
+      selectedSatelliteName,
+      hasSatPositionProperty: !!satPositionProperty,
+      renderCount: renderCount.current,
+      timestamp: new Date().toISOString()
+    });
+  }
   
   return (
     <div style={{ position: "relative", height: "100%" }}>
@@ -63,28 +80,44 @@ const CesiumViewer: React.FC<CesiumViewerProps> = ({
         animation={showCesiumOptions}
         fullscreenButton
       >
-        {visibilityConeEntities}
         <Clock shouldAnimate={true} />
 
         {/* Satellite with name label */}
-        {satPositionProperty && selectedSatelliteId && (
-          <Entity
-            name="Satellite"
-            position={satPositionProperty}
-            point={{ pixelSize: 12, color: Color.YELLOW }}
-            label={{
-              text:
-                satellites.find((sat) => sat._id === selectedSatelliteId)?.name ||
-                "Satellite",
-              font: "14px sans-serif",
-              fillColor: Color.WHITE,
-              style: 2, // LabelStyle.OUTLINE
-              outlineWidth: 2,
-              pixelOffset: new Cartesian2(0, -20),
-              showBackground: true,
-            }}
-          />
-        )}
+        {satPositionProperty && selectedSatelliteId && (() => {
+          console.log("🛰️ CesiumViewer: Rendering satellite entity", {
+            selectedSatelliteId,
+            selectedSatelliteName,
+            satPositionProperty: !!satPositionProperty,
+            positionPropertyType: satPositionProperty?.constructor?.name,
+            hasTleHistory: !!tleHistory,
+            hasTleFuture: !!tleFuture,
+            groundTrackHistoryLength: groundTrackHistory?.length || 0,
+            groundTrackFutureLength: groundTrackFuture?.length || 0
+          });
+          
+          return (
+            <Entity
+              key={`satellite-${selectedSatelliteId}`}
+              name="Satellite"
+              position={satPositionProperty}
+              point={{ 
+                pixelSize: 12, // Normal size
+                color: Color.YELLOW, // Yellow color
+                outlineColor: Color.WHITE,
+                outlineWidth: 2
+              }}
+              label={{
+                text: selectedSatelliteName,
+                font: "14px sans-serif",
+                fillColor: Color.WHITE,
+                style: 2, // LabelStyle.OUTLINE
+                outlineWidth: 2,
+                pixelOffset: new Cartesian2(0, -20),
+                showBackground: true,
+              }}
+            />
+          );
+        })()}
 
         {/* Ground Station with AOS/LOS label */}
         {groundStationPos && (
@@ -106,8 +139,8 @@ const CesiumViewer: React.FC<CesiumViewerProps> = ({
 
         {/* TLE Paths */}
         <TleEntities
-          tleHistory={new CallbackProperty(() => tleHistory, false)}
-          tleFuture={new CallbackProperty(() => tleFuture, false)}
+          tleHistory={tleHistory}
+          tleFuture={tleFuture}
           satPositionProperty={satPositionProperty}
         />
 
@@ -126,10 +159,10 @@ const CesiumViewer: React.FC<CesiumViewerProps> = ({
         {/* Ground Track */}
         <GroundTrackEntities
           groundTrackHistory={
-            new CallbackProperty(() => groundTrackHistory, false)
+            groundTrackHistory ? new CallbackProperty(() => groundTrackHistory, false) : null
           }
           groundTrackFuture={
-            new CallbackProperty(() => groundTrackFuture, false)
+            groundTrackFuture ? new CallbackProperty(() => groundTrackFuture, false) : null
           }
           satPositionProperty={satPositionProperty}
         />
@@ -141,4 +174,21 @@ const CesiumViewer: React.FC<CesiumViewerProps> = ({
   );
 };
 
-export default CesiumViewer;
+// Custom comparison function to prevent unnecessary re-renders
+const areEqual = (prevProps: CesiumViewerProps, nextProps: CesiumViewerProps) => {
+  // Only re-render if important props have changed
+  const shouldRerender = (
+    prevProps.satPositionProperty !== nextProps.satPositionProperty ||
+    prevProps.groundStationPos !== nextProps.groundStationPos ||
+    prevProps.nextAosLosLabel !== nextProps.nextAosLosLabel ||
+    prevProps.lineOfSightPositions !== nextProps.lineOfSightPositions ||
+    prevProps.tleHistory !== nextProps.tleHistory ||
+    prevProps.tleFuture !== nextProps.tleFuture ||
+    prevProps.groundTrackHistory !== nextProps.groundTrackHistory ||
+    prevProps.groundTrackFuture !== nextProps.groundTrackFuture
+  );
+  
+  return !shouldRerender;
+};
+
+export default React.memo(CesiumViewer, areEqual);

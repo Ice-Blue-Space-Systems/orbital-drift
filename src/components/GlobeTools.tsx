@@ -10,7 +10,6 @@ import SatellitePopover from "./SatellitePopover";
 import GroundStationPopover from "./GroundStationPopover";
 import ContactWindowsPopover from "./ContactWindowsPopover";
 import ConsolePopover from "./ConsolePopover";
-import TimelinePopover from "./TimelinePopover";
 import { ContactWindow } from "../types";
 import { useTheme } from "../contexts/ThemeContext";
 import { useSelectedEntities } from "../hooks/useSelectedEntities";
@@ -238,7 +237,6 @@ const GlobeTools: React.FC<GlobeToolsProps> = ({
           )}
         />
         <ConsolePopover debugInfo={debugInfo} nextContactWindow={nextContactWindow} />
-        <TimelinePopover />
       </div>
     </Box>
   );

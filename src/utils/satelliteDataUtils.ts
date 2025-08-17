@@ -19,6 +19,8 @@ export interface DisplaySatellite {
   period?: number; // minutes
   lastUpdate: string;
   description?: string;
+  // Original CelesTrak data for TLE generation (only for celestrak source)
+  celestrakData?: CelesTrakSatellite;
 }
 
 // CelesTrak TLE data structure
@@ -79,7 +81,7 @@ const countryFromSatelliteName = (name: string): string => {
   // ISS and international missions
   if (nameUpper.includes("ISS") || nameUpper.includes("INTERNATIONAL SPACE STATION")) return "International";
   
-  console.log(`Country detection for satellite "${name}" defaulted to International`);
+  // console.log(`Country detection for satellite "${name}" defaulted to International`);
   return "International";
 };
 
@@ -137,7 +139,69 @@ export const convertCelesTrakSatelliteToDisplay = (sat: CelesTrakSatellite & { _
     country: countryFromSatelliteName(sat.OBJECT_NAME),
     lastUpdate: sat.EPOCH,
     description: `TLE Data - Classification: ${sat.CLASSIFICATION_TYPE}`,
+    celestrakData: sat, // Include original CelesTrak data for TLE generation
   };
+};
+
+// Convert CelesTrak satellite data to TLE format
+export const convertCelesTrakToTLE = (sat: CelesTrakSatellite): { line1: string; line2: string } => {
+  // Helper function to format numbers with specific padding and precision
+  const formatEpoch = (epochStr: string): string => {
+    const date = new Date(epochStr);
+    const year = date.getUTCFullYear().toString().slice(-2); // Last 2 digits
+    const dayOfYear = Math.floor((date.getTime() - new Date(date.getUTCFullYear(), 0, 0).getTime()) / (1000 * 60 * 60 * 24));
+    const fractionalDay = (date.getUTCHours() * 3600 + date.getUTCMinutes() * 60 + date.getUTCSeconds()) / 86400;
+    return `${year}${String(dayOfYear).padStart(3, '0')}.${(fractionalDay).toFixed(8).slice(2)}`;
+  };
+
+  const formatExponential = (num: number): string => {
+    if (num === 0) return " 00000-0";
+    const absNum = Math.abs(num);
+    const sign = num >= 0 ? " " : "-";
+    const exp = Math.floor(Math.log10(absNum));
+    const mantissa = Math.round(absNum / Math.pow(10, exp) * 100000);
+    return `${sign}${String(mantissa).padStart(5, '0')}-${Math.abs(exp)}`;
+  };
+
+  // Generate TLE lines
+  const epoch = formatEpoch(sat.EPOCH);
+  const meanMotionDot = sat.MEAN_MOTION_DOT ? formatExponential(sat.MEAN_MOTION_DOT) : " 00000-0";
+  const meanMotionDdot = sat.MEAN_MOTION_DDOT ? formatExponential(sat.MEAN_MOTION_DDOT) : " 00000-0";
+  const bstar = sat.BSTAR ? formatExponential(sat.BSTAR) : " 00000-0";
+
+  // Line 1: Satellite number, classification, launch year/number, epoch, derivatives, B*, element set number, checksum
+  const line1Base = `1 ${String(sat.NORAD_CAT_ID).padStart(5)}U ${sat.OBJECT_ID.padEnd(8)} ${epoch}${meanMotionDot}${meanMotionDdot} ${bstar} 0 ${String(sat.ELEMENT_SET_NO).padStart(4)}`;
+  const line1Checksum = calculateTLEChecksum(line1Base);
+  const line1 = `${line1Base}${line1Checksum}`;
+
+  // Line 2: Satellite number, inclination, RAAN, eccentricity, argument of perigee, mean anomaly, mean motion, revolution number, checksum
+  const inclination = sat.INCLINATION.toFixed(4).padStart(8);
+  const raan = sat.RA_OF_ASC_NODE.toFixed(4).padStart(8);
+  const eccentricity = String(Math.round(sat.ECCENTRICITY * 10000000)).padStart(7, '0');
+  const argPerigee = sat.ARG_OF_PERICENTER.toFixed(4).padStart(8);
+  const meanAnomaly = sat.MEAN_ANOMALY.toFixed(4).padStart(8);
+  const meanMotion = sat.MEAN_MOTION.toFixed(8).padStart(11);
+  const revNumber = String(sat.REV_AT_EPOCH).padStart(5);
+
+  const line2Base = `2 ${String(sat.NORAD_CAT_ID).padStart(5)} ${inclination} ${raan} ${eccentricity} ${argPerigee} ${meanAnomaly} ${meanMotion}${revNumber}`;
+  const line2Checksum = calculateTLEChecksum(line2Base);
+  const line2 = `${line2Base}${line2Checksum}`;
+
+  return { line1, line2 };
+};
+
+// Calculate TLE checksum
+const calculateTLEChecksum = (line: string): number => {
+  let sum = 0;
+  for (let i = 0; i < line.length; i++) {
+    const char = line[i];
+    if (char >= '0' && char <= '9') {
+      sum += parseInt(char);
+    } else if (char === '-') {
+      sum += 1;
+    }
+  }
+  return sum % 10;
 };
 
 // Fetch satellites from MongoDB API
@@ -207,6 +271,7 @@ const getSatelliteClassification = (name: string, sourceGroup?: string): { categ
 export const fetchCelesTrakSatellites = async (): Promise<DisplaySatellite[]> => {
   try {
     // Fetch from major satellite groups on CelesTrak for comprehensive coverage
+    // Using only verified, stable group names
     const urlsWithCategories = [
       { url: "https://celestrak.org/NORAD/elements/gp.php?GROUP=stations&FORMAT=json", group: "stations" },
       { url: "https://celestrak.org/NORAD/elements/gp.php?GROUP=starlink&FORMAT=json", group: "starlink" },
@@ -214,23 +279,31 @@ export const fetchCelesTrakSatellites = async (): Promise<DisplaySatellite[]> =>
       { url: "https://celestrak.org/NORAD/elements/gp.php?GROUP=gps-ops&FORMAT=json", group: "gps-ops" },
       { url: "https://celestrak.org/NORAD/elements/gp.php?GROUP=glonass-ops&FORMAT=json", group: "glonass-ops" },
       { url: "https://celestrak.org/NORAD/elements/gp.php?GROUP=beidou&FORMAT=json", group: "beidou" },
-      { url: "https://celestrak.org/NORAD/elements/gp.php?GROUP=iridium-33&FORMAT=json", group: "iridium-33" },
-      { url: "https://celestrak.org/NORAD/elements/gp.php?GROUP=globalstar&FORMAT=json", group: "globalstar" },
+      { url: "https://celestrak.org/NORAD/elements/gp.php?GROUP=iridium&FORMAT=json", group: "iridium" },
       { url: "https://celestrak.org/NORAD/elements/gp.php?GROUP=oneweb&FORMAT=json", group: "oneweb" },
       { url: "https://celestrak.org/NORAD/elements/gp.php?GROUP=weather&FORMAT=json", group: "weather" },
       { url: "https://celestrak.org/NORAD/elements/gp.php?GROUP=goes&FORMAT=json", group: "goes" },
       { url: "https://celestrak.org/NORAD/elements/gp.php?GROUP=resource&FORMAT=json", group: "resource" },
       { url: "https://celestrak.org/NORAD/elements/gp.php?GROUP=cubesat&FORMAT=json", group: "cubesat" },
       { url: "https://celestrak.org/NORAD/elements/gp.php?GROUP=planet&FORMAT=json", group: "planet" },
-      { url: "https://celestrak.org/NORAD/elements/gp.php?GROUP=spire&FORMAT=json", group: "spire" },
     ];
     
     const promises = urlsWithCategories.map(({ url, group }) => 
       fetch(url)
-        .then(response => response.json())
-        .then(data => data.map((sat: CelesTrakSatellite) => ({ ...sat, _sourceGroup: group })))
+        .then(response => {
+          if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+          }
+          return response.json();
+        })
+        .then(data => {
+          if (!Array.isArray(data)) {
+            throw new Error(`Invalid response format for ${group}`);
+          }
+          return data.map((sat: CelesTrakSatellite) => ({ ...sat, _sourceGroup: group }));
+        })
         .catch(error => {
-          console.warn(`Failed to fetch from ${url}:`, error);
+          console.warn(`Failed to fetch from ${group} (${url}):`, error.message);
           return [];
         })
     );

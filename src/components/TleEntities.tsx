@@ -15,32 +15,32 @@ const TleEntities: React.FC<TleEntitiesProps> = ({
   tleFuture,
   satPositionProperty,
 }) => {
-
-  const {showTle, showHistory} = useSelector((state: RootState) => state.mongo);
+  const { showTle, showHistory } = useSelector((state: RootState) => state.mongo);
 
   if (!showTle || !satPositionProperty) return null;
 
   return (
     <>
-      {/* If "Show TLE" is on, we show the TLE path. If "Show History" is on, render the entire (past + future). Otherwise, show just the current/future. */}
-      {showHistory && tleHistory && (
-        <Entity
-          name="TLE Path - Past"
-          polyline={{
-            positions: tleHistory,
-            width: 2,
-            material: Color.GRAY, // Past TLE in gray
-          }}
-        />
-      )}
-      {/* Always show future, or a simplified “Preview” (depending on your preference). */}
+      {/* Always show future track when TLE is enabled - main green orbital path */}
       {tleFuture && (
         <Entity
           name="TLE Path - Future"
           polyline={{
             positions: tleFuture,
-            width: 2,
-            material: Color.GREEN, // Future TLE in green
+            width: 3, // Thicker for better visibility
+            material: Color.GREEN, // Future TLE in bright green
+          }}
+        />
+      )}
+
+      {/* Show history track only when history is enabled - gray trail behind satellite */}
+      {showHistory && tleHistory && (
+        <Entity
+          name="TLE Path - Past"
+          polyline={{
+            positions: tleHistory,
+            width: 2, // Thinner than future
+            material: Color.GRAY, // Past TLE in gray
           }}
         />
       )}

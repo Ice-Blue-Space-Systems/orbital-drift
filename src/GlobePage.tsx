@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { Cartesian3, JulianDate } from "cesium";
 import { useSelector, useDispatch } from "react-redux";
 import { RootState, AppDispatch } from "./store";
@@ -20,14 +20,21 @@ import { DebugInfo } from "./types";
 import { resolveCallbackProperty } from "./utils/cesiumUtils";
 import { useRoutePerformance } from "./utils/performanceUtils";
 
-const GlobePage: React.FC = () => {
+const GlobePage: React.FC = (): React.ReactElement => {
   // Add performance monitoring
   useRoutePerformance('globe');
 
   const dispatch: AppDispatch = useDispatch();
-  const { satellites, groundStations, status } = useSelector(
-    (state: RootState) => state.mongo
-  );
+  const { 
+    satellites, 
+    groundStations, 
+    status,
+    tleHistoryDuration,
+    tleFutureDuration,
+    showTle,
+    showHistory,
+    showGroundTrack
+  } = useSelector((state: RootState) => state.mongo);
   const contactWindows = useSelector(selectContactWindows);
 
   const selectedSatId = useSelector(
@@ -42,119 +49,66 @@ const GlobePage: React.FC = () => {
   // Single source of truth for Cesium clock
   useCesiumClock(viewerRef);
 
-  // Get current Redux state
-  const cesiumMultiplier = useSelector((state: RootState) => state.cesiumClock.multiplier);
-  const cesiumClockTime = useSelector((state: RootState) => state.cesiumClock.iso);
-
-  // Sync Redux state to Cesium when Globe page loads
-  useEffect(() => {
-    const viewer = viewerRef.current?.cesiumElement;
-    if (!viewer) {
-      console.log("GlobePage: No viewer available yet for initialization");
-      return;
-    }
-
-    console.log(`GlobePage: Initializing with Redux state - Time: ${cesiumClockTime}, Multiplier: ${cesiumMultiplier}x`);
-
-    const timeout = setTimeout(() => {
-      // Set Cesium time to match Redux time (preserves Timeline → Globe continuity)
-      if (cesiumClockTime) {
-        const targetTime = new Date(cesiumClockTime);
-        const cesiumTime = JulianDate.fromDate(targetTime);
-        viewer.clock.currentTime = cesiumTime;
-        console.log(`GlobePage: Set Cesium time to ${targetTime.toISOString()}`);
-      }
-
-      // Set Cesium multiplier to match Redux multiplier
-      const currentMultiplier = viewer.clock.multiplier;
-      if (currentMultiplier !== cesiumMultiplier) {
-        viewer.clock.multiplier = cesiumMultiplier;
-        console.log(`GlobePage: Set Cesium speed from ${currentMultiplier}x to ${cesiumMultiplier}x`);
-      } else {
-        console.log(`GlobePage: Cesium speed already at ${cesiumMultiplier}x`);
-      }
-    }, 200); // Increased delay to ensure viewer is fully ready
-
-    return () => clearTimeout(timeout);
-  }, [cesiumMultiplier, cesiumClockTime]); // Removed viewerRef dependency to avoid unnecessary re-runs
-
-  // Sync Redux state to Cesium when viewer becomes available
-  useEffect(() => {
-    const viewer = viewerRef.current?.cesiumElement;
-    if (!viewer) return;
-
-    console.log(`GlobePage: Viewer became available, syncing state - Time: ${cesiumClockTime}, Multiplier: ${cesiumMultiplier}x`);
-
-    // Set Cesium time to match Redux time
-    if (cesiumClockTime) {
-      const targetTime = new Date(cesiumClockTime);
-      const cesiumTime = JulianDate.fromDate(targetTime);
-      viewer.clock.currentTime = cesiumTime;
-      console.log(`GlobePage: Set Cesium time to ${targetTime.toISOString()}`);
-    }
-
-    // Set Cesium multiplier to match Redux multiplier
-    const currentMultiplier = viewer.clock.multiplier;
-    if (currentMultiplier !== cesiumMultiplier) {
-      viewer.clock.multiplier = cesiumMultiplier;
-      console.log(`GlobePage: Set Cesium speed from ${currentMultiplier}x to ${cesiumMultiplier}x`);
-    } else {
-      console.log(`GlobePage: Cesium speed already at ${cesiumMultiplier}x`);
-    }
-  }, [viewerRef.current?.cesiumElement, cesiumClockTime, cesiumMultiplier]); // Trigger when viewer becomes available or state changes
-
-  const { satPositionProperty, groundTrackPositionProperty } =
-    useSatellitePosition(selectedSatId, satellites, viewerRef);
-
-  const groundStationPos = useGroundStationPosition(
-    selectedGroundStationId ?? null,
-    groundStations
-  );
-
-  const showHistory = useSelector(
-    (state: RootState) => state.mongo.showHistory
-  );
-  const showTle = useSelector((state: RootState) => state.mongo.showTle);
-  const showGroundTrack = useSelector(
-    (state: RootState) => state.mongo.showGroundTrack
-  );
-
-  const [debugInfo, setDebugInfo] = useState<DebugInfo>({
+  // State for debug info display
+  const [debugInfo, setDebugInfo] = useState<{
+    satellitePosition: Cartesian3 | null;
+    groundTrackPosition: Cartesian3 | null;
+    currentTime: Date | null;
+    inSight: boolean;
+    groundStationPosition: Cartesian3 | null;
+    satelliteVelocity: Cartesian3 | null;
+  }>({
     satellitePosition: null,
     groundTrackPosition: null,
-    currentTime: null,
+    currentTime: new Date(),
     inSight: false,
     groundStationPosition: null,
     satelliteVelocity: null,
   });
 
-  // Use the custom hook for updating debug info
+  // Get satellite position property
+  const { satPositionProperty, groundTrackPositionProperty } = useSatellitePosition(selectedSatId, satellites, viewerRef);
+
+  // Ground station position
+  const groundStationPos = useGroundStationPosition(selectedGroundStationId, groundStations);
+
+  // Debug info updater - Update debug info based on satellite position and current time
   useDebugInfoUpdater({
     viewerRef,
-    contactWindows,
     selectedSatId,
     selectedGroundStationId,
     satPositionProperty,
     groundTrackPositionProperty,
     groundStationPos,
+    contactWindows,
     setDebugInfo,
   });
 
-  const tleHistoryRef = useTleTrackHistory(
+  // TLE track hooks with configurable durations
+  const tleHistory = useTleTrackHistory(
     satPositionProperty,
     viewerRef,
     showTle,
-    showHistory
+    showHistory,
+    tleHistoryDuration
   );
+
+  const tleFuture = useTleTrackFuture(
+    satPositionProperty, 
+    viewerRef, 
+    showTle, 
+    tleFutureDuration
+  );
+
   const groundTrackHistoryRef = useGroundTrackHistory(
     groundTrackPositionProperty,
     viewerRef,
     showGroundTrack,
     showHistory
   );
-  const lineOfSightPositionsRef = useRef<Cartesian3[]>([]);
-
-  const tleFuture = useTleTrackFuture(satPositionProperty, viewerRef, showTle);
+  
+  // State for line of sight positions to prevent unnecessary re-renders
+  const [lineOfSightPositions, setLineOfSightPositions] = useState<Cartesian3[]>([]);
 
   const groundTrackFuture = useFutureGroundTrack(
     groundTrackPositionProperty,
@@ -203,8 +157,14 @@ const GlobePage: React.FC = () => {
     viewerRef,
     satPositionProperty,
     groundStationPos,
-    lineOfSightPositionsRef
+    setLineOfSightPositions
   );
+
+  // Memoize resolved properties to prevent unnecessary re-renders  
+  const memoizedGroundTrackFuture = useMemo(() => {
+    return resolveCallbackProperty(groundTrackFuture);
+  }, [groundTrackFuture]);
+
   return (
     <div
       style={{
@@ -220,19 +180,18 @@ const GlobePage: React.FC = () => {
       <div style={{ flex: 1, position: "relative" }}>
         <CesiumViewer
           viewerRef={viewerRef}
-          lineOfSightPositions={lineOfSightPositionsRef.current}
+          lineOfSightPositions={lineOfSightPositions}
           satPositionProperty={satPositionProperty}
           groundStationPos={groundStationPos}
           nextAosLosLabel={nextAosLosLabel}
-          tleHistory={tleHistoryRef.current}
-          tleFuture={resolveCallbackProperty(tleFuture)} // Cleaned up logic
+          tleHistory={tleHistory}
+          tleFuture={tleFuture}
           groundTrackHistory={groundTrackHistoryRef.current}
-          groundTrackFuture={resolveCallbackProperty(groundTrackFuture)} // Cleaned up logic
-          visibilityConeEntities={[]}
+          groundTrackFuture={memoizedGroundTrackFuture}
         />
       </div>
     </div>
   );
-}
+};
 
 export default GlobePage;

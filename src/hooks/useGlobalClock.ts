@@ -20,7 +20,7 @@ export function useGlobalClock() {
     baseTimeRef.current = cesiumClockTime ? new Date(cesiumClockTime) : new Date();
     startTimeRef.current = Date.now();
     
-    console.log(`useGlobalClock: Starting at ${cesiumMultiplier}x speed`);
+    // console.log(`useGlobalClock: Starting at ${cesiumMultiplier}x speed`);
     
     // Calculate interval based on multiplier (faster updates for higher speeds)
     const updateInterval = cesiumMultiplier > 10 ? 100 : 1000;

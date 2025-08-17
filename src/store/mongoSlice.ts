@@ -26,6 +26,8 @@ interface MongoState {
   showHistory: boolean; // Add showHistory to the state
   showCesiumOptions: boolean; // Add showCesiumOptions to the state
   liveMode: boolean; // Add liveMode to the state
+  tleHistoryDuration: number; // TLE history duration in seconds
+  tleFutureDuration: number; // TLE future duration in seconds
 }
 
 const initialState: MongoState = {
@@ -43,6 +45,8 @@ const initialState: MongoState = {
   showHistory: false,
   showCesiumOptions: false,
   liveMode: false, // Add liveMode to the initial state
+  tleHistoryDuration: 3600, // Default: 1 hour (3600 seconds)
+  tleFutureDuration: 10800, // Default: 3 hours (10800 seconds)
 };
 
 const mongoSlice = createSlice({
@@ -80,6 +84,15 @@ const mongoSlice = createSlice({
     setLiveMode(state, action) {
       state.liveMode = action.payload; // Reducer for liveMode toggle
     },
+    addSatellite(state, action) {
+      state.satellites.push(action.payload); // Add a new satellite to the state
+    },
+    setTleHistoryDuration(state, action) {
+      state.tleHistoryDuration = action.payload;
+    },
+    setTleFutureDuration(state, action) {
+      state.tleFutureDuration = action.payload;
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -108,5 +121,8 @@ export const {
   setShowHistory,
   setShowCesiumOptions, // Export the action
   setLiveMode, // Export the action
+  addSatellite, // Export the action
+  setTleHistoryDuration,
+  setTleFutureDuration,
 } = mongoSlice.actions;
 export default mongoSlice.reducer;

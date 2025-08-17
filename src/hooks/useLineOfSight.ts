@@ -6,10 +6,13 @@ export function useLineOfSight(
   viewerRef: any,
   satPositionProperty: any,
   groundStationPos: Cartesian3 | null,
-  lineOfSightPositionsRef: React.MutableRefObject<Cartesian3[]>
+  setLineOfSightPositions: React.Dispatch<React.SetStateAction<Cartesian3[]>>
 ) {
   useEffect(() => {
-    if (!satPositionProperty || !groundStationPos) return;
+    if (!satPositionProperty || !groundStationPos) {
+      setLineOfSightPositions([]);
+      return;
+    }
 
     // Wait for viewer to be available
     const setupLineOfSight = () => {
@@ -20,12 +23,26 @@ export function useLineOfSight(
       }
 
       const clock = viewerRef.current.cesiumElement.clock;
+      let lastUpdate = 0;
 
       const onTick = () => {
+        const now = Date.now();
+        // Throttle updates to prevent excessive re-renders
+        if (now - lastUpdate < 100) return; // Update max every 100ms
+        lastUpdate = now;
+
         const time = clock.currentTime;
         const satPos = satPositionProperty.getValue(time);
         if (satPos) {
-          lineOfSightPositionsRef.current = [groundStationPos, satPos]; // Update the ref
+          setLineOfSightPositions(prevPositions => {
+            // Only update if positions actually changed significantly
+            if (prevPositions.length === 2 && 
+                groundStationPos.equals(prevPositions[0]) &&
+                satPos.equalsEpsilon(prevPositions[1], 1.0)) { // 1 meter tolerance
+              return prevPositions; // Don't create new array if positions haven't changed much
+            }
+            return [groundStationPos, satPos];
+          });
         }
       };
 
@@ -39,5 +56,5 @@ export function useLineOfSight(
 
     const cleanup = setupLineOfSight();
     return cleanup;
-  }, [satPositionProperty, groundStationPos, viewerRef, lineOfSightPositionsRef]);
+  }, [satPositionProperty, groundStationPos, viewerRef, setLineOfSightPositions]);
 }
