@@ -20,12 +20,15 @@ import FitScreenIcon from "@mui/icons-material/FitScreen";
 import AccessTimeIcon from "@mui/icons-material/AccessTime";
 import MyLocationIcon from "@mui/icons-material/MyLocation";
 import LocationDisabledIcon from "@mui/icons-material/LocationDisabled";
+import RocketLaunchIcon from "@mui/icons-material/RocketLaunch";
+import OpenInNewIcon from "@mui/icons-material/OpenInNew";
 import ContactWindows from "./ContactWindows";
 import { useSelector } from "react-redux";
 import { selectContactWindows, selectContactWindowsStatus } from "../store/contactWindowsSlice";
 import { selectCesiumClockDate } from "../store/selectors/cesiumClockSelectors";
 import { useTheme } from "../contexts/ThemeContext";
 import { ContactWindow } from "../types";
+import { useNavigate } from "react-router-dom";
 
 // Mini Timeline Component
 interface MiniTimelineProps {
@@ -187,6 +190,7 @@ const ContactWindowsPopover: React.FC<ContactWindowsPopoverProps> = ({
   const status = useSelector(selectContactWindowsStatus);
   const cesiumClockTime = useSelector(selectCesiumClockDate);
   const { theme } = useTheme();
+  const navigate = useNavigate();
   
   // Timeline state
   const [followMode, setFollowMode] = useState(true);
@@ -466,7 +470,39 @@ const ContactWindowsPopover: React.FC<ContactWindowsPopoverProps> = ({
                     <EventIcon /> CONTACT WINDOWS
                   </Typography>
                   
-                  <Box sx={{ display: 'flex', gap: 1 }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    {/* Mission Planner Button */}
+                    <Tooltip title="Open Full Mission Planner" arrow>
+                      <IconButton
+                        size="small"
+                        onClick={() => {
+                          handleClose(); // Close the popover first
+                          navigate('/timeline');
+                        }}
+                        sx={{
+                          background: `linear-gradient(135deg, ${theme.primary}20, ${theme.primary}10)`,
+                          border: `1px solid ${theme.primary}40`,
+                          color: theme.primary,
+                          borderRadius: '8px',
+                          padding: '6px 12px',
+                          transition: 'all 0.3s ease',
+                          '&:hover': {
+                            background: `linear-gradient(135deg, ${theme.primary}30, ${theme.primary}20)`,
+                            border: `1px solid ${theme.primary}60`,
+                            transform: 'translateY(-1px)',
+                            boxShadow: `0 4px 12px ${theme.primary}20`
+                          }
+                        }}
+                      >
+                        <RocketLaunchIcon sx={{ fontSize: 16, mr: 0.5 }} />
+                        <Typography variant="caption" sx={{ fontSize: '11px', fontWeight: 'bold' }}>
+                          MISSION
+                        </Typography>
+                        <OpenInNewIcon sx={{ fontSize: 12, ml: 0.5, opacity: 0.7 }} />
+                      </IconButton>
+                    </Tooltip>
+                    
+                    {/* Status Chips */}
                     {activeWindow && (
                       <Chip 
                         label="LIVE" 
