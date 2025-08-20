@@ -11,6 +11,7 @@ import { RootState } from "../store";
 import TleEntities from "./TleEntities";
 import GroundTrackEntities from "./GroundTrackEntities";
 import NadirLines from "./NadirLines";
+import { useCesiumClock } from "../hooks/useCesiumClock";
 
 interface CesiumViewerProps {
   viewerRef: React.RefObject<any>;
@@ -54,6 +55,9 @@ const CesiumViewer: React.FC<CesiumViewerProps> = ({
   // Debug: Log when component re-renders (less frequent)
   const renderCount = useRef(0);
   renderCount.current++;
+  
+  // Use the Cesium clock synchronization hook
+  useCesiumClock(viewerRef);
   
   if (renderCount.current % 100 === 1) { // Log every 100th render to reduce spam
     console.log("🔄 CesiumViewer: Component re-rendering", {

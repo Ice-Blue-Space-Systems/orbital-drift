@@ -1,4 +1,5 @@
 import { Satellite as ApiSatellite } from "../types";
+import { isValidTleForPlotting } from "./tleUtils";
 
 // Extended interface for display purposes (combines different satellite sources)
 export interface DisplaySatellite {
@@ -20,7 +21,7 @@ export interface DisplaySatellite {
   lastUpdate: string;
   description?: string;
   // Original CelesTrak data for TLE generation (only for celestrak source)
-  celestrakData?: CelesTrakSatellite;
+  celestrakData?: CelesTrakSatellite | { line1: string; line2: string; noradId: number };
 }
 
 // CelesTrak TLE data structure
@@ -140,6 +141,38 @@ export const convertCelesTrakSatelliteToDisplay = (sat: CelesTrakSatellite & { _
     lastUpdate: sat.EPOCH,
     description: `TLE Data - Classification: ${sat.CLASSIFICATION_TYPE}`,
     celestrakData: sat, // Include original CelesTrak data for TLE generation
+  };
+};
+
+// Convert TLE-based satellite data to display format
+const convertTleSatelliteToDisplay = (sat: { name: string; line1: string; line2: string; noradId: number; _sourceGroup: string }): DisplaySatellite => {
+  // Extract orbital parameters from TLE for classification
+  const inclination = parseFloat(sat.line2.substring(8, 16));
+  const meanMotion = parseFloat(sat.line2.substring(52, 63));
+  
+  const classification = getSatelliteClassification(sat.name, sat._sourceGroup);
+  
+  return {
+    id: `celestrak-${sat.noradId}`,
+    name: sat.name,
+    source: "celestrak",
+    type: "live",
+    noradId: sat.noradId,
+    status: "Active",
+    orbitType: getOrbitType(meanMotion, inclination),
+    category: classification.category,
+    constellation: classification.constellation,
+    inclination: inclination,
+    period: 1440 / meanMotion, // Convert from mean motion to minutes
+    country: countryFromSatelliteName(sat.name),
+    lastUpdate: new Date().toISOString(), // We don't have epoch from TLE easily, use current time
+    description: `TLE Data from CelesTrak - ${sat._sourceGroup}`,
+    celestrakData: {
+      // Store the raw TLE data for direct use
+      line1: sat.line1,
+      line2: sat.line2,
+      noradId: sat.noradId
+    },
   };
 };
 
@@ -270,22 +303,22 @@ const getSatelliteClassification = (name: string, sourceGroup?: string): { categ
 // Fetch satellites from CelesTrak (comprehensive public satellite data)
 export const fetchCelesTrakSatellites = async (): Promise<DisplaySatellite[]> => {
   try {
-    // Fetch from major satellite groups on CelesTrak for comprehensive coverage
-    // Using only verified, stable group names
+    // Fetch TLE data directly in 3-line format from CelesTrak
+    // This gives us proper TLE data without conversion issues
     const urlsWithCategories = [
-      { url: "https://celestrak.org/NORAD/elements/gp.php?GROUP=stations&FORMAT=json", group: "stations" },
-      { url: "https://celestrak.org/NORAD/elements/gp.php?GROUP=starlink&FORMAT=json", group: "starlink" },
-      { url: "https://celestrak.org/NORAD/elements/gp.php?GROUP=galileo&FORMAT=json", group: "galileo" },
-      { url: "https://celestrak.org/NORAD/elements/gp.php?GROUP=gps-ops&FORMAT=json", group: "gps-ops" },
-      { url: "https://celestrak.org/NORAD/elements/gp.php?GROUP=glonass-ops&FORMAT=json", group: "glonass-ops" },
-      { url: "https://celestrak.org/NORAD/elements/gp.php?GROUP=beidou&FORMAT=json", group: "beidou" },
-      { url: "https://celestrak.org/NORAD/elements/gp.php?GROUP=iridium&FORMAT=json", group: "iridium" },
-      { url: "https://celestrak.org/NORAD/elements/gp.php?GROUP=oneweb&FORMAT=json", group: "oneweb" },
-      { url: "https://celestrak.org/NORAD/elements/gp.php?GROUP=weather&FORMAT=json", group: "weather" },
-      { url: "https://celestrak.org/NORAD/elements/gp.php?GROUP=goes&FORMAT=json", group: "goes" },
-      { url: "https://celestrak.org/NORAD/elements/gp.php?GROUP=resource&FORMAT=json", group: "resource" },
-      { url: "https://celestrak.org/NORAD/elements/gp.php?GROUP=cubesat&FORMAT=json", group: "cubesat" },
-      { url: "https://celestrak.org/NORAD/elements/gp.php?GROUP=planet&FORMAT=json", group: "planet" },
+      { url: "https://celestrak.org/NORAD/elements/gp.php?GROUP=stations&FORMAT=3le", group: "stations" },
+      { url: "https://celestrak.org/NORAD/elements/gp.php?GROUP=starlink&FORMAT=3le", group: "starlink" },
+      { url: "https://celestrak.org/NORAD/elements/gp.php?GROUP=galileo&FORMAT=3le", group: "galileo" },
+      { url: "https://celestrak.org/NORAD/elements/gp.php?GROUP=gps-ops&FORMAT=3le", group: "gps-ops" },
+      { url: "https://celestrak.org/NORAD/elements/gp.php?GROUP=glonass-ops&FORMAT=3le", group: "glonass-ops" },
+      { url: "https://celestrak.org/NORAD/elements/gp.php?GROUP=beidou&FORMAT=3le", group: "beidou" },
+      { url: "https://celestrak.org/NORAD/elements/gp.php?GROUP=iridium&FORMAT=3le", group: "iridium" },
+      { url: "https://celestrak.org/NORAD/elements/gp.php?GROUP=oneweb&FORMAT=3le", group: "oneweb" },
+      { url: "https://celestrak.org/NORAD/elements/gp.php?GROUP=weather&FORMAT=3le", group: "weather" },
+      { url: "https://celestrak.org/NORAD/elements/gp.php?GROUP=goes&FORMAT=3le", group: "goes" },
+      { url: "https://celestrak.org/NORAD/elements/gp.php?GROUP=resource&FORMAT=3le", group: "resource" },
+      { url: "https://celestrak.org/NORAD/elements/gp.php?GROUP=cubesat&FORMAT=3le", group: "cubesat" },
+      { url: "https://celestrak.org/NORAD/elements/gp.php?GROUP=planet&FORMAT=3le", group: "planet" },
     ];
     
     const promises = urlsWithCategories.map(({ url, group }) => 
@@ -294,13 +327,36 @@ export const fetchCelesTrakSatellites = async (): Promise<DisplaySatellite[]> =>
           if (!response.ok) {
             throw new Error(`HTTP ${response.status}: ${response.statusText}`);
           }
-          return response.json();
+          return response.text(); // Get as text since it's TLE format
         })
-        .then(data => {
-          if (!Array.isArray(data)) {
-            throw new Error(`Invalid response format for ${group}`);
+        .then(text => {
+          // Parse 3-line TLE format (name, line1, line2)
+          const lines = text.trim().split('\n');
+          const satellites = [];
+          
+          for (let i = 0; i < lines.length; i += 3) {
+            if (i + 2 < lines.length) {
+              const name = lines[i].trim();
+              const line1 = lines[i + 1].trim();
+              const line2 = lines[i + 2].trim();
+              
+              // Basic validation
+              if (line1.startsWith('1 ') && line2.startsWith('2 ') && name) {
+                // Extract NORAD ID from line 1
+                const noradId = parseInt(line1.substring(2, 7));
+                
+                satellites.push({
+                  name,
+                  line1,
+                  line2,
+                  noradId,
+                  _sourceGroup: group
+                });
+              }
+            }
           }
-          return data.map((sat: CelesTrakSatellite) => ({ ...sat, _sourceGroup: group }));
+          
+          return satellites;
         })
         .catch(error => {
           console.warn(`Failed to fetch from ${group} (${url}):`, error.message);
@@ -309,25 +365,38 @@ export const fetchCelesTrakSatellites = async (): Promise<DisplaySatellite[]> =>
     );
     
     const results = await Promise.all(promises);
-    const allSatellites: (CelesTrakSatellite & { _sourceGroup: string })[] = results.flat();
+    const allSatellites = results.flat();
     
-    // Filter out obviously inactive/decayed satellites and sort by name
-    // Remove the artificial sampling limit to show all available public satellites
+    // Convert to DisplaySatellite format and filter
     const activeSatellites = allSatellites
       .filter(sat => {
         // Basic filtering for clearly active satellites
-        const name = sat.OBJECT_NAME.toUpperCase();
+        const name = sat.name.toUpperCase();
         // Skip debris, rocket bodies, and clearly inactive objects
-        return !name.includes("DEB") && 
-               !name.includes("DEBRIS") && 
-               !name.includes("R/B") && 
-               !name.includes("ROCKET BODY") &&
-               sat.MEAN_MOTION > 0.5; // Filter out very slow objects (likely debris)
+        if (name.includes("DEB") || 
+            name.includes("DEBRIS") || 
+            name.includes("R/B") || 
+            name.includes("ROCKET BODY")) {
+          return false;
+        }
+        
+        // Validate TLE data to ensure the satellite can be plotted
+        try {
+          if (!isValidTleForPlotting(sat.line1, sat.line2)) {
+            console.log(`Filtering out satellite ${sat.name} due to invalid/old TLE data`);
+            return false;
+          }
+          return true;
+        } catch (error) {
+          console.warn(`Error validating TLE for ${sat.name}:`, error);
+          return false;
+        }
       })
-      .sort((a, b) => a.OBJECT_NAME.localeCompare(b.OBJECT_NAME));
+      .sort((a, b) => a.name.localeCompare(b.name))
+      .map(sat => convertTleSatelliteToDisplay(sat)); // Use new converter
     
     console.log(`Fetched ${activeSatellites.length} active satellites from CelesTrak`);
-    return activeSatellites.map(convertCelesTrakSatelliteToDisplay);
+    return activeSatellites;
   } catch (error) {
     console.error("Error fetching CelesTrak satellites:", error);
     return [];

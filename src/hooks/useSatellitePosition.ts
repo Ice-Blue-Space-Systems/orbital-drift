@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo, useRef } from "react";
-import { SampledPositionProperty } from "cesium";
+import { SampledPositionProperty, CallbackProperty } from "cesium";
 import { useDispatch } from "react-redux";
 import { loadTleAndPosition } from "../utils/tleUtils";
 import { AppDispatch } from "../store";
@@ -9,14 +9,14 @@ export function useSatellitePosition(
   satellites: any[],
   viewerRef: React.MutableRefObject<any>
 ): {
-  satPositionProperty: SampledPositionProperty | null;
-  groundTrackPositionProperty: SampledPositionProperty | null;
+  satPositionProperty: SampledPositionProperty | CallbackProperty | null;
+  groundTrackPositionProperty: SampledPositionProperty | CallbackProperty | null;
 } {
   const dispatch: AppDispatch = useDispatch();
   const [satPositionProperty, setSatPositionProperty] =
-    useState<SampledPositionProperty | null>(null);
+    useState<SampledPositionProperty | CallbackProperty | null>(null);
   const [groundTrackPositionProperty, setGroundTrackPositionProperty] =
-    useState<SampledPositionProperty | null>(null);
+    useState<SampledPositionProperty | CallbackProperty | null>(null);
 
   // Track the last processed satellite to prevent unnecessary re-processing
   const lastProcessedSatIdRef = useRef<string | null>(null);
