@@ -61,7 +61,7 @@ const GlobeTools: React.FC<GlobeToolsProps> = ({
 
       return () => clearTimeout(timeoutId);
     }
-  }, [selectedSatelliteId, selectedGroundStationId, dispatch]); // Removed contactWindowsStatus from deps
+  }, [selectedSatelliteId, selectedGroundStationId, dispatch, contactWindowsStatus]);
 
   // Remove the duplicate fetch effect to prevent double API calls
 
@@ -127,22 +127,6 @@ const GlobeTools: React.FC<GlobeToolsProps> = ({
       y: e.clientY - position.y,
     });
     e.preventDefault();
-  };
-
-  const handleMouseMove = (e: MouseEvent) => {
-    if (isDragging) {
-      const newX = e.clientX - dragStart.x;
-      const newY = e.clientY - dragStart.y;
-      
-      // Constrain to viewport bounds
-      const maxX = window.innerWidth - (globeToolsRef.current?.offsetWidth || 200);
-      const maxY = window.innerHeight - (globeToolsRef.current?.offsetHeight || 100);
-      
-      setPosition({
-        x: Math.max(0, Math.min(newX, maxX)),
-        y: Math.max(0, Math.min(newY, maxY)),
-      });
-    }
   };
 
   const handleMouseUp = () => {

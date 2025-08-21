@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { 
   IconButton, 
   Popover, 
@@ -96,7 +96,6 @@ const MiniTimeline: React.FC<MiniTimelineProps> = ({
           
           const isActive = aosTime <= currentTime && currentTime <= losTime;
           const isPast = losTime < currentTime;
-          const isFuture = aosTime > currentTime;
           
           return (
             <Tooltip 
@@ -196,7 +195,6 @@ const ContactWindowsPopover: React.FC<ContactWindowsPopoverProps> = ({
   const [followMode, setFollowMode] = useState(true);
   const [timelineZoom, setTimelineZoom] = useState(1);
   const [timelineCenter, setTimelineCenter] = useState(new Date());
-  const timelineRef = useRef<HTMLDivElement>(null);
   
   const open = Boolean(anchorEl);
   
@@ -212,8 +210,11 @@ const ContactWindowsPopover: React.FC<ContactWindowsPopoverProps> = ({
     );
   }, [contactWindows, satelliteId, groundStationId]);
   
-  // Timeline calculations
-  const currentSimTime = cesiumClockTime || currentTime || new Date();
+  // Timeline calculations - wrapped in useMemo to prevent dependency issues
+  const currentSimTime = useMemo(() => 
+    cesiumClockTime || currentTime || new Date(), 
+    [cesiumClockTime, currentTime]
+  );
   
   // Update timeline center when following mode is on
   useEffect(() => {

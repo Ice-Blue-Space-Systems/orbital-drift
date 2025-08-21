@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useMemo } from "react";
-import { Cartesian3, JulianDate } from "cesium";
+import { Cartesian3 } from "cesium";
 import { useSelector, useDispatch } from "react-redux";
 import { RootState, AppDispatch } from "./store";
 import { fetchMongoData } from "./store/mongoSlice";
@@ -16,7 +16,6 @@ import { useGroundStationPosition } from "./hooks/useGroundStationPosition";
 import { useDebugInfoUpdater } from "./hooks/useDebugInfoUpdater";
 import { useCesiumClock } from "./hooks/useCesiumClock";
 import { useNextContactWindow } from "./hooks/useNextContactWindow";
-import { DebugInfo } from "./types";
 import { resolveCallbackProperty } from "./utils/cesiumUtils";
 import { useRoutePerformance } from "./utils/performanceUtils";
 

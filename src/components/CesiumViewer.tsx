@@ -1,4 +1,4 @@
-import React, { JSX, useMemo, useRef, useEffect } from "react";
+import React, { useMemo, useRef } from "react";
 import { Viewer, Entity, Clock } from "resium";
 import {
   Cartesian3,

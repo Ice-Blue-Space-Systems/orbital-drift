@@ -86,7 +86,7 @@ export function useCesiumClock(viewerRef: React.MutableRefObject<any>) {
         currentViewer.clock.onTick.removeEventListener(listenerRef.current);
       }
     };
-  }, [dispatch]);
+  }, [dispatch, viewerRef]);
 
   // Sync Redux multiplier changes to Cesium clock
   useEffect(() => {
@@ -99,7 +99,7 @@ export function useCesiumClock(viewerRef: React.MutableRefObject<any>) {
       viewer.clock.multiplier = reduxMultiplier;
       lastSyncedMultiplier.current = reduxMultiplier;
     }
-  }, [reduxMultiplier]);
+  }, [reduxMultiplier, viewerRef]);
 
   return { isActive: isActiveRef.current };
 }

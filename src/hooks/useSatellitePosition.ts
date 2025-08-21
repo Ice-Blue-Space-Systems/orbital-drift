@@ -96,7 +96,7 @@ export function useSatellitePosition(
     if (selectedSatId && selectedSatellite) {
       fetchPositions();
     }
-  }, [selectedSatId, selectedSatellite, dispatch]); // Include selectedSatellite to satisfy eslint
+  }, [selectedSatId, selectedSatellite, dispatch, viewerRef]); // Include selectedSatellite and viewerRef to satisfy eslint
 
   return { satPositionProperty, groundTrackPositionProperty };
 }
