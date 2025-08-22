@@ -22,9 +22,9 @@ import {
   Paper,
 } from "@mui/material";
 import { useDispatch, useSelector } from "react-redux";
-import axios from "axios";
 import {
   fetchContactWindows,
+  refreshContactWindows,
   selectContactWindows,
   selectContactWindowsStatus,
   selectContactWindowsError,
@@ -111,20 +111,27 @@ const ContactWindows: React.FC<ContactWindowsProps> = ({
     ? filteredWindows.reduce((sum: number, window: any) => sum + window.maxElevationDeg, 0) / filteredWindows.length 
     : 0;
 
-  const refreshContactWindows = async () => {
+  const handleRefreshContactWindows = async () => {
+    if (!satelliteId || !groundStationId) {
+      toast.error("Please select both a satellite and ground station.", {
+        position: "top-right",
+        autoClose: 3000,
+      });
+      return;
+    }
+
     try {
       setRefreshing(true);
-      await axios.post("/api/contact-windows/refresh");
+      console.log(`[ContactWindows] Triggering refresh for satellite ${satelliteId} and ground station ${groundStationId}`);
+      
+      await dispatch(refreshContactWindows({ satelliteId, groundStationId })).unwrap();
+      
       toast.success("Contact windows refreshed successfully!", {
         position: "top-right",
         autoClose: 3000,
       });
-      // Re-fetch contact windows after refresh
-      if (satelliteId && groundStationId) {
-        dispatch(fetchContactWindows({ satelliteId, groundStationId }));
-      }
     } catch (err) {
-      console.error(err);
+      console.error("[ContactWindows] Failed to refresh contact windows:", err);
       toast.error("Failed to refresh contact windows.", {
         position: "top-right",
         autoClose: 3000,
@@ -338,7 +345,7 @@ const ContactWindows: React.FC<ContactWindowsProps> = ({
         <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
           <Tooltip title="Refresh Contact Windows">
             <IconButton
-              onClick={refreshContactWindows}
+              onClick={handleRefreshContactWindows}
               disabled={refreshing}
               sx={{
                 color: '#00ff41',

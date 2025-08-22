@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { 
   IconButton, 
   Popover, 
@@ -30,7 +30,7 @@ import { useTheme } from "../contexts/ThemeContext";
 import { ContactWindow } from "../types";
 import { useNavigate } from "react-router-dom";
 
-// Mini Timeline Component
+// Mini Timeline Component - Memoized to prevent unnecessary re-renders
 interface MiniTimelineProps {
   contactWindows: any[];
   currentTime: Date;
@@ -39,7 +39,7 @@ interface MiniTimelineProps {
   theme: any;
 }
 
-const MiniTimeline: React.FC<MiniTimelineProps> = ({ 
+const MiniTimeline: React.FC<MiniTimelineProps> = React.memo(({ 
   contactWindows, 
   currentTime, 
   centerTime, 
@@ -48,15 +48,77 @@ const MiniTimeline: React.FC<MiniTimelineProps> = ({
 }) => {
   const timelineWidth = 700; // Available width in popover
   const timeSpan = (24 * 60 * 60 * 1000) / zoom; // 24 hours base, adjusted by zoom
-  const startTime = new Date(centerTime.getTime() - timeSpan / 2);
-  const endTime = new Date(centerTime.getTime() + timeSpan / 2);
   
-  const timeToPosition = (time: Date) => {
-    const progress = (time.getTime() - startTime.getTime()) / timeSpan;
+  // Memoize startTime and endTime to prevent recreation on every render
+  const startTime = useMemo(() => new Date(centerTime.getTime() - timeSpan / 2), [centerTime, timeSpan]);
+  const endTime = useMemo(() => new Date(centerTime.getTime() + timeSpan / 2), [centerTime, timeSpan]);
+  
+  // Extract startTime value for dependency array
+  const startTimeValue = startTime.getTime();
+  
+  const timeToPosition = useCallback((time: Date) => {
+    const progress = (time.getTime() - startTimeValue) / timeSpan;
     return Math.max(0, Math.min(timelineWidth, progress * timelineWidth));
-  };
+  }, [startTimeValue, timeSpan, timelineWidth]);
   
-  const currentTimePosition = timeToPosition(currentTime);
+  // Throttle current time position updates to every 5 seconds for smoother UX
+  // Extract current time value for dependency array
+  const currentTimeThrottled = Math.floor(currentTime.getTime() / 5000) * 5000;
+  const currentTimePosition = useMemo(() => {
+    return timeToPosition(new Date(currentTimeThrottled));
+  }, [currentTimeThrottled, timeToPosition]);
+  
+  // Memoize contact window elements to prevent recreation on every render
+  const contactWindowElements = useMemo(() => {
+    return contactWindows.map((window: any, index: number) => {
+      const aosTime = new Date(window.scheduledAOS);
+      const losTime = new Date(window.scheduledLOS);
+      
+      // Only render if window overlaps with visible timeline
+      if (losTime < startTime || aosTime > endTime) return null;
+      
+      const startPos = timeToPosition(aosTime);
+      const endPos = timeToPosition(losTime);
+      const width = Math.max(2, endPos - startPos);
+      
+      const isActive = aosTime <= currentTime && currentTime <= losTime;
+      const isPast = losTime < currentTime;
+      
+      return (
+        <Tooltip 
+          key={index}
+          title={`${aosTime.toLocaleTimeString()} - ${losTime.toLocaleTimeString()}`}
+          arrow
+        >
+          <Box
+            sx={{
+              position: 'absolute',
+              left: `${startPos}px`,
+              width: `${width}px`,
+              height: '40px',
+              top: '10px',
+              backgroundColor: isActive 
+                ? theme.primary 
+                : isPast 
+                  ? 'rgba(128, 128, 128, 0.6)' 
+                  : theme.accent,
+              border: `1px solid ${isActive ? theme.primary : isPast ? '#666' : theme.accent}`,
+              borderRadius: '4px',
+              cursor: 'pointer',
+              opacity: isPast ? 0.5 : 1,
+              animation: isActive ? 'pulse 2s infinite' : 'none',
+              '&:hover': {
+                opacity: 1,
+                transform: 'scaleY(1.2)',
+                zIndex: 10,
+              },
+              transition: 'all 0.2s ease',
+            }}
+          />
+        </Tooltip>
+      );
+    });
+  }, [contactWindows, startTime, endTime, currentTime, timeToPosition, theme]);
   
   return (
     <Box sx={{ position: 'relative', height: '80px', backgroundColor: 'rgba(0, 0, 0, 0.3)', borderRadius: '8px', overflow: 'hidden' }}>
@@ -83,54 +145,7 @@ const MiniTimeline: React.FC<MiniTimelineProps> = ({
       {/* Timeline Track */}
       <Box sx={{ position: 'absolute', top: '20px', left: 0, right: 0, bottom: 0 }}>
         {/* Contact Windows */}
-        {contactWindows.map((window: any, index: number) => {
-          const aosTime = new Date(window.scheduledAOS);
-          const losTime = new Date(window.scheduledLOS);
-          
-          // Only render if window overlaps with visible timeline
-          if (losTime < startTime || aosTime > endTime) return null;
-          
-          const startPos = timeToPosition(aosTime);
-          const endPos = timeToPosition(losTime);
-          const width = Math.max(2, endPos - startPos);
-          
-          const isActive = aosTime <= currentTime && currentTime <= losTime;
-          const isPast = losTime < currentTime;
-          
-          return (
-            <Tooltip 
-              key={index}
-              title={`${aosTime.toLocaleTimeString()} - ${losTime.toLocaleTimeString()}`}
-              arrow
-            >
-              <Box
-                sx={{
-                  position: 'absolute',
-                  left: `${startPos}px`,
-                  width: `${width}px`,
-                  height: '40px',
-                  top: '10px',
-                  backgroundColor: isActive 
-                    ? theme.primary 
-                    : isPast 
-                      ? 'rgba(128, 128, 128, 0.6)' 
-                      : theme.accent,
-                  border: `1px solid ${isActive ? theme.primary : isPast ? '#666' : theme.accent}`,
-                  borderRadius: '4px',
-                  cursor: 'pointer',
-                  opacity: isPast ? 0.5 : 1,
-                  animation: isActive ? 'pulse 2s infinite' : 'none',
-                  '&:hover': {
-                    opacity: 1,
-                    transform: 'scaleY(1.2)',
-                    zIndex: 10,
-                  },
-                  transition: 'all 0.2s ease',
-                }}
-              />
-            </Tooltip>
-          );
-        })}
+        {contactWindowElements}
         
         {/* Current Time Indicator */}
         <Box
@@ -157,7 +172,28 @@ const MiniTimeline: React.FC<MiniTimelineProps> = ({
       </Box>
     </Box>
   );
-};
+});
+
+// Time display component that updates every second instead of every render
+const TimeDisplay: React.FC<{ time: Date }> = React.memo(({ time }) => {
+  const [displayTime, setDisplayTime] = useState(time.toLocaleTimeString());
+  
+  // Extract time string for dependency array to avoid complex expressions
+  const timeString = time.toDateString();
+  
+  useEffect(() => {
+    // Update immediately when time prop changes
+    setDisplayTime(time.toLocaleTimeString());
+    
+    const interval = setInterval(() => {
+      setDisplayTime(time.toLocaleTimeString());
+    }, 1000);
+    
+    return () => clearInterval(interval);
+  }, [time, timeString]); // Include time as dependency
+  
+  return <>{displayTime}</>;
+});
 
 interface ContactWindowsPopoverProps {
   nextContactWindow?: ContactWindow | null;
@@ -172,7 +208,7 @@ interface ContactWindowsPopoverProps {
   showPlaceholder?: boolean;
 }
 
-const ContactWindowsPopover: React.FC<ContactWindowsPopoverProps> = ({
+const ContactWindowsPopover: React.FC<ContactWindowsPopoverProps> = React.memo(({
   nextContactWindow,
   selectedSatelliteName,
   selectedGroundStationName,
@@ -202,61 +238,124 @@ const ContactWindowsPopover: React.FC<ContactWindowsPopoverProps> = ({
   const displaySatelliteName = selectedSatelliteName || satelliteName;
   const displayGroundStationName = selectedGroundStationName || groundStationName;
   
-  // Filter contact windows for selected satellite/ground station pair
+  // Filter contact windows for selected satellite/ground station pair - memoized
   const filteredContactWindows = useMemo(() => {
     if (!satelliteId || !groundStationId) return [];
-    return contactWindows.filter((window: any) => 
-      window.satelliteId === satelliteId && window.groundStationId === groundStationId
-    );
+    
+    console.log('ContactWindowsPopover: Filtering', {
+      total: contactWindows.length,
+      satelliteId,
+      groundStationId
+    });
+    
+    // Handle api- prefix for ID matching
+    const propSatId = satelliteId.replace('api-', '');
+    const propGsId = groundStationId.replace('api-', '');
+    
+    const filtered = contactWindows.filter((window: any) => {
+      const windowSatId = window.satelliteId;
+      const windowGsId = window.groundStationId;
+      
+      const satMatch = windowSatId === propSatId || windowSatId === satelliteId;
+      const gsMatch = windowGsId === propGsId || windowGsId === groundStationId;
+      
+      return satMatch && gsMatch;
+    });
+    
+    console.log('ContactWindowsPopover: Filtered result', {
+      filtered: filtered.length
+    });
+    
+    return filtered;
   }, [contactWindows, satelliteId, groundStationId]);
   
-  // Timeline calculations - wrapped in useMemo to prevent dependency issues
-  const currentSimTime = useMemo(() => 
-    cesiumClockTime || currentTime || new Date(), 
-    [cesiumClockTime, currentTime]
-  );
+  // Current simulation time - memoized and only updates every 5 seconds to reduce re-renders
+  // Extract cesiumClockTime value for dependency array
+  const cesiumClockTimeValue = cesiumClockTime?.getTime() || Date.now();
+  const currentTimeThrottled = Math.floor(cesiumClockTimeValue / 5000) * 5000;
   
-  // Update timeline center when following mode is on
+  const currentSimTime = useMemo(() => {
+    const time = cesiumClockTime || currentTime || new Date();
+    // Round to nearest 5 seconds to reduce excessive updates
+    const rounded = new Date(Math.floor(time.getTime() / 5000) * 5000);
+    return rounded;
+  }, [currentTimeThrottled, currentTime, cesiumClockTime]);
+  
+  // Expensive calculations - memoized to prevent recalculation on every render
+  const windowStats = useMemo(() => {
+    const upcomingWindows = filteredContactWindows.filter((window: any) => {
+      return new Date(window.scheduledAOS) > currentSimTime;
+    }).length;
+    
+    const activeWindow = filteredContactWindows.find((window: any) => {
+      return new Date(window.scheduledAOS) <= currentSimTime && new Date(window.scheduledLOS) >= currentSimTime;
+    });
+    
+    const todayWindows = filteredContactWindows.filter((w: any) => {
+      const windowDate = new Date(w.scheduledAOS).toDateString();
+      const today = currentSimTime.toDateString();
+      return windowDate === today;
+    }).length;
+    
+    const pastWindows = filteredContactWindows.filter((window: any) => {
+      return new Date(window.scheduledLOS) < currentSimTime;
+    }).length;
+    
+    // Get date range of available windows
+    let dateRange = null;
+    if (filteredContactWindows.length > 0) {
+      const dates = filteredContactWindows.map((w: any) => new Date(w.scheduledAOS));
+      const earliest = new Date(Math.min(...dates.map((d: Date) => d.getTime())));
+      const latest = new Date(Math.max(...dates.map((d: Date) => d.getTime())));
+      dateRange = { earliest, latest };
+    }
+    
+    return { upcomingWindows, activeWindow, todayWindows, pastWindows, dateRange };
+  }, [filteredContactWindows, currentSimTime]);
+  
+  const { upcomingWindows, activeWindow, todayWindows, pastWindows, dateRange } = windowStats;
+  
+  // Update timeline center when following mode is on - use throttled time
   useEffect(() => {
     if (followMode) {
       setTimelineCenter(currentSimTime);
     }
   }, [currentSimTime, followMode]);
   
-  // Timeline control functions
-  const handleJumpToNow = () => {
+  // Timeline control functions - memoized to prevent recreation on every render
+  const handleJumpToNow = useCallback(() => {
     setTimelineCenter(currentSimTime);
     setFollowMode(true);
-  };
+  }, [currentSimTime]);
   
-  const handleJumpToStart = () => {
+  const handleJumpToStart = useCallback(() => {
     if (filteredContactWindows.length > 0) {
       const earliest = new Date(Math.min(...filteredContactWindows.map((w: any) => new Date(w.scheduledAOS).getTime())));
       setTimelineCenter(earliest);
       setFollowMode(false);
     }
-  };
+  }, [filteredContactWindows]);
   
-  const handleJumpToNext = () => {
-    const upcomingWindows = filteredContactWindows
+  const handleJumpToNext = useCallback(() => {
+    const upcomingContactWindows = filteredContactWindows
       .filter((w: any) => new Date(w.scheduledAOS) > currentSimTime)
       .sort((a: any, b: any) => new Date(a.scheduledAOS).getTime() - new Date(b.scheduledAOS).getTime());
     
-    if (upcomingWindows.length > 0) {
-      setTimelineCenter(new Date(upcomingWindows[0].scheduledAOS));
+    if (upcomingContactWindows.length > 0) {
+      setTimelineCenter(new Date(upcomingContactWindows[0].scheduledAOS));
       setFollowMode(false);
     }
-  };
+  }, [filteredContactWindows, currentSimTime]);
   
-  const handleZoomIn = () => {
+  const handleZoomIn = useCallback(() => {
     setTimelineZoom(prev => Math.min(prev * 1.5, 10));
-  };
+  }, []);
   
-  const handleZoomOut = () => {
+  const handleZoomOut = useCallback(() => {
     setTimelineZoom(prev => Math.max(prev / 1.5, 0.1));
-  };
+  }, []);
   
-  const handleFitAll = () => {
+  const handleFitAll = useCallback(() => {
     if (filteredContactWindows.length > 0) {
       const times = filteredContactWindows.flatMap((w: any) => [
         new Date(w.scheduledAOS).getTime(),
@@ -271,20 +370,15 @@ const ContactWindowsPopover: React.FC<ContactWindowsPopoverProps> = ({
       setTimelineZoom(Math.min(24 * 60 * 60 * 1000 / timeSpan, 10)); // Fit to roughly 24 hours max zoom
       setFollowMode(false);
     }
-  };
+  }, [filteredContactWindows]);
   
-  const handleToggleFollow = () => {
+  const handleToggleFollow = useCallback(() => {
     setFollowMode(prev => !prev);
-  };
+  }, []);
   
-  // Calculate stats
-  const upcomingWindows = filteredContactWindows.filter((window: any) => {
-    return new Date(window.scheduledAOS) > currentSimTime;
-  }).length;
-  
-  const activeWindow = filteredContactWindows.find((window: any) => {
-    return new Date(window.scheduledAOS) <= currentSimTime && new Date(window.scheduledLOS) >= currentSimTime;
-  });
+  // Calculate stats - now using memoized values
+  // const upcomingWindows = ... (removed, now in windowStats)
+  // const activeWindow = ... (removed, now in windowStats)
 
   const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
     setAnchorEl(event.currentTarget);
@@ -294,26 +388,45 @@ const ContactWindowsPopover: React.FC<ContactWindowsPopoverProps> = ({
     setAnchorEl(null);
   };
 
-  const getStatusColor = () => {
+  // Memoize ContactWindows component to prevent unnecessary re-renders and API calls
+  const memoizedContactWindows = useMemo(() => {
+    if (satelliteId && groundStationId) {
+      return (
+        <ContactWindows 
+          satelliteId={satelliteId} 
+          groundStationId={groundStationId}
+          compact={true}
+        />
+      );
+    }
+    return (
+      <Typography variant="body2" sx={{ p: 2, color: theme.textSecondary }}>
+        Select a satellite and ground station to view contact windows
+      </Typography>
+    );
+  }, [satelliteId, groundStationId, theme.textSecondary]);
+
+  // Memoize status functions to prevent recreation on every render
+  const getStatusColor = useCallback(() => {
     if (showPlaceholder) return "#666"; // Placeholder state - gray
     if (activeWindow) return theme.primary; // Active contact - theme primary
     if (upcomingWindows > 0) return theme.accent; // Upcoming contacts - theme accent
     return "#666"; // No contacts - gray
-  };
+  }, [showPlaceholder, activeWindow, upcomingWindows, theme.primary, theme.accent]);
 
-  const getStatusIcon = () => {
+  const getStatusIcon = useCallback(() => {
     if (activeWindow && !showPlaceholder) return <SignalCellularAltIcon sx={{ color: theme.primary }} />;
     return <EventIcon />;
-  };
+  }, [activeWindow, showPlaceholder, theme.primary]);
 
-  const getTooltipText = () => {
+  const getTooltipText = useCallback(() => {
     if (showPlaceholder) {
       return "Select a satellite and ground station to view contact windows";
     }
     if (activeWindow) return "Contact Window Active";
     if (upcomingWindows > 0) return `${upcomingWindows} Upcoming Contact${upcomingWindows !== 1 ? 's' : ''}`;
     return "No Upcoming Contacts";
-  };
+  }, [showPlaceholder, activeWindow, upcomingWindows]);
 
   return (
     <>
@@ -562,11 +675,7 @@ const ContactWindowsPopover: React.FC<ContactWindowsPopoverProps> = ({
                         TOTAL TODAY
                       </Typography>
                       <Typography variant="h6" sx={{ color: theme.primary, fontFamily: 'inherit', lineHeight: 1 }}>
-                        {filteredContactWindows.filter((w: any) => {
-                          const windowDate = new Date(w.scheduledAOS).toDateString();
-                          const today = currentSimTime.toDateString();
-                          return windowDate === today;
-                        }).length}
+                        {todayWindows}
                       </Typography>
                     </Box>
                     <Divider orientation="vertical" flexItem sx={{ borderColor: theme.textSecondary }} />
@@ -586,7 +695,7 @@ const ContactWindowsPopover: React.FC<ContactWindowsPopoverProps> = ({
                   </Box>
                   
                   <Typography variant="caption" sx={{ color: theme.textSecondary, fontFamily: 'inherit' }}>
-                    {currentSimTime.toLocaleTimeString()}
+                    <TimeDisplay time={currentSimTime} />
                   </Typography>
                 </Box>
               </Box>
@@ -602,7 +711,7 @@ const ContactWindowsPopover: React.FC<ContactWindowsPopoverProps> = ({
                     TIMELINE CONTROLS
                   </Typography>
                   <Typography variant="caption" sx={{ color: theme.textSecondary, fontFamily: 'inherit' }}>
-                    {currentSimTime.toLocaleTimeString()} UTC
+                    <TimeDisplay time={currentSimTime} /> UTC
                   </Typography>
                 </Box>
                 
@@ -744,17 +853,7 @@ const ContactWindowsPopover: React.FC<ContactWindowsPopoverProps> = ({
 
               {/* Contact Windows Content */}
               <Box sx={{ maxHeight: '400px', overflow: 'hidden' }}>
-                {satelliteId && groundStationId ? (
-                  <ContactWindows 
-                    satelliteId={satelliteId} 
-                    groundStationId={groundStationId}
-                    compact={true}
-                  />
-                ) : (
-                  <Typography variant="body2" sx={{ p: 2, color: theme.textSecondary }}>
-                    Select a satellite and ground station to view contact windows
-                  </Typography>
-                )}
+                {memoizedContactWindows}
               </Box>
             </>
           )}
@@ -762,6 +861,6 @@ const ContactWindowsPopover: React.FC<ContactWindowsPopoverProps> = ({
       </Popover>
     </>
   );
-};
+});
 
 export default ContactWindowsPopover;

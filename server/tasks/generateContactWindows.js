@@ -11,6 +11,9 @@ const GroundStation = require("../models/GroundStation");
  * @returns An array of contact windows.
  */
 async function generateContactWindows(satellite, groundStation, timeRangeMinutes = 1440) {
+  console.log(`[generateContactWindows] === FUNCTION CALLED ===`);
+  console.log(`[generateContactWindows] Satellite: ${satellite.name}, Ground Station: ${groundStation.name}`);
+  
   // Check if TLE data exists
   if (!satellite.currentTleId || !satellite.currentTleId.line1 || !satellite.currentTleId.line2) {
     console.warn(`Satellite ${satellite.name} does not have TLE data. Skipping contact window generation.`);
@@ -22,9 +25,30 @@ async function generateContactWindows(satellite, groundStation, timeRangeMinutes
   const { lat, lon, alt } = groundStation.location; // alt stored in kilometers
 
   const satrec = twoline2satrec(line1, line2);
+  
+  // Use UTC time to ensure consistency with frontend
   const now = new Date();
   const endTime = new Date(now.getTime() + timeRangeMinutes * 60 * 1000);
   const stepSeconds = 10;
+
+  // Add robust logging
+  console.log(`[generateContactWindows] Starting window generation for ${satellite.name} at ${groundStation.name}`);
+  console.log(`[generateContactWindows] Server local time: ${now.toLocaleString()}`);
+  console.log(`[generateContactWindows] Server UTC time: ${now.toISOString()}`);
+  console.log(`[generateContactWindows] End time (local): ${endTime.toLocaleString()}`);
+  console.log(`[generateContactWindows] End time (UTC): ${endTime.toISOString()}`);
+  console.log(`[generateContactWindows] Time range: ${timeRangeMinutes} minutes`);
+  console.log(`[generateContactWindows] TLE epoch: ${satellite.currentTleId.epoch || 'unknown'}`);
+  
+  // Check TLE age and warn if it's too old
+  if (satellite.currentTleId.epoch) {
+    const tleEpoch = new Date(satellite.currentTleId.epoch);
+    const ageInDays = (now - tleEpoch) / (1000 * 60 * 60 * 24);
+    console.log(`[generateContactWindows] TLE age: ${ageInDays.toFixed(1)} days`);
+    if (ageInDays > 30) {
+      console.warn(`[generateContactWindows] WARNING: TLE for ${satellite.name} is ${ageInDays.toFixed(1)} days old. Contact windows may be inaccurate.`);
+    }
+  }
 
   const contactWindows = [];
   let isInContact = false;
@@ -58,6 +82,7 @@ async function generateContactWindows(satellite, groundStation, timeRangeMinutes
         const durationSeconds = (los.getTime() - aos.getTime()) / 1000;
 
         if (maxElevationDeg >= 10) {
+          console.log(`[generateContactWindows] Found contact window: AOS=${aos.toISOString()}, LOS=${los.toISOString()}, MaxEl=${maxElevationDeg.toFixed(1)}°, Duration=${durationSeconds}s`);
           contactWindows.push({
             satelliteId: satellite._id,
             groundStationId: groundStation._id,
@@ -70,6 +95,11 @@ async function generateContactWindows(satellite, groundStation, timeRangeMinutes
       }
     }
   }
+
+  console.log(`[generateContactWindows] Generated ${contactWindows.length} contact windows for ${satellite.name} at ${groundStation.name}`);
+  contactWindows.forEach((window, index) => {
+    console.log(`[generateContactWindows] Window ${index + 1}: ${window.aos.toISOString()} - ${window.los.toISOString()}`);
+  });
 
   return contactWindows;
 }

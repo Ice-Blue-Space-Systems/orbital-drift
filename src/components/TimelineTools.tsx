@@ -141,7 +141,7 @@ const TimelineTools: React.FC<TimelineToolsProps> = ({
             selectedSatellite,
             selectedGroundStation,
             nextContactWindow,
-            debugInfo?.currentTime
+            undefined // Don't pass currentTime to prevent constant re-renders
           )}
         />
 

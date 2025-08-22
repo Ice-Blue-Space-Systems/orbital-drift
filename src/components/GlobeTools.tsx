@@ -48,24 +48,33 @@ const GlobeTools: React.FC<GlobeToolsProps> = ({
 
   // React to changes in selectedSatelliteId - debounced to prevent excessive API calls
   useEffect(() => {
-    if (selectedSatelliteId && contactWindowsStatus !== "loading") {
+    if (selectedSatelliteId && selectedGroundStationId) {
       const timeoutId = setTimeout(() => {
-        console.log(`Selected Satellite ID: ${selectedSatelliteId}`);
-        dispatch(
-          fetchContactWindows({
-            satelliteId: selectedSatelliteId,
-            groundStationId: selectedGroundStationId || "",
-          })
+        // Only fetch if we don't already have contact windows for this pair
+        const hasData = contactWindows.some((win: ContactWindow) => 
+          win.satelliteId === selectedSatelliteId.replace('api-', '') && 
+          win.groundStationId === selectedGroundStationId.replace('api-', '')
         );
-      }, 200); // 200ms debounce
+        
+        // Only fetch if we don't have data and not currently loading
+        if (!hasData && contactWindowsStatus !== "loading") {
+          console.log(`GlobeTools: Fetching contact windows for satellite ${selectedSatelliteId} and ground station ${selectedGroundStationId}`);
+          dispatch(
+            fetchContactWindows({
+              satelliteId: selectedSatelliteId,
+              groundStationId: selectedGroundStationId,
+            })
+          );
+        }
+      }, 500); // Increased debounce to 500ms
 
       return () => clearTimeout(timeoutId);
     }
-  }, [selectedSatelliteId, selectedGroundStationId, dispatch, contactWindowsStatus]);
+  }, [selectedSatelliteId, selectedGroundStationId, dispatch, contactWindows, contactWindowsStatus]); // Added contactWindows as dependency
 
   // Remove the duplicate fetch effect to prevent double API calls
 
-  // Calculate the next contact window
+  // Calculate the next contact window - throttled to prevent constant re-renders
   const nextContactWindow: ContactWindow | null = useMemo(() => {
     if (
       !selectedSatelliteId ||
@@ -75,6 +84,9 @@ const GlobeTools: React.FC<GlobeToolsProps> = ({
       return null;
 
     const cesiumCurrentTime = debugInfo.currentTime;
+    
+    // Throttle updates to every 5 seconds to reduce constant re-calculations
+    const throttledTime = Math.floor(cesiumCurrentTime.getTime() / 5000) * 5000;
 
     // Extract real MongoDB ObjectIds from synthetic IDs
     let realSatId = selectedSatelliteId;
@@ -110,7 +122,7 @@ const GlobeTools: React.FC<GlobeToolsProps> = ({
     contactWindows,
     selectedSatelliteId,
     selectedGroundStationId,
-    debugInfo.currentTime,
+    Math.floor((debugInfo.currentTime?.getTime() || 0) / 5000), // Throttle to every 5 seconds
   ]);
 
   // Drag functionality
@@ -217,7 +229,7 @@ const GlobeTools: React.FC<GlobeToolsProps> = ({
             selectedSatellite,
             selectedGroundStation,
             nextContactWindow,
-            debugInfo.currentTime
+            undefined // Don't pass currentTime to prevent constant re-renders
           )}
         />
         <ConsolePopover debugInfo={debugInfo} nextContactWindow={nextContactWindow} />

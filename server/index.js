@@ -320,8 +320,14 @@ const generateContactWindows = require("./tasks/generateContactWindows");
 
 app.post("/api/contact-windows/refresh", async (req, res) => {
   try {
+    console.log(`[refresh-contact-windows] === CONTACT WINDOWS REFRESH TRIGGERED ===`);
+    console.log(`[refresh-contact-windows] Starting refresh at ${new Date().toISOString()}`);
+    console.log(`[refresh-contact-windows] Server timezone: ${Intl.DateTimeFormat().resolvedOptions().timeZone}`);
+    
     const satellites = await Satellite.find().populate("currentTleId"); // Populate TLE data
     const groundStations = await GroundStation.find();
+
+    console.log(`[refresh-contact-windows] Found ${satellites.length} satellites and ${groundStations.length} ground stations`);
 
     for (const satellite of satellites) {
       // Skip satellites without TLE data
@@ -339,6 +345,7 @@ app.post("/api/contact-windows/refresh", async (req, res) => {
 
         // Generate new contact windows
         const windows = await generateContactWindows(satellite, groundStation);
+        console.log(`[refresh-contact-windows] Generated ${windows.length} windows for ${satellite.name} <-> ${groundStation.name}`);
 
         // Insert new contact windows, ensuring no duplicates
         const bulkOps = windows.map((window) => ({
@@ -365,11 +372,13 @@ app.post("/api/contact-windows/refresh", async (req, res) => {
         }));
 
         if (bulkOps.length > 0) {
-          await ContactWindow.bulkWrite(bulkOps);
+          const result = await ContactWindow.bulkWrite(bulkOps);
+          console.log(`[refresh-contact-windows] Inserted/updated ${result.upsertedCount + result.modifiedCount} contact windows for ${satellite.name} <-> ${groundStation.name}`);
         }
       }
     }
 
+    console.log(`[refresh-contact-windows] Refresh completed successfully at ${new Date().toISOString()}`);
     res.status(200).send("Contact windows refreshed successfully.");
   } catch (err) {
     console.error(err);

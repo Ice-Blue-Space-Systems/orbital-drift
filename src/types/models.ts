@@ -39,6 +39,9 @@ export interface ContactWindow {
   groundStationId: string;
   scheduledAOS: string; // ISO date string
   scheduledLOS: string; // ISO date string
+  maxElevationDeg: number;
+  durationSeconds: number;
+  status: string;
 }
 
 export interface DebugInfo {

@@ -377,37 +377,37 @@ const TimelinePage: React.FC = () => {
     }
   }, [contactWindows, selectedSatelliteId, selectedGroundStationId, showAllPairs]);
 
-  // Auto-fetch contact windows when selections change or when navigating back to empty state - debounced
-  useEffect(() => {
-    if (selectedSatelliteId && selectedGroundStationId) {
-      // Debounce API calls to prevent excessive requests
-      const timeoutId = setTimeout(() => {
-        // Force refetch if we have selections but no contact windows data and no active request
-        if (contactWindows.length === 0 && contactWindowsStatus !== "loading") {
-          console.log('TimelinePage: Force-refetching contact windows for:', {
-            satelliteId: selectedSatelliteId,
-            groundStationId: selectedGroundStationId,
-            reason: 'Empty contact windows with selections'
-          });
-          dispatch(fetchContactWindows({ 
-            satelliteId: selectedSatelliteId, 
-            groundStationId: selectedGroundStationId 
-          }));
-        } else if (contactWindowsStatus === "idle") {
-          console.log('TimelinePage: Auto-fetching contact windows for:', {
-            satelliteId: selectedSatelliteId,
-            groundStationId: selectedGroundStationId
-          });
-          dispatch(fetchContactWindows({ 
-            satelliteId: selectedSatelliteId, 
-            groundStationId: selectedGroundStationId 
-          }));
-        }
-      }, 300); // 300ms debounce
+  // Disabled auto-fetch to prevent duplicate API calls - GlobeTools handles contact window fetching
+  // useEffect(() => {
+  //   if (selectedSatelliteId && selectedGroundStationId) {
+  //     // Debounce API calls to prevent excessive requests
+  //     const timeoutId = setTimeout(() => {
+  //       // Force refetch if we have selections but no contact windows data and no active request
+  //       if (contactWindows.length === 0 && contactWindowsStatus !== "loading") {
+  //         console.log('TimelinePage: Force-refetching contact windows for:', {
+  //           satelliteId: selectedSatelliteId,
+  //           groundStationId: selectedGroundStationId,
+  //           reason: 'Empty contact windows with selections'
+  //         });
+  //         dispatch(fetchContactWindows({ 
+  //           satelliteId: selectedSatelliteId, 
+  //           groundStationId: selectedGroundStationId 
+  //         }));
+  //       } else if (contactWindowsStatus === "idle") {
+  //         console.log('TimelinePage: Auto-fetching contact windows for:', {
+  //           satelliteId: selectedSatelliteId,
+  //           groundStationId: selectedGroundStationId
+  //         });
+  //         dispatch(fetchContactWindows({ 
+  //           satelliteId: selectedSatelliteId, 
+  //           groundStationId: selectedGroundStationId 
+  //         }));
+  //       }
+  //     }, 300); // 300ms debounce
 
-      return () => clearTimeout(timeoutId);
-    }
-  }, [selectedSatelliteId, selectedGroundStationId, dispatch, contactWindows.length]); // Removed contactWindowsStatus from deps
+  //     return () => clearTimeout(timeoutId);
+  //   }
+  // }, [selectedSatelliteId, selectedGroundStationId, dispatch, contactWindows.length]); // Removed contactWindowsStatus from deps
 
   // Timeline control functions
   const jumpToNextContactWindow = () => {
