@@ -298,6 +298,8 @@ const SatellitePopover: React.FC = () => {
             overflow: "hidden",
             transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)', // Match GlobeTools transition
           }}
+          onMouseDown={(e) => e.stopPropagation()} // Prevent event bubbling
+          onClick={(e) => e.stopPropagation()} // Prevent event bubbling
         >
           {/* Header with title and popout button */}
           <Box sx={{ 
@@ -571,6 +573,10 @@ const SatellitePopover: React.FC = () => {
                 placeholder="Search satellite database..."
                 value={satelliteFilter}
                 onChange={(e) => setSatelliteFilter(e.target.value)}
+                onMouseDown={(e) => e.stopPropagation()}
+                onClick={(e) => e.stopPropagation()}
+                onFocus={(e) => e.stopPropagation()}
+                onKeyDown={(e) => e.stopPropagation()}
                 sx={{
                   marginBottom: "12px",
                   "& .MuiOutlinedInput-root": {
@@ -589,9 +595,14 @@ const SatellitePopover: React.FC = () => {
                       boxShadow: `0 0 8px rgba(${theme.secondaryRGB}, 0.3)`,
                     },
                   },
-                  "& .MuiInputBase-input::placeholder": {
-                    color: `rgba(${theme.secondaryRGB}, 0.6)`,
-                    opacity: 1,
+                  "& .MuiInputBase-input": {
+                    "&::placeholder": {
+                      color: `rgba(${theme.secondaryRGB}, 0.6)`,
+                      opacity: 1,
+                    },
+                    "&:focus": {
+                      outline: "none",
+                    }
                   },
                 }}
               />

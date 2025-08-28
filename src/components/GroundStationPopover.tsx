@@ -1,5 +1,5 @@
 import React, { useState, useRef, useMemo } from "react";
-import { IconButton, Tooltip, TextField, ListItem, ListItemButton, Box, Typography, Chip } from "@mui/material";
+import { IconButton, Tooltip, TextField, List, ListItem, ListItemButton, Box, Typography, Chip } from "@mui/material";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import RadarIcon from "@mui/icons-material/Radar";
 import AddIcon from "@mui/icons-material/Add";
@@ -33,29 +33,32 @@ const GroundStationPopover: React.FC = () => {
     return getDisplayGroundStations(groundStations);
   }, [groundStations]);
 
-  // Filter ground stations based on search
-  const filteredGroundStations = useMemo(() => {
-    if (!groundStationFilter) return displayGroundStations;
+  // Separate managed and discoverable ground stations first
+  const managedGS = useMemo(() => 
+    displayGroundStations.filter((gs: DisplayGroundStation) => gs.source === "api" || gs.source === "custom"), 
+    [displayGroundStations]
+  );
+  
+  const discoverableGS = useMemo(() => 
+    displayGroundStations.filter((gs: DisplayGroundStation) => gs.source === "predefined"), 
+    [displayGroundStations]
+  );
+
+  // Filter managed ground stations (always visible, no search filtering)
+  const filteredManagedGS = managedGS;
+  
+  // Filter discoverable ground stations (only apply search to discover section)
+  const filteredDiscoverableGS = useMemo(() => {
+    if (!groundStationFilter) return discoverableGS;
     
     const lowerFilter = groundStationFilter.toLowerCase();
-    return displayGroundStations.filter((gs: DisplayGroundStation) =>
+    return discoverableGS.filter((gs: DisplayGroundStation) =>
       gs.name.toLowerCase().includes(lowerFilter) ||
       gs.country.toLowerCase().includes(lowerFilter) ||
       gs.city?.toLowerCase().includes(lowerFilter) ||
       gs.operator?.toLowerCase().includes(lowerFilter)
     );
-  }, [displayGroundStations, groundStationFilter]);
-
-  // Separate managed and discoverable ground stations
-  const filteredManagedGS = useMemo(() => 
-    filteredGroundStations.filter((gs: DisplayGroundStation) => gs.source === "api" || gs.source === "custom"), 
-    [filteredGroundStations]
-  );
-  
-  const filteredDiscoverableGS = useMemo(() => 
-    filteredGroundStations.filter((gs: DisplayGroundStation) => gs.source === "predefined"), 
-    [filteredGroundStations]
-  );
+  }, [discoverableGS, groundStationFilter]);
 
   // Quick-add ground station
   const handleQuickAdd = async (groundStation: DisplayGroundStation) => {
@@ -97,42 +100,52 @@ const GroundStationPopover: React.FC = () => {
     }
   };
 
-  const getCountryFlagSafe = (countryCode: string): string => {
-    try {
-      // Map country names to ISO codes for flag display
-      const countryMap: { [key: string]: string } = {
-        'USA': 'US',
-        'United States': 'US', 
-        'Russia': 'RU',
-        'Germany': 'DE',
-        'France': 'FR',
-        'Spain': 'ES',
-        'Australia': 'AU',
-        'Japan': 'JP',
-        'China': 'CN',
-        'Kazakhstan': 'KZ',
-        'India': 'IN',
-        'United Kingdom': 'GB',
-        'Canada': 'CA',
-        'Brazil': 'BR',
-        'Italy': 'IT',
-        'South Korea': 'KR',
-        'Israel': 'IL',
-        'Norway': 'NO',
-      };
-      
-      const code = countryMap[countryCode] || countryCode;
-      // Simple flag emoji based on country
-      const flagMap: { [key: string]: string } = {
-        'US': '🇺🇸', 'RU': '🇷🇺', 'DE': '🇩🇪', 'FR': '🇫🇷', 'ES': '🇪🇸',
-        'AU': '🇦🇺', 'JP': '🇯🇵', 'CN': '🇨🇳', 'KZ': '🇰🇿', 'IN': '🇮🇳',
-        'GB': '🇬🇧', 'CA': '🇨🇦', 'BR': '🇧🇷', 'IT': '🇮🇹', 'KR': '🇰🇷',
-        'IL': '🇮🇱', 'NO': '🇳🇴'
-      };
-      return flagMap[code] || '🌍';
-    } catch {
-      return '🌍';
+  // Country flag component (matching SatellitePopover)
+  const CountryFlag: React.FC<{ country: string; size?: number }> = ({ country, size = 20 }) => {
+    const countryCodeMap: { [key: string]: string } = {
+      "USA": "US",
+      "United States": "US",
+      "Russia": "RU",
+      "Germany": "DE", 
+      "France": "FR",
+      "Spain": "ES",
+      "Australia": "AU",
+      "Japan": "JP",
+      "China": "CN",
+      "Kazakhstan": "KZ",
+      "India": "IN",
+      "United Kingdom": "GB",
+      "Canada": "CA",
+      "Brazil": "BR",
+      "Italy": "IT",
+      "South Korea": "KR",
+      "Israel": "IL",
+      "Norway": "NO",
+    };
+
+    if (!country || country === "Unknown") {
+      return <span style={{ color: theme.textSecondary, fontSize: `${size}px` }}>📡</span>;
     }
+    
+    const countryCode = countryCodeMap[country] || country.slice(0, 2).toUpperCase();
+    const flagUrl = `https://flagcdn.com/24x18/${countryCode.toLowerCase()}.png`;
+    
+    return (
+      <img 
+        src={flagUrl} 
+        alt={`${country} flag`}
+        style={{ 
+          width: `${size}px`, 
+          height: `${Math.round(size * 0.75)}px`, 
+          objectFit: "cover",
+          borderRadius: "2px"
+        }}
+        onError={(e) => {
+          // Fallback to generic flag if country flag not found
+          e.currentTarget.src = "https://flagcdn.com/24x18/un.png";
+        }}
+      />
+    );
   };
 
   const handleMouseEnter = () => {
@@ -169,41 +182,30 @@ const GroundStationPopover: React.FC = () => {
       {openPopover && (
         <div
           style={{
-            position: "absolute",
-            top: "46px",
-            left: "0",
-            backgroundColor: theme.backgroundDark,
-            border: `1px solid rgba(${theme.primaryRGB}, 0.4)`,
-            color: theme.primary,
+            position: "fixed", // Changed from absolute to fixed for better positioning
+            top: "80px", // Position it underneath GlobeTools (which is at ~20px + 48px height)
+            left: "20px", // Left-align with GlobeTools
+            backgroundColor: 'rgba(10, 15, 25, 0.9)', // Match GlobeTools background
+            backdropFilter: 'blur(20px)',
+            WebkitBackdropFilter: 'blur(20px)',
+            border: `1px solid rgba(${theme.primaryRGB}, 0.3)`,
+            borderRadius: "16px", // Match GlobeTools border radius
+            boxShadow: `0 16px 50px rgba(${theme.primaryRGB}, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.1), 0 0 40px rgba(${theme.primaryRGB}, 0.15)`, // Match GlobeTools shadow
+            color: theme.textPrimary,
             fontFamily: "Courier New, Courier, monospace",
-            borderRadius: "8px",
-            padding: "12px",
-            width: "420px",
-            maxHeight: "70vh", // Limit to 70% of viewport height
-            zIndex: 1001,
-            boxShadow: `0 8px 32px rgba(${theme.primaryRGB}, 0.15)`,
-            backdropFilter: "blur(10px)",
+            padding: "16px", // Increased padding
+            width: "500px", // Made wider to match SatellitePopover
+            maxHeight: "75vh", // Increased max height to match SatellitePopover
+            zIndex: 999, // Slightly lower than GlobeTools
             display: "flex",
             flexDirection: "column",
-            overflow: "hidden", // Prevent outer overflow
+            overflow: "hidden",
+            transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)', // Match GlobeTools transition
           }}
+          onMouseDown={(e) => e.stopPropagation()} // Prevent event bubbling
+          onClick={(e) => e.stopPropagation()} // Prevent event bubbling
         >
-          {/* Arrow */}
-          <div
-            style={{
-              position: "absolute",
-              top: "-9px",
-              left: "20px",
-              width: "0",
-              height: "0",
-              borderLeft: "9px solid transparent",
-              borderRight: "9px solid transparent",
-              borderBottom: `9px solid rgba(${theme.primaryRGB}, 0.4)`,
-              filter: `drop-shadow(0 -2px 4px rgba(${theme.primaryRGB}, 0.2))`,
-            }}
-          ></div>
-
-          {/* Header with title and popout button */}
+          {/* Header Section */}
           <Box sx={{ 
             display: 'flex', 
             justifyContent: 'space-between', 
@@ -238,10 +240,11 @@ const GroundStationPopover: React.FC = () => {
             </Tooltip>
           </Box>
 
-          {/* Fixed Header Section */}
+          {/* Fixed Header Section with Control Buttons */}
           <div style={{ flexShrink: 0 }}>
-            {/* Line of Sight and Visibility Cones Toggles */}
-            <div className="globe-tools-group" style={{ marginBottom: "12px" }}>
+            {/* Control Buttons */}
+            <div style={{ display: "flex", gap: "8px", justifyContent: "center", marginBottom: "12px" }}>
+              {/* Toggle Line of Sight */}
               <Tooltip title="Toggle Line of Sight" arrow placement="bottom">
                 <IconButton
                   onClick={() => dispatch(setShowLineOfSight(!showLineOfSight))}
@@ -251,6 +254,7 @@ const GroundStationPopover: React.FC = () => {
                 </IconButton>
               </Tooltip>
 
+              {/* Toggle Visibility Cones */}
               <Tooltip title="Toggle Visibility Cones" arrow placement="bottom">
                 <IconButton
                   onClick={() => dispatch(setShowVisibilityCones(!showVisibilityCones))}
@@ -260,54 +264,34 @@ const GroundStationPopover: React.FC = () => {
                 </IconButton>
               </Tooltip>
             </div>
-
-            {/* Search Field */}
-            <TextField
-              fullWidth
-              placeholder="Search Ground Stations..."
-              value={groundStationFilter}
-              onChange={(e) => setGroundStationFilter(e.target.value)}
-              sx={{
-                marginBottom: "12px",
-                "& .MuiOutlinedInput-root": {
-                  backgroundColor: theme.inputBackground,
-                  color: theme.primary,
-                  fontFamily: "'Courier New', Courier, monospace",
-                  fontSize: "0.9rem",
-                  "& fieldset": {
-                    borderColor: `rgba(${theme.primaryRGB}, 0.3)`,
-                  },
-                  "&:hover fieldset": {
-                    borderColor: `rgba(${theme.primaryRGB}, 0.5)`,
-                  },
-                  "&.Mui-focused fieldset": {
-                    borderColor: theme.primary,
-                    boxShadow: `0 0 8px rgba(${theme.primaryRGB}, 0.3)`,
-                  },
-                },
-                "& .MuiInputBase-input::placeholder": {
-                  color: `rgba(${theme.primaryRGB}, 0.6)`,
-                  opacity: 1,
-                },
-              }}
-            />
           </div>
 
           {/* Scrollable Content Area */}
           <div 
             style={{ 
               flex: 1,
-              overflowY: "auto",
+              overflowY: "hidden",
               overflowX: "hidden",
-              paddingRight: "4px", // Space for scrollbar
+              paddingRight: "0px",
             }}
-            className="satellite-list-scroll"
+            className="ground-station-popover-content"
           >
 
-            {/* My Ground Stations Section */}
+            {/* My Ground Stations Section - Simple Pinned List */}
             {filteredManagedGS.length > 0 && (
               <Box sx={{ marginBottom: "16px" }}>
-                <Box sx={{ display: "flex", alignItems: "center", marginBottom: "8px", position: "sticky", top: 0, backgroundColor: theme.backgroundDark, paddingY: "4px", zIndex: 1 }}>
+                <Box sx={{ 
+                  display: "flex", 
+                  alignItems: "center", 
+                  marginBottom: "8px", 
+                  position: "sticky", 
+                  top: 0, 
+                  backgroundColor: 'rgba(10, 15, 25, 0.95)', 
+                  paddingY: "6px", 
+                  zIndex: 1, 
+                  borderRadius: "6px",
+                  borderBottom: `1px solid rgba(${theme.primaryRGB}, 0.2)`
+                }}>
                   <Typography 
                     variant="caption" 
                     sx={{ 
@@ -316,214 +300,320 @@ const GroundStationPopover: React.FC = () => {
                       letterSpacing: "1px",
                       textTransform: "uppercase",
                       fontFamily: "'Courier New', Courier, monospace",
-                      fontSize: "0.75rem",
+                      fontSize: "0.8rem"
                     }}
                   >
-                    🏛️ My Ground Stations ({filteredManagedGS.length})
+                    📌 My Ground Stations
                   </Typography>
-                </Box>
-                
-                {filteredManagedGS.map((gs: DisplayGroundStation) => (
-                  <ListItem key={gs.id} disablePadding sx={{ marginBottom: "4px" }}>
-                    <ListItemButton
-                      onClick={() => {
-                        console.log("Ground Station ID:", gs);
-                        dispatch(setSelectedGroundStationId(gs.id));
-                        setOpenPopover(false);
-                      }}
-                      sx={{
-                        color: theme.primary,
-                        backgroundColor: theme.backgroundSecondary,
-                        border: `1px solid rgba(${theme.primaryRGB}, 0.2)`,
-                        borderRadius: "6px",
-                        padding: "8px 12px",
-                        transition: "all 0.2s ease-in-out",
-                        "&:hover": {
-                          backgroundColor: `rgba(${theme.primaryRGB}, 0.1)`,
-                          borderColor: `rgba(${theme.primaryRGB}, 0.4)`,
-                          transform: "translateX(2px)",
-                        },
-                      }}
-                    >
-                      <Box sx={{ display: "flex", alignItems: "center", width: "100%" }}>
-                        <Box sx={{ marginRight: "8px", fontSize: "1.2rem" }}>
-                          {getCountryFlagSafe(gs.country)}
-                        </Box>
-                        <Box sx={{ flex: 1, minWidth: 0 }}>
-                          <Typography 
-                            variant="body2" 
-                            sx={{ 
-                              color: theme.primary, 
-                              fontWeight: "bold",
-                              fontFamily: "'Courier New', Courier, monospace",
-                              fontSize: "0.85rem",
-                              whiteSpace: "nowrap",
-                              overflow: "hidden",
-                              textOverflow: "ellipsis",
-                            }}
-                          >
-                            {gs.name}
-                          </Typography>
-                          <Typography 
-                            variant="caption" 
-                            sx={{ 
-                              color: `rgba(${theme.primaryRGB}, 0.7)`, 
-                              fontFamily: "'Courier New', Courier, monospace",
-                              fontSize: "0.7rem",
-                              display: "block",
-                            }}
-                          >
-                            {gs.city}, {gs.country} • {gs.operator}
-                          </Typography>
-                        </Box>
-                        {gs.source === "api" && (
-                          <Chip 
-                            label="MANAGED" 
-                            size="small" 
-                            sx={{ 
-                              backgroundColor: `rgba(${theme.primaryRGB}, 0.2)`,
-                              color: theme.primary,
-                              fontSize: "0.6rem",
-                              fontFamily: "'Courier New', Courier, monospace",
-                              fontWeight: "bold",
-                              height: "20px",
-                            }}
-                          />
-                        )}
-                      </Box>
-                    </ListItemButton>
-                  </ListItem>
-                ))}
-              </Box>
-            )}
-
-            {/* Discoverable Ground Stations Section */}
-            {filteredDiscoverableGS.length > 0 && (
-              <Box>
-                <Box sx={{ display: "flex", alignItems: "center", marginBottom: "8px", position: "sticky", top: 0, backgroundColor: theme.backgroundDark, paddingY: "4px", zIndex: 1 }}>
-                  <Typography 
-                    variant="caption" 
+                  <Chip 
+                    label={filteredManagedGS.length} 
+                    size="small" 
                     sx={{ 
-                      color: `rgba(${theme.primaryRGB}, 0.8)`, 
-                      fontWeight: "bold", 
-                      letterSpacing: "1px",
-                      textTransform: "uppercase",
+                      marginLeft: "8px", 
+                      backgroundColor: `rgba(${theme.primaryRGB}, 0.2)`, 
+                      color: theme.primary,
                       fontFamily: "'Courier New', Courier, monospace",
-                      fontSize: "0.75rem",
-                    }}
-                  >
-                    🌍 Discover Ground Stations ({filteredDiscoverableGS.length})
-                  </Typography>
+                      height: "18px",
+                      fontSize: "0.65rem"
+                    }} 
+                  />
                 </Box>
-                
-                {filteredDiscoverableGS.map((gs: DisplayGroundStation) => (
-                  <ListItem key={gs.id} disablePadding sx={{ marginBottom: "4px" }}>
-                    <ListItemButton
-                      onClick={() => {
-                        console.log("Discoverable Ground Station:", gs);
-                        // For predefined stations, we can either select them directly or show details
-                        // For now, let's allow quick selection
-                        dispatch(setSelectedGroundStationId(gs.id));
-                        setOpenPopover(false);
-                      }}
-                      sx={{
-                        color: `rgba(${theme.primaryRGB}, 0.8)`,
-                        backgroundColor: theme.backgroundDark,
-                        border: `1px solid rgba(${theme.primaryRGB}, 0.15)`,
-                        borderRadius: "6px",
-                        padding: "8px 12px",
-                        transition: "all 0.2s ease-in-out",
-                        "&:hover": {
-                          backgroundColor: `rgba(${theme.primaryRGB}, 0.08)`,
-                          borderColor: `rgba(${theme.primaryRGB}, 0.3)`,
-                          color: theme.primary,
-                        },
-                      }}
-                    >
-                      <Box sx={{ display: "flex", alignItems: "center", width: "100%" }}>
-                        <Box sx={{ marginRight: "8px", fontSize: "1.2rem" }}>
-                          {getCountryFlagSafe(gs.country)}
-                        </Box>
-                        <Box sx={{ flex: 1, minWidth: 0 }}>
-                          <Typography 
-                            variant="body2" 
-                            sx={{ 
-                              fontWeight: "bold",
-                              fontFamily: "'Courier New', Courier, monospace",
-                              fontSize: "0.85rem",
-                              whiteSpace: "nowrap",
-                              overflow: "hidden",
-                              textOverflow: "ellipsis",
-                            }}
-                          >
-                            {gs.name}
-                          </Typography>
-                          <Typography 
-                            variant="caption" 
-                            sx={{ 
-                              color: `rgba(${theme.primaryRGB}, 0.6)`, 
-                              fontFamily: "'Courier New', Courier, monospace",
-                              fontSize: "0.7rem",
-                              display: "block",
-                            }}
-                          >
-                            {gs.city}, {gs.country} • {gs.operator}
-                          </Typography>
-                        </Box>
-                        <Box sx={{ display: "flex", alignItems: "center", gap: "4px" }}>
+                <Box sx={{ 
+                  maxHeight: "150px", 
+                  overflowY: "auto", 
+                  paddingRight: "4px",
+                  // Custom scrollbar styling
+                  '&::-webkit-scrollbar': {
+                    width: '6px',
+                  },
+                  '&::-webkit-scrollbar-track': {
+                    background: `rgba(${theme.primaryRGB}, 0.1)`,
+                    borderRadius: '3px',
+                  },
+                  '&::-webkit-scrollbar-thumb': {
+                    background: `rgba(${theme.primaryRGB}, 0.4)`,
+                    borderRadius: '3px',
+                    '&:hover': {
+                      background: `rgba(${theme.primaryRGB}, 0.6)`,
+                    }
+                  },
+                  // Firefox scrollbar
+                  scrollbarWidth: 'thin',
+                  scrollbarColor: `rgba(${theme.primaryRGB}, 0.4) rgba(${theme.primaryRGB}, 0.1)`,
+                }}>
+                  <List sx={{ padding: 0 }}>
+                    {filteredManagedGS.map((gs: DisplayGroundStation) => (
+                      <ListItem key={gs.id} disablePadding>
+                        <ListItemButton
+                          onClick={() => {
+                            dispatch(setSelectedGroundStationId(gs.id));
+                            setOpenPopover(false);
+                          }}
+                          sx={{
+                            color: theme.primary,
+                            backgroundColor: selectedGroundStationId === gs.id ? `rgba(${theme.primaryRGB}, 0.15)` : "transparent",
+                            transition: "all 0.2s ease-in-out",
+                            borderRadius: "6px",
+                            marginBottom: "2px",
+                            padding: "6px 8px",
+                            "&:hover": {
+                              backgroundColor: `rgba(${theme.primaryRGB}, 0.1)`,
+                              transform: "translateX(2px)"
+                            }
+                          }}
+                        >
+                          <Box sx={{ display: "flex", alignItems: "center", gap: 1, flex: 1 }}>
+                            <CountryFlag country={gs.country} size={16} />
+                            <Box sx={{ flex: 1 }}>
+                              <Typography 
+                                sx={{
+                                  fontFamily: "'Courier New', Courier, monospace",
+                                  fontSize: "0.8rem",
+                                  fontWeight: selectedGroundStationId === gs.id ? "bold" : "normal",
+                                  color: selectedGroundStationId === gs.id ? theme.primary : theme.textPrimary,
+                                  overflow: "hidden",
+                                  textOverflow: "ellipsis",
+                                  whiteSpace: "nowrap"
+                                }}
+                              >
+                                {gs.name}
+                              </Typography>
+                              <Typography 
+                                sx={{
+                                  fontFamily: "'Courier New', Courier, monospace",
+                                  fontSize: "0.65rem",
+                                  color: `rgba(${theme.primaryRGB}, 0.6)`,
+                                  marginTop: "1px"
+                                }}
+                              >
+                                {gs.city}, {gs.country}
+                              </Typography>
+                            </Box>
+                          </Box>
                           <Chip 
-                            label="MAJOR"
+                            label="PINNED" 
                             size="small" 
                             sx={{ 
-                              backgroundColor: `rgba(${theme.primaryRGB}, 0.1)`,
-                              color: `rgba(${theme.primaryRGB}, 0.8)`,
-                              fontSize: "0.6rem",
+                              backgroundColor: `rgba(${theme.primaryRGB}, 0.25)`, 
+                              color: theme.primary,
                               fontFamily: "'Courier New', Courier, monospace",
-                              fontWeight: "bold",
-                              height: "18px",
-                            }}
+                              fontSize: "0.55rem",
+                              height: "16px",
+                              fontWeight: "bold"
+                            }} 
                           />
-                          <Tooltip title="Quick Add to My Ground Stations" arrow>
-                            <IconButton
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleQuickAdd(gs);
-                              }}
-                              sx={{
-                                color: `rgba(${theme.primaryRGB}, 0.6)`,
-                                padding: "2px",
-                                fontSize: "0.8rem",
-                                "&:hover": {
-                                  color: theme.primary,
-                                  backgroundColor: `rgba(${theme.primaryRGB}, 0.1)`,
-                                },
-                              }}
-                            >
-                              <AddIcon fontSize="small" />
-                            </IconButton>
-                          </Tooltip>
-                        </Box>
-                      </Box>
-                    </ListItemButton>
-                  </ListItem>
-                ))}
+                        </ListItemButton>
+                      </ListItem>
+                    ))}
+                  </List>
+                </Box>
               </Box>
             )}
 
-            {/* No Results Message */}
-            {filteredGroundStations.length === 0 && groundStationFilter && (
-              <Box sx={{ textAlign: "center", padding: "20px", color: `rgba(${theme.primaryRGB}, 0.6)` }}>
+            {/* Discover Ground Stations Section with integrated search */}
+            <Box>
+              <Box sx={{ 
+                display: "flex", 
+                alignItems: "center", 
+                marginBottom: "12px", 
+                position: "sticky", 
+                top: 0, 
+                backgroundColor: 'rgba(10, 15, 25, 0.95)', 
+                paddingY: "8px", 
+                zIndex: 1, 
+                borderRadius: "6px",
+                borderBottom: `1px solid rgba(${theme.secondaryRGB}, 0.2)`
+              }}>
                 <Typography 
-                  variant="body2" 
+                  variant="caption" 
                   sx={{ 
+                    color: theme.secondary, 
+                    fontWeight: "bold", 
+                    letterSpacing: "1px",
+                    textTransform: "uppercase",
                     fontFamily: "'Courier New', Courier, monospace",
-                    fontSize: "0.9rem"
+                    fontSize: "0.8rem"
                   }}
                 >
-                  No ground stations found for "{groundStationFilter}"
+                  🔍 Discover More ({discoverableGS.length})
                 </Typography>
+                <Chip 
+                  label={filteredDiscoverableGS.length} 
+                  size="small" 
+                  sx={{ 
+                    marginLeft: "8px", 
+                    backgroundColor: `rgba(${theme.secondaryRGB}, 0.2)`, 
+                    color: theme.secondary,
+                    fontFamily: "'Courier New', Courier, monospace",
+                    height: "18px",
+                    fontSize: "0.65rem"
+                  }} 
+                />
               </Box>
-            )}
+
+              {/* Search Field for Discovery */}
+              <TextField
+                fullWidth
+                placeholder="Search ground station database..."
+                value={groundStationFilter}
+                onChange={(e) => setGroundStationFilter(e.target.value)}
+                onMouseDown={(e) => e.stopPropagation()}
+                onClick={(e) => e.stopPropagation()}
+                onFocus={(e) => e.stopPropagation()}
+                onKeyDown={(e) => e.stopPropagation()}
+                sx={{
+                  marginBottom: "12px",
+                  "& .MuiOutlinedInput-root": {
+                    backgroundColor: `rgba(${theme.secondaryRGB}, 0.05)`,
+                    color: theme.secondary,
+                    fontFamily: "'Courier New', Courier, monospace",
+                    fontSize: "0.85rem",
+                    "& fieldset": {
+                      borderColor: `rgba(${theme.secondaryRGB}, 0.3)`,
+                    },
+                    "&:hover fieldset": {
+                      borderColor: `rgba(${theme.secondaryRGB}, 0.5)`,
+                    },
+                    "&.Mui-focused fieldset": {
+                      borderColor: theme.secondary,
+                      boxShadow: `0 0 8px rgba(${theme.secondaryRGB}, 0.3)`,
+                    },
+                  },
+                  "& .MuiInputBase-input": {
+                    "&::placeholder": {
+                      color: `rgba(${theme.secondaryRGB}, 0.6)`,
+                      opacity: 1,
+                    },
+                    "&:focus": {
+                      outline: "none",
+                    }
+                  },
+                }}
+              />
+
+              {/* Ground Station List */}
+              {filteredDiscoverableGS.length > 0 ? (
+                <Box sx={{ 
+                  maxHeight: "300px", 
+                  overflowY: "auto", 
+                  paddingRight: "4px",
+                  // Custom scrollbar styling
+                  '&::-webkit-scrollbar': {
+                    width: '6px',
+                  },
+                  '&::-webkit-scrollbar-track': {
+                    background: `rgba(${theme.secondaryRGB}, 0.1)`,
+                    borderRadius: '3px',
+                  },
+                  '&::-webkit-scrollbar-thumb': {
+                    background: `rgba(${theme.secondaryRGB}, 0.4)`,
+                    borderRadius: '3px',
+                    '&:hover': {
+                      background: `rgba(${theme.secondaryRGB}, 0.6)`,
+                    }
+                  },
+                  // Firefox scrollbar
+                  scrollbarWidth: 'thin',
+                  scrollbarColor: `rgba(${theme.secondaryRGB}, 0.4) rgba(${theme.secondaryRGB}, 0.1)`,
+                }}>
+                  <List sx={{ padding: 0 }}>
+                    {filteredDiscoverableGS.map((gs: DisplayGroundStation) => (
+                      <ListItem key={gs.id} disablePadding>
+                        <Tooltip title="Click to add and select this ground station" arrow placement="left">
+                          <ListItemButton
+                            onClick={async () => {
+                              // Quick-add the ground station first, then select it
+                              try {
+                                console.log("Adding ground station:", gs.name);
+                                await handleQuickAdd(gs);
+                              } catch (error) {
+                                console.error('Failed to add ground station:', error);
+                              }
+                            }}
+                            sx={{
+                              color: "#cccccc",
+                              transition: "all 0.2s ease-in-out",
+                              borderRadius: "6px",
+                              marginBottom: "2px",
+                              padding: "6px 8px",
+                              cursor: "pointer",
+                              "&:hover": {
+                                backgroundColor: `rgba(${theme.secondaryRGB}, 0.15)`,
+                                transform: "translateX(2px)",
+                                "& .ground-station-name": {
+                                  color: theme.secondary
+                                }
+                              }
+                            }}
+                          >
+                            <Box sx={{ display: "flex", alignItems: "center", gap: 1, flex: 1 }}>
+                              <CountryFlag country={gs.country || 'Unknown'} size={16} />
+                              <Box sx={{ flex: 1 }}>
+                                <Typography 
+                                  className="ground-station-name"
+                                  sx={{
+                                    fontFamily: "'Courier New', Courier, monospace",
+                                    fontSize: "0.75rem",
+                                    color: "#cccccc",
+                                    overflow: "hidden",
+                                    textOverflow: "ellipsis",
+                                    whiteSpace: "nowrap",
+                                    transition: "color 0.2s ease"
+                                  }}
+                                >
+                                  {gs.name}
+                                </Typography>
+                                <Typography 
+                                  sx={{
+                                    fontFamily: "'Courier New', Courier, monospace",
+                                    fontSize: "0.6rem",
+                                    color: "#888",
+                                    marginTop: "1px"
+                                  }}
+                                >
+                                  {gs.city}, {gs.country} • {gs.operator}
+                                </Typography>
+                              </Box>
+                            </Box>
+                            <Chip 
+                              label="ADD" 
+                              size="small" 
+                              sx={{ 
+                                backgroundColor: `rgba(${theme.secondaryRGB}, 0.25)`, 
+                                color: theme.secondary,
+                                fontFamily: "'Courier New', Courier, monospace",
+                                fontSize: "0.55rem",
+                                height: "16px",
+                                fontWeight: "bold"
+                              }} 
+                            />
+                          </ListItemButton>
+                        </Tooltip>
+                      </ListItem>
+                    ))}
+                  </List>
+                </Box>
+              ) : (
+                <Box sx={{ 
+                  textAlign: "center", 
+                  padding: "20px", 
+                  color: `rgba(${theme.secondaryRGB}, 0.6)` 
+                }}>
+                  <Typography 
+                    variant="body2" 
+                    sx={{ 
+                      fontFamily: "'Courier New', Courier, monospace",
+                      fontSize: "0.75rem"
+                    }}
+                  >
+                    {groundStationFilter 
+                      ? `No ground stations found for "${groundStationFilter}"`
+                      : 'Start typing to search ground stations...'
+                    }
+                  </Typography>
+                </Box>
+              )}
+            </Box>
 
           </div>
         </div>
