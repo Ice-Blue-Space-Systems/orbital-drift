@@ -9,7 +9,7 @@ app.use(express.json());
 
 // MongoDB connection
 const uri = "mongodb://localhost:27017/satelliteTrackingDB";
-mongoose.connect(uri, { useNewUrlParser: true, useUnifiedTopology: true })
+mongoose.connect(uri)
   .then(() => console.log("Connected to MongoDB locally"))
   .catch(err => console.error("Error connecting to MongoDB:", err));
 
@@ -254,28 +254,133 @@ app.get("/api/ground-stations/:id", async (req, res) => {
 // API endpoint to create a new ground station
 app.post("/api/ground-stations", async (req, res) => {
   try {
-    const newGroundStation = new GroundStation(req.body);
+    console.log("Received ground station creation request:", JSON.stringify(req.body, null, 2));
+    
+    let groundStationData = { ...req.body };
+    
+    // Handle both frontend format and correct MongoDB format
+    // Frontend might send: { latitude, longitude, altitude, ... }
+    // MongoDB expects: { location: { lat, lon, alt }, ... }
+    if (req.body.latitude !== undefined || req.body.longitude !== undefined || req.body.altitude !== undefined) {
+      console.log("Converting frontend coordinate format to MongoDB format");
+      
+      // Ensure we have valid numbers for coordinates
+      const lat = req.body.latitude || req.body.lat;
+      const lon = req.body.longitude || req.body.lng || req.body.lon;
+      const alt = req.body.altitude || req.body.alt;
+      
+      // Validate that we have all required coordinates
+      if (lat === undefined || lat === null || lon === undefined || lon === null || alt === undefined || alt === null) {
+        return res.status(400).json({ 
+          error: "Complete location data is required: latitude, longitude, and altitude must all be provided" 
+        });
+      }
+      
+      // Create the location object from top-level coordinates
+      groundStationData.location = {
+        lat: Number(lat),
+        lon: Number(lon),
+        alt: Number(alt)
+      };
+      
+      // Remove the top-level coordinate fields to avoid conflicts
+      delete groundStationData.latitude;
+      delete groundStationData.longitude;
+      delete groundStationData.altitude;
+      delete groundStationData.lat;
+      delete groundStationData.lng;
+      delete groundStationData.lon;
+      delete groundStationData.alt;
+      
+      console.log("Converted location data:", groundStationData.location);
+    }
+    
+    // Ensure location object exists and has all required fields
+    if (!groundStationData.location) {
+      return res.status(400).json({ 
+        error: "Location data is required. Please provide either { latitude, longitude, altitude } or { location: { lat, lon, alt } }" 
+      });
+    }
+    
+    // Validate required location fields exist and are numbers
+    if (typeof groundStationData.location.lat !== 'number' || 
+        typeof groundStationData.location.lon !== 'number' || 
+        typeof groundStationData.location.alt !== 'number' ||
+        isNaN(groundStationData.location.lat) ||
+        isNaN(groundStationData.location.lon) ||
+        isNaN(groundStationData.location.alt)) {
+      return res.status(400).json({ 
+        error: "Location coordinates must be valid numbers: lat, lon, and alt" 
+      });
+    }
+    
+    console.log("Final ground station data:", JSON.stringify(groundStationData, null, 2));
+    
+    const newGroundStation = new GroundStation(groundStationData);
     const savedGroundStation = await newGroundStation.save();
+    
+    console.log("Ground station saved successfully:", savedGroundStation._id);
     res.status(201).json(savedGroundStation);
   } catch (err) {
-    res.status(400).send(err.message);
+    console.error("Error creating ground station:", err);
+    res.status(400).json({ error: err.message });
   }
 });
 
 // API endpoint to update a ground station
 app.put("/api/ground-stations/:id", async (req, res) => {
   try {
+    console.log("Received ground station update request:", JSON.stringify(req.body, null, 2));
+    
+    let updateData = { ...req.body };
+    
+    // Handle both frontend format and correct MongoDB format
+    // Frontend might send: { latitude, longitude, altitude, ... }
+    // MongoDB expects: { location: { lat, lon, alt }, ... }
+    if (req.body.latitude !== undefined || req.body.longitude !== undefined || req.body.altitude !== undefined) {
+      console.log("Converting frontend coordinate format to MongoDB format for update");
+      
+      // Create or update the location object from top-level coordinates
+      updateData.location = updateData.location || {};
+      
+      if (req.body.latitude !== undefined) updateData.location.lat = Number(req.body.latitude);
+      if (req.body.longitude !== undefined) updateData.location.lon = Number(req.body.longitude);
+      if (req.body.altitude !== undefined) updateData.location.alt = Number(req.body.altitude);
+      
+      // Also handle alternative field names
+      if (req.body.lat !== undefined) updateData.location.lat = Number(req.body.lat);
+      if (req.body.lng !== undefined) updateData.location.lon = Number(req.body.lng);
+      if (req.body.lon !== undefined) updateData.location.lon = Number(req.body.lon);
+      if (req.body.alt !== undefined) updateData.location.alt = Number(req.body.alt);
+      
+      // Remove the top-level coordinate fields to avoid conflicts
+      delete updateData.latitude;
+      delete updateData.longitude;
+      delete updateData.altitude;
+      delete updateData.lat;
+      delete updateData.lng;
+      delete updateData.lon;
+      delete updateData.alt;
+      
+      console.log("Converted location data for update:", updateData.location);
+    }
+    
+    console.log("Final update data:", JSON.stringify(updateData, null, 2));
+    
     const updatedGroundStation = await GroundStation.findByIdAndUpdate(
       req.params.id,
-      req.body,
+      updateData,
       { new: true, runValidators: true }
     );
     if (!updatedGroundStation) {
-      return res.status(404).send("Ground station not found");
+      return res.status(404).json({ error: "Ground station not found" });
     }
+    
+    console.log("Ground station updated successfully:", updatedGroundStation._id);
     res.json(updatedGroundStation);
   } catch (err) {
-    res.status(400).send(err.message);
+    console.error("Error updating ground station:", err);
+    res.status(400).json({ error: err.message });
   }
 });
 

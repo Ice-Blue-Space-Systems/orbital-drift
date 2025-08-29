@@ -87,16 +87,25 @@ const GroundStationPopover: React.FC = () => {
       if (response.ok) {
         const newGroundStation = await response.json();
         console.log('Ground station added successfully:', newGroundStation);
-        // Refresh data from API
-        dispatch(fetchMongoData());
-        // Select the new ground station
+        
+        // First refresh the data to get the new ground station in the store
+        await dispatch(fetchMongoData());
+        
+        // Then select the new ground station (this will plot it on the globe)
         dispatch(setSelectedGroundStationId(newGroundStation._id));
+        
+        // Close the popover
         setOpenPopover(false);
+        
+        console.log('Ground station selected:', newGroundStation._id);
       } else {
-        console.error('Failed to add ground station:', response.statusText);
+        const errorText = await response.text();
+        console.error('Failed to add ground station:', response.statusText, errorText);
+        alert(`Failed to add ground station: ${response.statusText}`);
       }
     } catch (error) {
       console.error('Error adding ground station:', error);
+      alert('Error adding ground station. Please try again.');
     }
   };
 
