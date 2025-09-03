@@ -28,6 +28,8 @@ interface MongoState {
   liveMode: boolean; // Add liveMode to the state
   tleHistoryDuration: number; // TLE history duration in seconds
   tleFutureDuration: number; // TLE future duration in seconds
+  renderingQuality: 'low' | 'medium' | 'high'; // Cesium rendering quality setting
+  mouseThrottle: number; // Mouse event throttling in milliseconds
 }
 
 const initialState: MongoState = {
@@ -47,6 +49,8 @@ const initialState: MongoState = {
   liveMode: false, // Add liveMode to the initial state
   tleHistoryDuration: 3600, // Default: 1 hour (3600 seconds)
   tleFutureDuration: 10800, // Default: 3 hours (10800 seconds)
+  renderingQuality: 'medium', // Default: balanced performance and quality
+  mouseThrottle: 16, // Default: 60fps (16ms) mouse events
 };
 
 const mongoSlice = createSlice({
@@ -93,6 +97,12 @@ const mongoSlice = createSlice({
     setTleFutureDuration(state, action) {
       state.tleFutureDuration = action.payload;
     },
+    setRenderingQuality(state, action) {
+      state.renderingQuality = action.payload;
+    },
+    setMouseThrottle(state, action) {
+      state.mouseThrottle = action.payload;
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -124,5 +134,7 @@ export const {
   addSatellite, // Export the action
   setTleHistoryDuration,
   setTleFutureDuration,
+  setRenderingQuality,
+  setMouseThrottle,
 } = mongoSlice.actions;
 export default mongoSlice.reducer;

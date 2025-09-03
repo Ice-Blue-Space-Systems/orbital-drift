@@ -1,4 +1,4 @@
-import React, { useMemo, useRef } from "react";
+import React, { useMemo, useRef, useEffect } from "react";
 import { Viewer, Entity, Clock } from "resium";
 import {
   Cartesian3,
@@ -12,6 +12,7 @@ import TleEntities from "./TleEntities";
 import GroundTrackEntities from "./GroundTrackEntities";
 import NadirLines from "./NadirLines";
 import { useCesiumClock } from "../hooks/useCesiumClock";
+import { getRenderingSettings } from "../utils/renderingUtils";
 
 interface CesiumViewerProps {
   viewerRef: React.RefObject<any>;
@@ -46,6 +47,12 @@ const CesiumViewer: React.FC<CesiumViewerProps> = ({
   const showCesiumOptions = useSelector(
     (state: RootState) => state.mongo.showCesiumOptions
   );
+  const renderingQuality = useSelector(
+    (state: RootState) => state.mongo.renderingQuality
+  );
+  const mouseThrottle = useSelector(
+    (state: RootState) => state.mongo.mouseThrottle
+  );
 
   // Memoize satellite name to prevent unnecessary renders
   const selectedSatelliteName = useMemo(() => {
@@ -58,6 +65,61 @@ const CesiumViewer: React.FC<CesiumViewerProps> = ({
   
   // Use the Cesium clock synchronization hook
   useCesiumClock(viewerRef);
+  
+  // Apply rendering quality settings when they change
+  useEffect(() => {
+    if (viewerRef.current?.cesiumElement) {
+      const viewer = viewerRef.current.cesiumElement;
+      const settings = getRenderingSettings(renderingQuality);
+      
+      // Apply resolution scaling
+      viewer.resolutionScale = settings.resolutionScale;
+      
+      // Apply terrain settings
+      if (viewer.scene.globe) {
+        viewer.scene.globe.maximumScreenSpaceError = settings.maximumScreenSpaceError;
+      }
+      
+      // Apply visual effects
+      viewer.scene.shadowMap.enabled = settings.shadows;
+      viewer.scene.fog.enabled = settings.fog;
+      viewer.scene.globe.enableLighting = settings.lighting;
+      viewer.scene.skyBox.show = settings.skyBox;
+      viewer.scene.skyAtmosphere.show = settings.skyAtmosphere;
+      
+      console.log(`🎨 CesiumViewer: Applied ${renderingQuality} rendering quality`, settings);
+    }
+  }, [renderingQuality, viewerRef]);
+  
+  // Apply mouse throttling settings
+  useEffect(() => {
+    if (viewerRef.current?.cesiumElement) {
+      const viewer = viewerRef.current.cesiumElement;
+      const canvas = viewer.canvas;
+      
+      // Store original event handlers if not already stored
+      if (!canvas._originalMouseMove) {
+        canvas._originalMouseMove = canvas.onmousemove;
+      }
+      
+      // Create throttled mouse move handler
+      let lastMouseMove = 0;
+      const throttledMouseMove = (event: MouseEvent) => {
+        const now = Date.now();
+        if (now - lastMouseMove >= mouseThrottle) {
+          lastMouseMove = now;
+          if (canvas._originalMouseMove) {
+            canvas._originalMouseMove.call(canvas, event);
+          }
+        }
+      };
+      
+      // Apply throttled handler
+      canvas.onmousemove = throttledMouseMove;
+      
+      console.log(`🖱️ CesiumViewer: Applied mouse throttling: ${mouseThrottle}ms (${Math.round(1000/mouseThrottle)}fps)`);
+    }
+  }, [mouseThrottle, viewerRef]);
   
   if (renderCount.current % 100 === 1) { // Log every 100th render to reduce spam
     console.log("🔄 CesiumViewer: Component re-rendering", {
