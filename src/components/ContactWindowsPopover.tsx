@@ -29,6 +29,7 @@ import { selectCesiumClockDate } from "../store/selectors/cesiumClockSelectors";
 import { useTheme } from "../contexts/ThemeContext";
 import { ContactWindow } from "../types";
 import { useNavigate } from "react-router-dom";
+import ContactWindowCountdown from "./ContactWindowCountdown";
 
 // Mini Timeline Component - Memoized to prevent unnecessary re-renders
 interface MiniTimelineProps {
@@ -698,6 +699,15 @@ const ContactWindowsPopover: React.FC<ContactWindowsPopoverProps> = React.memo((
                     <TimeDisplay time={currentSimTime} />
                   </Typography>
                 </Box>
+              </Box>
+
+              {/* Contact Window Countdown */}
+              <Box sx={{ padding: 1.5 }}>
+                <ContactWindowCountdown 
+                  compact={true}
+                  showRefreshButton={true}
+                  closable={false}
+                />
               </Box>
 
               {/* Timeline Controls */}

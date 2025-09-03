@@ -18,6 +18,7 @@ import { useCesiumClock } from "./hooks/useCesiumClock";
 import { useNextContactWindow } from "./hooks/useNextContactWindow";
 import { resolveCallbackProperty } from "./utils/cesiumUtils";
 import { useRoutePerformance } from "./utils/performanceUtils";
+import ContactWindowPanel from "./components/ContactWindowPanel";
 
 const GlobePage: React.FC = (): React.ReactElement => {
   // Add performance monitoring
@@ -44,6 +45,9 @@ const GlobePage: React.FC = (): React.ReactElement => {
   );
 
   const viewerRef = useRef<any>(null);
+
+  // Contact window panel visibility state
+  const [showContactPanel, setShowContactPanel] = useState(true);
 
   // Single source of truth for Cesium clock
   useCesiumClock(viewerRef);
@@ -174,6 +178,14 @@ const GlobePage: React.FC = (): React.ReactElement => {
     >
       {/* Globe Tools - Top Left (position will be set via CSS) */}
       <GlobeTools groundStations={groundStations} debugInfo={debugInfo} />
+
+      {/* Contact Window Panel - Bottom Left */}
+      {showContactPanel && (
+        <ContactWindowPanel 
+          position="bottom-left"
+          onClose={() => setShowContactPanel(false)}
+        />
+      )}
 
       {/* Main Cesium globe, stretched to fill the remaining space */}
       <div style={{ flex: 1, position: "relative" }}>
